@@ -19,21 +19,22 @@ import java.io.IOException;
 
 //XXX delete very soon
 public class ZipFileWeaver {
-	File inFile;
-	public ZipFileWeaver(File inFile) {
-		super();
-		this.inFile = inFile;
-	}
+  File inFile;
 
-	public void weave(BcelWeaver weaver, File outFile) throws IOException {
-		int count = 0;
-		long startTime = System.currentTimeMillis();
-		weaver.addJarFile(inFile, new File("."),false);
-		weaver.weave(outFile);
-		long stopTime = System.currentTimeMillis();
-		
-		
-		System.out.println("handled " + count + " entries, in " + 
-				(stopTime-startTime)/1000. + " seconds");
-	}
+  public ZipFileWeaver(File inFile) {
+    super();
+    this.inFile = inFile;
+  }
+
+  public void weave(BcelWeaver weaver, File outFile) throws IOException {
+    final int count = 0;
+    final long startTime = System.currentTimeMillis();
+    weaver.addJarFile(inFile, new File("."), false);
+    weaver.weave(outFile);
+    final long stopTime = System.currentTimeMillis();
+
+
+    System.out.println("handled " + count + " entries, in " +
+        (stopTime - startTime) / 1000. + " seconds");
+  }
 }

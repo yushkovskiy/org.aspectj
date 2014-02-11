@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -14,14 +14,14 @@ import java.util.Map;
 
 /**
  * @author colyer
- *
- * Implementors of this interface are called by the CompilerAdapter just before
- * it does a weave, and should return the set of binary source files (ie. those
- * resources from injars and inpath) that are to be included in the weave. 
- * Used to manage incremental compilation of binary sources.
+ *         <p/>
+ *         Implementors of this interface are called by the CompilerAdapter just before
+ *         it does a weave, and should return the set of binary source files (ie. those
+ *         resources from injars and inpath) that are to be included in the weave.
+ *         Used to manage incremental compilation of binary sources.
  */
 public interface IBinarySourceProvider {
-	
-	Map /* fileName |-> List<UnwovenClassFile> */ getBinarySourcesForThisWeave();
-	
+
+  Map /* fileName |-> List<UnwovenClassFile> */ getBinarySourcesForThisWeave();
+
 }

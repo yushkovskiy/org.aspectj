@@ -20,17 +20,18 @@ import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 public class AjcTests extends TestCase {
-    public static String aspectjrtClasspath() {
-        return TestUtil.aspectjrtPath().getPath();        
-    }
-    public static Test suite() { 
-        TestSuite suite = new TestSuite(AjcTests.class.getName());
-        suite.addTestSuite(org.aspectj.tools.ajc.MainTest.class);
-        suite.addTestSuite(ASTVisitorTest.class);
-        suite.addTestSuite(ASTitdTest.class);
-        suite.addTestSuite(AjASTTest.class);
-        suite.addTestSuite(AjNaiveASTFlattenerTest.class);
-        return suite;
-    }
+  public static String aspectjrtClasspath() {
+    return TestUtil.aspectjrtPath().getPath();
+  }
+
+  public static Test suite() {
+    final TestSuite suite = new TestSuite(AjcTests.class.getName());
+    suite.addTestSuite(org.aspectj.tools.ajc.MainTest.class);
+    suite.addTestSuite(ASTVisitorTest.class);
+    suite.addTestSuite(ASTitdTest.class);
+    suite.addTestSuite(AjASTTest.class);
+    suite.addTestSuite(AjNaiveASTFlattenerTest.class);
+    return suite;
+  }
 
 }

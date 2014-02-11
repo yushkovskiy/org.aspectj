@@ -15,29 +15,32 @@ import org.aspectj.weaver.tools.PointcutParameter;
 
 public class PointcutParameterImpl implements PointcutParameter {
 
-	String name;
-	Class type;
-	Object binding;
-	
-	public PointcutParameterImpl(String name, Class type) {
-		this.name = name;
-		this.type = type;
-	}
-	
-	public String getName() {
-		return name;
-	}
+  String name;
+  Class type;
+  Object binding;
 
-	public Class getType() {
-		return type;
-	}
+  public PointcutParameterImpl(String name, Class type) {
+    this.name = name;
+    this.type = type;
+  }
 
-	public Object getBinding() {
-		return binding;
-	}
-	
-	void setBinding(Object boundValue) {
-		this.binding = boundValue;
-	}
-	
+  @Override
+  public String getName() {
+    return name;
+  }
+
+  @Override
+  public Class getType() {
+    return type;
+  }
+
+  @Override
+  public Object getBinding() {
+    return binding;
+  }
+
+  void setBinding(Object boundValue) {
+    this.binding = boundValue;
+  }
+
 }

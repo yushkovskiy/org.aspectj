@@ -19,54 +19,69 @@ import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
 import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.Scope;
 import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
+import org.jetbrains.annotations.NotNull;
 
-public class AjTypeConstants {
+public final class AjTypeConstants {
+  @NotNull
+  public static final char[] ORG = "org".toCharArray();
+  @NotNull
+  public static final char[] ASPECTJ = "aspectj".toCharArray();
+  @NotNull
+  public static final char[] RUNTIME = "runtime".toCharArray();
+  @NotNull
+  public static final char[] LANG = "lang".toCharArray();
+  @NotNull
+  public static final char[] INTERNAL = "internal".toCharArray();
 
-	public static final char[] ORG = "org".toCharArray();
-	public static final char[] ASPECTJ = "aspectj".toCharArray();
-	public static final char[] RUNTIME = "runtime".toCharArray();
-	public static final char[] LANG = "lang".toCharArray();
-	public static final char[] INTERNAL = "internal".toCharArray();
-	
-	// Constant compound names
-	public static final char[][] ORG_ASPECTJ_LANG_JOINPOINT =
-	    new char[][] {ORG, ASPECTJ, LANG, "JoinPoint".toCharArray()};
-	    
-	public static final char[][] ORG_ASPECTJ_LANG_JOINPOINT_STATICPART =
-	    new char[][] {ORG, ASPECTJ, LANG, "JoinPoint".toCharArray(), "StaticPart".toCharArray()};
-	    
-	public static final char[][] ORG_ASPECTJ_RUNTIME_INTERNAL_AROUNDCLOSURE =
-	    new char[][] {ORG, ASPECTJ, RUNTIME, INTERNAL, "AroundClosure".toCharArray()};
-	    
-	public static final char[][] ORG_ASPECTJ_RUNTIME_INTERNAL_CONVERSIONS =
-	    new char[][] {ORG, ASPECTJ, RUNTIME, INTERNAL, "Conversions".toCharArray()};
-	    
-	public static TypeReference getJoinPointType() {
-		return new QualifiedTypeReference(ORG_ASPECTJ_LANG_JOINPOINT, new long[10]);
-	}
-	
-	public static TypeReference getJoinPointStaticPartType() {
-		return new QualifiedTypeReference(ORG_ASPECTJ_LANG_JOINPOINT_STATICPART, new long[10]);
-	}
+  // Constant compound names
+  @NotNull
+  public static final char[][] ORG_ASPECTJ_LANG_JOINPOINT =
+      new char[][]{ORG, ASPECTJ, LANG, "JoinPoint".toCharArray()};
 
-	public static TypeReference getAroundClosureType() {
-		return new QualifiedTypeReference(ORG_ASPECTJ_RUNTIME_INTERNAL_AROUNDCLOSURE, new long[10]);
-	}
+  @NotNull
+  public static final char[][] ORG_ASPECTJ_LANG_JOINPOINT_STATICPART =
+      new char[][]{ORG, ASPECTJ, LANG, "JoinPoint".toCharArray(), "StaticPart".toCharArray()};
 
-	public static ReferenceBinding getConversionsType(Scope scope) {
-		return (ReferenceBinding)scope.getType(
-				ORG_ASPECTJ_RUNTIME_INTERNAL_CONVERSIONS,
-				ORG_ASPECTJ_RUNTIME_INTERNAL_CONVERSIONS.length);
-	}
+  @NotNull
+  public static final char[][] ORG_ASPECTJ_RUNTIME_INTERNAL_AROUNDCLOSURE =
+      new char[][]{ORG, ASPECTJ, RUNTIME, INTERNAL, "AroundClosure".toCharArray()};
 
-	public static MethodBinding getConversionMethodToObject(Scope scope, TypeBinding fromType) {
-		String name = new String(fromType.sourceName()) + "Object";
-		return getConversionsType(scope).getMethods(name.toCharArray())[0];
-	}
-	
-	public static MethodBinding getConversionMethodFromObject(Scope scope, TypeBinding toType) {
-		String name = new String(toType.sourceName()) + "Value";
-		return getConversionsType(scope).getMethods(name.toCharArray())[0];
-	}
+  @NotNull
+  public static final char[][] ORG_ASPECTJ_RUNTIME_INTERNAL_CONVERSIONS =
+      new char[][]{ORG, ASPECTJ, RUNTIME, INTERNAL, "Conversions".toCharArray()};
+
+  @NotNull
+  public static TypeReference getJoinPointType() {
+    return new QualifiedTypeReference(ORG_ASPECTJ_LANG_JOINPOINT, new long[10]);
+  }
+
+  @NotNull
+  public static TypeReference getJoinPointStaticPartType() {
+    return new QualifiedTypeReference(ORG_ASPECTJ_LANG_JOINPOINT_STATICPART, new long[10]);
+  }
+
+  @NotNull
+  public static TypeReference getAroundClosureType() {
+    return new QualifiedTypeReference(ORG_ASPECTJ_RUNTIME_INTERNAL_AROUNDCLOSURE, new long[10]);
+  }
+
+  @NotNull
+  public static ReferenceBinding getConversionsType(@NotNull Scope scope) {
+    return (ReferenceBinding) scope.getType(
+        ORG_ASPECTJ_RUNTIME_INTERNAL_CONVERSIONS,
+        ORG_ASPECTJ_RUNTIME_INTERNAL_CONVERSIONS.length);
+  }
+
+  @NotNull
+  public static MethodBinding getConversionMethodToObject(@NotNull Scope scope, @NotNull TypeBinding fromType) {
+    final String name = new String(fromType.sourceName()) + "Object";
+    return getConversionsType(scope).getMethods(name.toCharArray())[0];
+  }
+
+  @NotNull
+  public static MethodBinding getConversionMethodFromObject(@NotNull Scope scope, @NotNull TypeBinding toType) {
+    final String name = new String(toType.sourceName()) + "Value";
+    return getConversionsType(scope).getMethods(name.toCharArray())[0];
+  }
 
 }

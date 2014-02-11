@@ -17,44 +17,49 @@ import org.aspectj.weaver.UnresolvedType;
  * Under JDK 1.4 or lower, we can't give generic signature info...
  */
 public class Java14GenericSignatureInformationProvider implements
-		GenericSignatureInformationProvider {
+    GenericSignatureInformationProvider {
 
-	/* (non-Javadoc)
-	 * @see org.aspectj.weaver.reflect.GenericSignatureInformationProvider#getGenericParameterTypes(org.aspectj.weaver.reflect.ReflectionBasedResolvedMemberImpl)
-	 */
-	public UnresolvedType[] getGenericParameterTypes(
-			ReflectionBasedResolvedMemberImpl resolvedMember) {
-		return resolvedMember.getParameterTypes();
-	}
+  /* (non-Javadoc)
+   * @see org.aspectj.weaver.reflect.GenericSignatureInformationProvider#getGenericParameterTypes(org.aspectj.weaver.reflect.ReflectionBasedResolvedMemberImpl)
+   */
+  @Override
+  public UnresolvedType[] getGenericParameterTypes(
+      ReflectionBasedResolvedMemberImpl resolvedMember) {
+    return resolvedMember.getParameterTypes();
+  }
 
-	/* (non-Javadoc)
-	 * @see org.aspectj.weaver.reflect.GenericSignatureInformationProvider#getGenericReturnType(org.aspectj.weaver.reflect.ReflectionBasedResolvedMemberImpl)
-	 */
-	public UnresolvedType getGenericReturnType(
-			ReflectionBasedResolvedMemberImpl resolvedMember) {
-		return resolvedMember.getReturnType();
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.aspectj.weaver.reflect.GenericSignatureInformationProvider#isBridge()
-	 */
-	public boolean isBridge(ReflectionBasedResolvedMemberImpl resolvedMember) {
-		return false;
-	}
-	
+  /* (non-Javadoc)
+   * @see org.aspectj.weaver.reflect.GenericSignatureInformationProvider#getGenericReturnType(org.aspectj.weaver.reflect.ReflectionBasedResolvedMemberImpl)
+   */
+  @Override
+  public UnresolvedType getGenericReturnType(
+      ReflectionBasedResolvedMemberImpl resolvedMember) {
+    return resolvedMember.getReturnType();
+  }
 
-	/* (non-Javadoc)
-	 * @see org.aspectj.weaver.reflect.GenericSignatureInformationProvider#isVarArgs()
-	 */
-	public boolean isVarArgs(ReflectionBasedResolvedMemberImpl resolvedMember) {
-		return false;
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.aspectj.weaver.reflect.GenericSignatureInformationProvider#isSynthetic()
-	 */
-	public boolean isSynthetic(ReflectionBasedResolvedMemberImpl resolvedMember) {
-		return false;
-	}
+  /* (non-Javadoc)
+   * @see org.aspectj.weaver.reflect.GenericSignatureInformationProvider#isBridge()
+   */
+  @Override
+  public boolean isBridge(ReflectionBasedResolvedMemberImpl resolvedMember) {
+    return false;
+  }
+
+
+  /* (non-Javadoc)
+   * @see org.aspectj.weaver.reflect.GenericSignatureInformationProvider#isVarArgs()
+   */
+  @Override
+  public boolean isVarArgs(ReflectionBasedResolvedMemberImpl resolvedMember) {
+    return false;
+  }
+
+  /* (non-Javadoc)
+   * @see org.aspectj.weaver.reflect.GenericSignatureInformationProvider#isSynthetic()
+   */
+  @Override
+  public boolean isSynthetic(ReflectionBasedResolvedMemberImpl resolvedMember) {
+    return false;
+  }
 
 }

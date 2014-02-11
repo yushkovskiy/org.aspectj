@@ -18,14 +18,22 @@ import org.aspectj.weaver.internal.tools.MatchingContextBasedTest;
 
 public interface ITestVisitor {
 
-	void visit(And e);
-	void visit(Instanceof i);
-	void visit(Not not);
-	void visit(Or or);
-	void visit(Literal literal);
-	void visit(Call call);
-	void visit(FieldGetCall fieldGetCall);
-	void visit(HasAnnotation hasAnnotation);
-	void visit(MatchingContextBasedTest matchingContextTest);
+  void visit(And e);
+
+  void visit(Instanceof i);
+
+  void visit(Not not);
+
+  void visit(Or or);
+
+  void visit(Literal literal);
+
+  void visit(Call call);
+
+  void visit(FieldGetCall fieldGetCall);
+
+  void visit(HasAnnotation hasAnnotation);
+
+  void visit(MatchingContextBasedTest matchingContextTest);
 
 }

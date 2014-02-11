@@ -18,41 +18,42 @@ import java.io.IOException;
 import org.aspectj.weaver.ShadowMunger;
 
 public class AfterReturningWeaveTestCase extends WeaveTestCase {
-    {
-        regenerate = false;
-    }
+  {
+    regenerate = false;
+  }
 
-    public AfterReturningWeaveTestCase(String name) {
-        super(name);
-    }
+  public AfterReturningWeaveTestCase(String name) {
+    super(name);
+  }
 
-    public void testAfterReturning() throws IOException {
-        weaveTest(
-            getStandardTargets(),
-            "AfterReturning",
-            makeAdviceAll("afterReturning"));
-    }
+  public void testAfterReturning() throws IOException {
+    weaveTest(
+        getStandardTargets(),
+        "AfterReturning",
+        makeAdviceAll("afterReturning"));
+  }
 
-    public void testAfterReturningParam() throws IOException {
-        weaveTest(
-            getStandardTargets(),
-            "AfterReturningParam",
-            makeAdviceField("afterReturning", "java.lang.Object"));
-    }
-    public void testAfterReturningCheckcastParam() throws IOException {
-        weaveTest(
-            getStandardTargets(),
-            "AfterReturningCheckcastParam",
-            makeAdviceField("afterReturning", "java.rmi.server.LogStream"));
-    }
+  public void testAfterReturningParam() throws IOException {
+    weaveTest(
+        getStandardTargets(),
+        "AfterReturningParam",
+        makeAdviceField("afterReturning", "java.lang.Object"));
+  }
 
-    public void testAfterReturningConversionParam() throws IOException {
-        String mungerString =
-            "afterReturning(): call(int *.*(..)) -> "
-                + "static void Aspect.ajc_afterReturning_field_get(java.lang.Object)";
-        ShadowMunger cm = makeConcreteAdvice(mungerString, 1);
+  public void testAfterReturningCheckcastParam() throws IOException {
+    weaveTest(
+        getStandardTargets(),
+        "AfterReturningCheckcastParam",
+        makeAdviceField("afterReturning", "java.rmi.server.LogStream"));
+  }
 
-        weaveTest("FancyHelloWorld", "AfterReturningConversionParam", cm);
-    }
+  public void testAfterReturningConversionParam() throws IOException {
+    final String mungerString =
+        "afterReturning(): call(int *.*(..)) -> "
+            + "static void Aspect.ajc_afterReturning_field_get(java.lang.Object)";
+    final ShadowMunger cm = makeConcreteAdvice(mungerString, 1);
+
+    weaveTest("FancyHelloWorld", "AfterReturningConversionParam", cm);
+  }
 
 }

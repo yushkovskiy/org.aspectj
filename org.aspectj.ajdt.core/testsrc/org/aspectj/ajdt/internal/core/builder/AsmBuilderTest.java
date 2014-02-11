@@ -25,53 +25,56 @@ import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.BlockScope;
 
 public class AsmBuilderTest extends TestCase {
 
-	private AsmHierarchyBuilder builder = new AsmHierarchyBuilder();
-	
-    public static Test suite() { 
-        TestSuite suite = new TestSuite(AsmBuilderTest.class.getName());
-        //$JUnit-BEGIN$
-        suite.addTestSuite(AsmBuilderTest.class); 
-        //$JUnit-END$
-        return suite;
-    }
+  private AsmHierarchyBuilder builder = new AsmHierarchyBuilder();
 
-	/**
-	 * Test for bug#39626
-	 */
-	public void testNullHandlingOfVisit() { 
-		ICompilationUnit cu = new ICompilationUnit() {
-			public char[] getContents() {
-				return null;
-			}
+  public static Test suite() {
+    final TestSuite suite = new TestSuite(AsmBuilderTest.class.getName());
+    //$JUnit-BEGIN$
+    suite.addTestSuite(AsmBuilderTest.class);
+    //$JUnit-END$
+    return suite;
+  }
 
-			public char[] getMainTypeName() {
-				return null;
-			}
+  /**
+   * Test for bug#39626
+   */
+  public void testNullHandlingOfVisit() {
+    final ICompilationUnit cu = new ICompilationUnit() {
+      @Override
+      public char[] getContents() {
+        return null;
+      }
 
-			public char[][] getPackageName() {
-				return null;
-			}
-			
-			public char[] getFileName() { 
-				return null;
-			}
-			
-		};
-		TypeDeclaration local = new TypeDeclaration(new CompilationResult(cu, 0, 0, 0));
-		local.name = new char[2];
-		BlockScope scope = null;
-		
-		try { 
+      @Override
+      public char[] getMainTypeName() {
+        return null;
+      }
+
+      @Override
+      public char[][] getPackageName() {
+        return null;
+      }
+
+      @Override
+      public char[] getFileName() {
+        return null;
+      }
+
+    };
+    final TypeDeclaration local = new TypeDeclaration(new CompilationResult(cu, 0, 0, 0));
+    local.name = new char[2];
+    final BlockScope scope = null;
+
+    try {
 //			builder.internalBuild(new CompilationResult(cu, 0, 0, 0), null);
-			builder.visit(local, scope);
-		} 
-		catch (Exception e) {
-			assertTrue(e instanceof NullPointerException);
-		} 
+      builder.visit(local, scope);
+    } catch (Exception e) {
+      assertTrue(e instanceof NullPointerException);
+    }
 // XXX put back?
 //		catch (Exception e) {
 //			assertTrue(e instanceof EmptyStackException);
 //		}
-	}
+  }
 
 }  

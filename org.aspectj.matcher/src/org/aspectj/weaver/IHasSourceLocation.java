@@ -15,7 +15,7 @@ package org.aspectj.weaver;
 import org.aspectj.bridge.ISourceLocation;
 
 public interface IHasSourceLocation extends IHasPosition {
-	ISourceContext getSourceContext();
+  ISourceContext getSourceContext();
 
-	ISourceLocation getSourceLocation();
+  ISourceLocation getSourceLocation();
 }

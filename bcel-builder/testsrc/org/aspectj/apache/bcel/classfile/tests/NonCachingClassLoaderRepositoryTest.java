@@ -67,83 +67,83 @@ import org.aspectj.apache.bcel.util.NonCachingClassLoaderRepository;
  */
 public class NonCachingClassLoaderRepositoryTest extends TestCase {
 
-	private final NonCachingClassLoaderRepository nonCachingClassLoaderRepository = new NonCachingClassLoaderRepository(
-			NonCachingClassLoaderRepositoryTest.class.getClassLoader());
+  private final NonCachingClassLoaderRepository nonCachingClassLoaderRepository = new NonCachingClassLoaderRepository(
+      NonCachingClassLoaderRepositoryTest.class.getClassLoader());
 
-	protected void setUp() throws Exception {
-		super.setUp();
-	}
+  protected void setUp() throws Exception {
+    super.setUp();
+  }
 
-	abstract class DoneChecker implements Runnable {
-		private volatile boolean success = false;
-		private volatile boolean done = false;
+  abstract class DoneChecker implements Runnable {
+    private volatile boolean success = false;
+    private volatile boolean done = false;
 
-		public boolean isSuccess() {
-			return success;
-		}
+    public boolean isSuccess() {
+      return success;
+    }
 
-		public boolean isDone() {
-			return done;
-		}
+    public boolean isDone() {
+      return done;
+    }
 
-		protected void setDone(boolean successFully) {
-			success = successFully;
-			done = true;
-		}
+    protected void setDone(boolean successFully) {
+      success = successFully;
+      done = true;
+    }
 
-		public abstract void run();
-	}
+    public abstract void run();
+  }
 
-	class Loader extends DoneChecker implements Runnable {
-		public void run() {
-			try {
-				JavaClass javaClass = nonCachingClassLoaderRepository.loadClass(NonCachingClassLoaderRepositoryTest.class
-						.getCanonicalName());
-				nonCachingClassLoaderRepository.clear();
-				setDone(true);
-			} catch (Throwable e) {
-				e.printStackTrace(System.out);
-				setDone(false);
-			}
-		}
-	}
+  class Loader extends DoneChecker implements Runnable {
+    public void run() {
+      try {
+        final JavaClass javaClass = nonCachingClassLoaderRepository.loadClass(NonCachingClassLoaderRepositoryTest.class
+            .getCanonicalName());
+        nonCachingClassLoaderRepository.clear();
+        setDone(true);
+      } catch (Throwable e) {
+        e.printStackTrace(System.out);
+        setDone(false);
+      }
+    }
+  }
 
-	class Clearer extends DoneChecker implements Runnable {
-		public void run() {
-			try {
-				nonCachingClassLoaderRepository.clear();
-				setDone(true);
-			} catch (Throwable e) {
-				e.printStackTrace(System.out);
-				setDone(false);
-			}
-		}
-	}
+  class Clearer extends DoneChecker implements Runnable {
+    public void run() {
+      try {
+        nonCachingClassLoaderRepository.clear();
+        setDone(true);
+      } catch (Throwable e) {
+        e.printStackTrace(System.out);
+        setDone(false);
+      }
+    }
+  }
 
-	public void testConcurrency() throws ClassNotFoundException, InterruptedException {
-		List<DoneChecker> loaders = new ArrayList<DoneChecker>();
-		int i1 = 1000;
-		for (int i = 0; i < i1; i++) {
-			DoneChecker loader = new Loader();
-			loaders.add(loader);
-			new Thread(loader).start();
-			DoneChecker clearer = new Clearer();
-			loaders.add(clearer);
-			new Thread(clearer).start();
-		}
+  public void testConcurrency() throws ClassNotFoundException, InterruptedException {
+    final List<DoneChecker> loaders = new ArrayList<DoneChecker>();
+    final int i1 = 1000;
+    for (int i = 0; i < i1; i++) {
+      final DoneChecker loader = new Loader();
+      loaders.add(loader);
+      new Thread(loader).start();
+      final DoneChecker clearer = new Clearer();
+      loaders.add(clearer);
+      new Thread(clearer).start();
+    }
 
-		for (int i = 0; i < i1 * 2; i++) {
-			DoneChecker loader = loaders.get(i);
-			while (!loader.isDone()) {
-				Thread.sleep(10);
-			}
-			assertTrue("Loader " + i + " is supposed to run successfully", loader.isSuccess());
-		}
+    for (int i = 0; i < i1 * 2; i++) {
+      final DoneChecker loader = loaders.get(i);
+      while (!loader.isDone()) {
+        Thread.sleep(10);
+      }
+      assertTrue("Loader " + i + " is supposed to run successfully", loader.isSuccess());
+    }
 
-	}
+  }
 
-	protected void tearDown() throws Exception {
-		super.tearDown();
-	}
+  protected void tearDown() throws Exception {
+    super.tearDown();
+  }
 
 }

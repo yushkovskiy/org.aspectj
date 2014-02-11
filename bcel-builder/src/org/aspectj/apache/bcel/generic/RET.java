@@ -53,80 +53,81 @@ package org.aspectj.apache.bcel.generic;
  * information on the Apache Software Foundation, please see
  * <http://www.apache.org/>.
  */
-import java.io.DataOutputStream;
-import java.io.IOException;
 
 import org.aspectj.apache.bcel.Constants;
 import org.aspectj.apache.bcel.classfile.ConstantPool;
 
+import java.io.DataOutputStream;
+import java.io.IOException;
+
 /**
  * RET - Return from subroutine
- * 
+ * <p/>
  * <PRE>
  * Stack: ..., -&gt; ..., address
  * </PRE>
- * 
- * @version $Id: RET.java,v 1.5 2009/10/05 17:35:36 aclement Exp $
+ *
  * @author <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
+ * @version $Id: RET.java,v 1.5 2009/10/05 17:35:36 aclement Exp $
  */
 public class RET extends Instruction {
-	private boolean wide;
-	private int index; // index to local variable containing the return address
+  private boolean wide;
+  private int index; // index to local variable containing the return address
 
-	public RET(int index, boolean wide) {
-		super(Constants.RET);
-		this.index = index;
-		this.wide = wide;
-		// this.wide = index > org.aspectj.apache.bcel.Constants.MAX_BYTE;
-	}
+  public RET(int index, boolean wide) {
+    super(Constants.RET);
+    this.index = index;
+    this.wide = wide;
+    // this.wide = index > org.aspectj.apache.bcel.Constants.MAX_BYTE;
+  }
 
-	public void dump(DataOutputStream out) throws IOException {
-		if (wide) {
-			out.writeByte(Constants.WIDE);
-		}
-		out.writeByte(opcode);
-		if (wide) {
-			out.writeShort(index);
-		} else {
-			out.writeByte(index);
-		}
-	}
+  public void dump(DataOutputStream out) throws IOException {
+    if (wide) {
+      out.writeByte(Constants.WIDE);
+    }
+    out.writeByte(opcode);
+    if (wide) {
+      out.writeShort(index);
+    } else {
+      out.writeByte(index);
+    }
+  }
 
-	public int getLength() {
-		if (wide) {
-			return 4;
-		} else {
-			return 2;
-		}
-	}
+  public int getLength() {
+    if (wide) {
+      return 4;
+    } else {
+      return 2;
+    }
+  }
 
-	public final int getIndex() {
-		return index;
-	}
+  public final int getIndex() {
+    return index;
+  }
 
-	public final void setIndex(int index) {
-		this.index = index;
-		this.wide = index > Constants.MAX_BYTE;
-	}
+  public final void setIndex(int index) {
+    this.index = index;
+    this.wide = index > Constants.MAX_BYTE;
+  }
 
-	public String toString(boolean verbose) {
-		return super.toString(verbose) + " " + index;
-	}
+  public String toString(boolean verbose) {
+    return super.toString(verbose) + " " + index;
+  }
 
-	public Type getType(ConstantPool cp) {
-		return ReturnaddressType.NO_TARGET;
-	}
+  public Type getType(ConstantPool cp) {
+    return ReturnaddressType.NO_TARGET;
+  }
 
-	public boolean equals(Object other) {
-		if (!(other instanceof RET)) {
-			return false;
-		}
-		RET o = (RET) other;
-		return o.opcode == opcode && o.index == index;
-	}
+  public boolean equals(Object other) {
+    if (!(other instanceof RET)) {
+      return false;
+    }
+    final RET o = (RET) other;
+    return o.opcode == opcode && o.index == index;
+  }
 
-	public int hashCode() {
-		return opcode * 37 + index;
-	}
+  public int hashCode() {
+    return opcode * 37 + index;
+  }
 
 }

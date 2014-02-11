@@ -25,239 +25,241 @@ import org.aspectj.weaver.reflect.ReflectionWorld;
 
 public class TypePatternTestCase extends PatternsTestCase {
 
-	public World getWorld() {
-		return new ReflectionWorld(true, this.getClass().getClassLoader());
-	}
+  @Override
+  public World getWorld() {
+    return new ReflectionWorld(true, this.getClass().getClassLoader());
+  }
 
-	public void testStaticMatch() {
-		checkMatch("java.lang.Object", "java.lang.Object", true);
-		checkMatch("java.lang.Object+", "java.lang.Object", true);
-		checkMatch("java.lang.Object+", "java.lang.String", true);
-		checkMatch("java.lang.String+", "java.lang.Object", false);
-		checkMatch("java.lang.Integer", "java.lang.String", false);
+  public void testStaticMatch() {
+    checkMatch("java.lang.Object", "java.lang.Object", true);
+    checkMatch("java.lang.Object+", "java.lang.Object", true);
+    checkMatch("java.lang.Object+", "java.lang.String", true);
+    checkMatch("java.lang.String+", "java.lang.Object", false);
+    checkMatch("java.lang.Integer", "java.lang.String", false);
 
-		checkMatch("java.lang.Integer", "int", false);
+    checkMatch("java.lang.Integer", "int", false);
 
-		checkMatch("java.lang.Number+", "java.lang.Integer", true);
+    checkMatch("java.lang.Number+", "java.lang.Integer", true);
 
-		checkMatch("java..*", "java.lang.Integer", true);
-		checkMatch("java..*", "java.lang.reflect.Modifier", true);
-		checkMatch("java..*", "int", false);
-		checkMatch("java..*", "javax.swing.Action", false);
-		checkMatch("java..*+", "javax.swing.Action", true);
+    checkMatch("java..*", "java.lang.Integer", true);
+    checkMatch("java..*", "java.lang.reflect.Modifier", true);
+    checkMatch("java..*", "int", false);
+    checkMatch("java..*", "javax.swing.Action", false);
+    checkMatch("java..*+", "javax.swing.Action", true);
 
-		checkMatch("*.*.Object", "java.lang.Object", true);
-		checkMatch("*.Object", "java.lang.Object", false);
-		checkMatch("*..*", "java.lang.Object", true);
-		checkMatch("*..*", "int", false);
-		checkMatch("java..Modifier", "java.lang.reflect.Modifier", true);
-		checkMatch("java.lang.reflect.Mod..ifier", "java.lang.reflect.Modifier", false);
+    checkMatch("*.*.Object", "java.lang.Object", true);
+    checkMatch("*.Object", "java.lang.Object", false);
+    checkMatch("*..*", "java.lang.Object", true);
+    checkMatch("*..*", "int", false);
+    checkMatch("java..Modifier", "java.lang.reflect.Modifier", true);
+    checkMatch("java.lang.reflect.Mod..ifier", "java.lang.reflect.Modifier", false);
 
-		checkMatch("java..reflect..Modifier", "java.lang.reflect.Modifier", true);
-		checkMatch("java..lang..Modifier", "java.lang.reflect.Modifier", true);
-		checkMatch("java..*..Modifier", "java.lang.reflect.Modifier", true);
-		checkMatch("java..*..*..Modifier", "java.lang.reflect.Modifier", true);
-		checkMatch("java..*..*..*..Modifier", "java.lang.reflect.Modifier", false);
-		// checkMatch("java..reflect..Modifier", "java.lang.reflect.Modxifier", false);
-		checkMatch("ja*va..Modifier", "java.lang.reflect.Modifier", true);
-		checkMatch("java..*..Mod*ifier", "java.lang.reflect.Modifier", true);
+    checkMatch("java..reflect..Modifier", "java.lang.reflect.Modifier", true);
+    checkMatch("java..lang..Modifier", "java.lang.reflect.Modifier", true);
+    checkMatch("java..*..Modifier", "java.lang.reflect.Modifier", true);
+    checkMatch("java..*..*..Modifier", "java.lang.reflect.Modifier", true);
+    checkMatch("java..*..*..*..Modifier", "java.lang.reflect.Modifier", false);
+    // checkMatch("java..reflect..Modifier", "java.lang.reflect.Modxifier", false);
+    checkMatch("ja*va..Modifier", "java.lang.reflect.Modifier", true);
+    checkMatch("java..*..Mod*ifier", "java.lang.reflect.Modifier", true);
 
-	}
+  }
 
-	// three levels:
-	// 0. defined in current compilation unit, or imported by name
-	// 1. defined in current package/type/whatever
-	// 2. defined in package imported by *
-	/**
-	 * We've decided not to test this here, but rather in any compilers
-	 */
-	public void testImportResolve() {
-		// checkIllegalImportResolution("List", new String[] { "java.util", "java.awt", },
-		// ZERO_STRINGS);
+  // three levels:
+  // 0. defined in current compilation unit, or imported by name
+  // 1. defined in current package/type/whatever
+  // 2. defined in package imported by *
 
-	}
+  /**
+   * We've decided not to test this here, but rather in any compilers
+   */
+  public void testImportResolve() {
+    // checkIllegalImportResolution("List", new String[] { "java.util", "java.awt", },
+    // ZERO_STRINGS);
 
-	// Assumption for bcweaver: Already resolved type patterns with no *s or ..'s into exact type
-	// patterns. Exact type patterns don't have import lists. non-exact-type pattens don't
-	// care about precedence, so the current package can be included with all the other packages,
-	// and we don't care about compilation units, and we don't care about ordering.
+  }
 
-	// only giving this wild-type patterns
-	public void testImportMatch() {
+  // Assumption for bcweaver: Already resolved type patterns with no *s or ..'s into exact type
+  // patterns. Exact type patterns don't have import lists. non-exact-type pattens don't
+  // care about precedence, so the current package can be included with all the other packages,
+  // and we don't care about compilation units, and we don't care about ordering.
 
-		checkImportMatch("*List", new String[] { "java.awt.", }, ZERO_STRINGS, "java.awt.List", true);
-		checkImportMatch("*List", new String[] { "java.awt.", }, ZERO_STRINGS, "java.awt.List", true);
-		checkImportMatch("*List", new String[] { "java.awt.", }, ZERO_STRINGS, "java.util.List", false);
-		checkImportMatch("*List", new String[] { "java.util.", }, ZERO_STRINGS, "java.awt.List", false);
-		checkImportMatch("*List", new String[] { "java.util.", }, ZERO_STRINGS, "java.util.List", true);
+  // only giving this wild-type patterns
+  public void testImportMatch() {
 
-		checkImportMatch("*List", ZERO_STRINGS, new String[] { "java.awt.List", }, "java.awt.List", true);
+    checkImportMatch("*List", new String[]{"java.awt.",}, ZERO_STRINGS, "java.awt.List", true);
+    checkImportMatch("*List", new String[]{"java.awt.",}, ZERO_STRINGS, "java.awt.List", true);
+    checkImportMatch("*List", new String[]{"java.awt.",}, ZERO_STRINGS, "java.util.List", false);
+    checkImportMatch("*List", new String[]{"java.util.",}, ZERO_STRINGS, "java.awt.List", false);
+    checkImportMatch("*List", new String[]{"java.util.",}, ZERO_STRINGS, "java.util.List", true);
 
-		checkImportMatch("awt.*List", ZERO_STRINGS, new String[] { "java.awt.List", }, "java.awt.List", false);
-		checkImportMatch("*Foo", ZERO_STRINGS, new String[] { "java.awt.List", }, "java.awt.List", false);
+    checkImportMatch("*List", ZERO_STRINGS, new String[]{"java.awt.List",}, "java.awt.List", true);
 
-		checkImportMatch("*List", new String[] { "java.util.", "java.awt.", }, ZERO_STRINGS, "java.util.List", true);
-		checkImportMatch("*List", new String[] { "java.util.", "java.awt.", }, ZERO_STRINGS, "java.awt.List", true);
+    checkImportMatch("awt.*List", ZERO_STRINGS, new String[]{"java.awt.List",}, "java.awt.List", false);
+    checkImportMatch("*Foo", ZERO_STRINGS, new String[]{"java.awt.List",}, "java.awt.List", false);
 
-		checkImportMatch("*..List", new String[] { "java.util." }, ZERO_STRINGS, "java.util.List", true);
-		checkImportMatch("*..List", new String[] { "java.util." }, ZERO_STRINGS, "java.awt.List", true);
+    checkImportMatch("*List", new String[]{"java.util.", "java.awt.",}, ZERO_STRINGS, "java.util.List", true);
+    checkImportMatch("*List", new String[]{"java.util.", "java.awt.",}, ZERO_STRINGS, "java.awt.List", true);
 
-	}
+    checkImportMatch("*..List", new String[]{"java.util."}, ZERO_STRINGS, "java.util.List", true);
+    checkImportMatch("*..List", new String[]{"java.util."}, ZERO_STRINGS, "java.awt.List", true);
 
-	public void testImportMatchWithInners() {
-		// checkImportMatch("*Entry", new String[] { "java.util.", "java.util.Map$" }, ZERO_STRINGS, "java.util.Map$Entry", true);
-		//
-		// checkImportMatch("java.util.Map.*Entry", ZERO_STRINGS, ZERO_STRINGS, "java.util.Map$Entry", true);
-		//
-		// checkImportMatch("*Entry", new String[] { "java.util.", }, ZERO_STRINGS, "java.util.Map$Entry", false);
-		//
-		// checkImportMatch("*.Entry", new String[] { "java.util.", }, ZERO_STRINGS, "java.util.Map$Entry", true);
-		//
-		// checkImportMatch("Map.*", new String[] { "java.util.", }, ZERO_STRINGS, "java.util.Map$Entry", true);
+  }
 
-		checkImportMatch("Map.*", ZERO_STRINGS, new String[] { "java.util.Map" }, "java.util.Map$Entry", true);
-	}
+  public void testImportMatchWithInners() {
+    // checkImportMatch("*Entry", new String[] { "java.util.", "java.util.Map$" }, ZERO_STRINGS, "java.util.Map$Entry", true);
+    //
+    // checkImportMatch("java.util.Map.*Entry", ZERO_STRINGS, ZERO_STRINGS, "java.util.Map$Entry", true);
+    //
+    // checkImportMatch("*Entry", new String[] { "java.util.", }, ZERO_STRINGS, "java.util.Map$Entry", false);
+    //
+    // checkImportMatch("*.Entry", new String[] { "java.util.", }, ZERO_STRINGS, "java.util.Map$Entry", true);
+    //
+    // checkImportMatch("Map.*", new String[] { "java.util.", }, ZERO_STRINGS, "java.util.Map$Entry", true);
 
-	private void checkImportMatch(String wildPattern, String[] importedPackages, String[] importedNames, String matchName,
-			boolean shouldMatch) {
-		WildTypePattern p = makeResolvedWildTypePattern(wildPattern, importedPackages, importedNames);
-		checkPatternMatch(p, matchName, shouldMatch);
-	}
+    checkImportMatch("Map.*", ZERO_STRINGS, new String[]{"java.util.Map"}, "java.util.Map$Entry", true);
+  }
 
-	private WildTypePattern makeResolvedWildTypePattern(String wildPattern, String[] importedPackages, String[] importedNames) {
-		WildTypePattern unresolved = (WildTypePattern) new PatternParser(wildPattern).parseTypePattern();
+  private void checkImportMatch(String wildPattern, String[] importedPackages, String[] importedNames, String matchName,
+                                boolean shouldMatch) {
+    final WildTypePattern p = makeResolvedWildTypePattern(wildPattern, importedPackages, importedNames);
+    checkPatternMatch(p, matchName, shouldMatch);
+  }
 
-		WildTypePattern resolved = resolve(unresolved, importedPackages, importedNames);
-		return resolved;
+  private WildTypePattern makeResolvedWildTypePattern(String wildPattern, String[] importedPackages, String[] importedNames) {
+    final WildTypePattern unresolved = (WildTypePattern) new PatternParser(wildPattern).parseTypePattern();
 
-	}
+    final WildTypePattern resolved = resolve(unresolved, importedPackages, importedNames);
+    return resolved;
 
-	private WildTypePattern resolve(WildTypePattern unresolved, String[] importedPrefixes, String[] importedNames) {
+  }
 
-		TestScope scope = makeTestScope();
-		scope.setImportedPrefixes(importedPrefixes);
-		scope.setImportedNames(importedNames);
-		return (WildTypePattern) unresolved.resolveBindings(scope, Bindings.NONE, false, false);
-	}
+  private WildTypePattern resolve(WildTypePattern unresolved, String[] importedPrefixes, String[] importedNames) {
 
-	public static final String[] ZERO_STRINGS = new String[0];
+    final TestScope scope = makeTestScope();
+    scope.setImportedPrefixes(importedPrefixes);
+    scope.setImportedNames(importedNames);
+    return (WildTypePattern) unresolved.resolveBindings(scope, Bindings.NONE, false, false);
+  }
 
-	public void testInstanceofMatch() {
+  public static final String[] ZERO_STRINGS = new String[0];
 
-		checkInstanceofMatch("java.lang.Object", "java.lang.Object", FuzzyBoolean.YES);
+  public void testInstanceofMatch() {
 
-		checkIllegalInstanceofMatch("java.lang.Object+", "java.lang.Object");
-		checkIllegalInstanceofMatch("java.lang.Object+", "java.lang.String");
-		checkIllegalInstanceofMatch("java.lang.String+", "java.lang.Object");
-		checkIllegalInstanceofMatch("java.lang.*", "java.lang.Object");
-		checkInstanceofMatch("java.lang.Integer", "java.lang.String", FuzzyBoolean.NO);
+    checkInstanceofMatch("java.lang.Object", "java.lang.Object", FuzzyBoolean.YES);
 
-		checkInstanceofMatch("java.lang.Number", "java.lang.Integer", FuzzyBoolean.YES);
-		checkInstanceofMatch("java.lang.Integer", "java.lang.Number", FuzzyBoolean.MAYBE);
+    checkIllegalInstanceofMatch("java.lang.Object+", "java.lang.Object");
+    checkIllegalInstanceofMatch("java.lang.Object+", "java.lang.String");
+    checkIllegalInstanceofMatch("java.lang.String+", "java.lang.Object");
+    checkIllegalInstanceofMatch("java.lang.*", "java.lang.Object");
+    checkInstanceofMatch("java.lang.Integer", "java.lang.String", FuzzyBoolean.NO);
 
-		checkIllegalInstanceofMatch("java..Integer", "java.lang.Integer");
+    checkInstanceofMatch("java.lang.Number", "java.lang.Integer", FuzzyBoolean.YES);
+    checkInstanceofMatch("java.lang.Integer", "java.lang.Number", FuzzyBoolean.MAYBE);
 
-		checkInstanceofMatch("*", "java.lang.Integer", FuzzyBoolean.YES);
+    checkIllegalInstanceofMatch("java..Integer", "java.lang.Integer");
 
-	}
+    checkInstanceofMatch("*", "java.lang.Integer", FuzzyBoolean.YES);
 
-	public void testArrayMatch() {
-		checkMatch("*[][]", "java.lang.Object", false);
-		checkMatch("*[]", "java.lang.Object[]", true);
-		checkMatch("*[][]", "java.lang.Object[][]", true);
-		checkMatch("java.lang.Object+", "java.lang.Object[]", true);
-		checkMatch("java.lang.Object[]", "java.lang.Object", false);
-		checkMatch("java.lang.Object[]", "java.lang.Object[]", true);
-		checkMatch("java.lang.Object[][]", "java.lang.Object[][]", true);
-		checkMatch("java.lang.String[]", "java.lang.Object", false);
-		checkMatch("java.lang.String[]", "java.lang.Object[]", false);
-		checkMatch("java.lang.String[][]", "java.lang.Object[][]", false);
-		checkMatch("java.lang.Object+[]", "java.lang.String[][]", true);
-		checkMatch("java.lang.Object+[]", "java.lang.String[]", true);
-		checkMatch("java.lang.Object+[]", "int[][]", true);
-		checkMatch("java.lang.Object+[]", "int[]", false);
-	}
+  }
 
-	private void checkIllegalInstanceofMatch(String pattern, String name) {
-		try {
-			TypePattern p = makeTypePattern(pattern);
-			ResolvedType type = world.resolve(name);
-			p.matchesInstanceof(type);
-		} catch (Throwable e) {
-			return;
-		}
-		assertTrue("matching " + pattern + " with " + name + " should fail", false);
-	}
+  public void testArrayMatch() {
+    checkMatch("*[][]", "java.lang.Object", false);
+    checkMatch("*[]", "java.lang.Object[]", true);
+    checkMatch("*[][]", "java.lang.Object[][]", true);
+    checkMatch("java.lang.Object+", "java.lang.Object[]", true);
+    checkMatch("java.lang.Object[]", "java.lang.Object", false);
+    checkMatch("java.lang.Object[]", "java.lang.Object[]", true);
+    checkMatch("java.lang.Object[][]", "java.lang.Object[][]", true);
+    checkMatch("java.lang.String[]", "java.lang.Object", false);
+    checkMatch("java.lang.String[]", "java.lang.Object[]", false);
+    checkMatch("java.lang.String[][]", "java.lang.Object[][]", false);
+    checkMatch("java.lang.Object+[]", "java.lang.String[][]", true);
+    checkMatch("java.lang.Object+[]", "java.lang.String[]", true);
+    checkMatch("java.lang.Object+[]", "int[][]", true);
+    checkMatch("java.lang.Object+[]", "int[]", false);
+  }
 
-	private void checkInstanceofMatch(String pattern, String name, FuzzyBoolean shouldMatch) {
-		TypePattern p = makeTypePattern(pattern);
-		ResolvedType type = world.resolve(name);
+  private void checkIllegalInstanceofMatch(String pattern, String name) {
+    try {
+      final TypePattern p = makeTypePattern(pattern);
+      final ResolvedType type = world.resolve(name);
+      p.matchesInstanceof(type);
+    } catch (Throwable e) {
+      return;
+    }
+    assertTrue("matching " + pattern + " with " + name + " should fail", false);
+  }
 
-		p = p.resolveBindings(makeTestScope(), null, false, false);
+  private void checkInstanceofMatch(String pattern, String name, FuzzyBoolean shouldMatch) {
+    TypePattern p = makeTypePattern(pattern);
+    final ResolvedType type = world.resolve(name);
 
-		// System.out.println("type: " + p);
-		FuzzyBoolean result = p.matchesInstanceof(type);
-		String msg = "matches " + pattern + " to " + type;
-		assertEquals(msg, shouldMatch, result);
-	}
+    p = p.resolveBindings(makeTestScope(), null, false, false);
 
-	private TestScope makeTestScope() {
-		TestScope scope = new TestScope(ZERO_STRINGS, ZERO_STRINGS, world);
-		return scope;
-	}
+    // System.out.println("type: " + p);
+    final FuzzyBoolean result = p.matchesInstanceof(type);
+    final String msg = "matches " + pattern + " to " + type;
+    assertEquals(msg, shouldMatch, result);
+  }
 
-	private TypePattern makeTypePattern(String pattern) {
-		PatternParser pp = new PatternParser(pattern);
-		TypePattern tp = pp.parseSingleTypePattern();
-		pp.checkEof();
-		return tp;
-	}
+  private TestScope makeTestScope() {
+    final TestScope scope = new TestScope(ZERO_STRINGS, ZERO_STRINGS, world);
+    return scope;
+  }
 
-	private void checkMatch(String pattern, String name, boolean shouldMatch) {
-		TypePattern p = makeTypePattern(pattern);
-		p = p.resolveBindings(makeTestScope(), null, false, false);
-		checkPatternMatch(p, name, shouldMatch);
-	}
+  private TypePattern makeTypePattern(String pattern) {
+    final PatternParser pp = new PatternParser(pattern);
+    final TypePattern tp = pp.parseSingleTypePattern();
+    pp.checkEof();
+    return tp;
+  }
 
-	private void checkPatternMatch(TypePattern p, String name, boolean shouldMatch) {
-		ResolvedType type = world.resolve(name);
-		// System.out.println("type: " + type);
-		boolean result = p.matchesStatically(type);
-		String msg = "matches " + p + " to " + type + " expected ";
-		if (shouldMatch) {
-			assertTrue(msg + shouldMatch, result);
-		} else {
-			assertTrue(msg + shouldMatch, !result);
-		}
-	}
+  private void checkMatch(String pattern, String name, boolean shouldMatch) {
+    TypePattern p = makeTypePattern(pattern);
+    p = p.resolveBindings(makeTestScope(), null, false, false);
+    checkPatternMatch(p, name, shouldMatch);
+  }
 
-	public void testSerialization() throws IOException {
-		String[] patterns = new String[] { "java.lang.Object", "java.lang.Object+", "java.lang.Integer", "int", "java..*",
-				"java..util..*", "*.*.Object", "*", };
+  private void checkPatternMatch(TypePattern p, String name, boolean shouldMatch) {
+    final ResolvedType type = world.resolve(name);
+    // System.out.println("type: " + type);
+    final boolean result = p.matchesStatically(type);
+    final String msg = "matches " + p + " to " + type + " expected ";
+    if (shouldMatch) {
+      assertTrue(msg + shouldMatch, result);
+    } else {
+      assertTrue(msg + shouldMatch, !result);
+    }
+  }
 
-		for (int i = 0, len = patterns.length; i < len; i++) {
-			checkSerialization(patterns[i]);
-		}
-	}
+  public void testSerialization() throws IOException {
+    final String[] patterns = new String[]{"java.lang.Object", "java.lang.Object+", "java.lang.Integer", "int", "java..*",
+        "java..util..*", "*.*.Object", "*",};
 
-	/**
-	 * Method checkSerialization.
-	 * 
-	 * @param string
-	 */
-	private void checkSerialization(String string) throws IOException {
-		TypePattern p = makeTypePattern(string);
-		ByteArrayOutputStream bo = new ByteArrayOutputStream();
-		ConstantPoolSimulator cps = new ConstantPoolSimulator();
-		CompressingDataOutputStream out = new CompressingDataOutputStream(bo, cps);
-		p.write(out);
-		out.close();
+    for (int i = 0, len = patterns.length; i < len; i++) {
+      checkSerialization(patterns[i]);
+    }
+  }
 
-		ByteArrayInputStream bi = new ByteArrayInputStream(bo.toByteArray());
-		VersionedDataInputStream in = new VersionedDataInputStream(bi, cps);
-		TypePattern newP = TypePattern.read(in, null);
+  /**
+   * Method checkSerialization.
+   *
+   * @param string
+   */
+  private void checkSerialization(String string) throws IOException {
+    final TypePattern p = makeTypePattern(string);
+    final ByteArrayOutputStream bo = new ByteArrayOutputStream();
+    final ConstantPoolSimulator cps = new ConstantPoolSimulator();
+    final CompressingDataOutputStream out = new CompressingDataOutputStream(bo, cps);
+    p.write(out);
+    out.close();
 
-		assertEquals("write/read", p, newP);
-	}
+    final ByteArrayInputStream bi = new ByteArrayInputStream(bo.toByteArray());
+    final VersionedDataInputStream in = new VersionedDataInputStream(bi, cps);
+    final TypePattern newP = TypePattern.read(in, null);
+
+    assertEquals("write/read", p, newP);
+  }
 
 }

@@ -4,13 +4,15 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Matthew Webster - initial implementation
  *******************************************************************************/
 package org.aspectj.bridge;
 
-public interface IMessageContext {
+import org.jetbrains.annotations.NotNull;
 
-	public String getContextId ();
+public interface IMessageContext {
+  @NotNull
+  public String getContextId();
 }

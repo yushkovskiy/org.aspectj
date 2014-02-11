@@ -54,34 +54,35 @@ package org.aspectj.apache.bcel.classfile;
  * <http://www.apache.org/>.
  */
 
+import org.aspectj.apache.bcel.Constants;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.DataInputStream;
 import java.io.IOException;
 
-import org.aspectj.apache.bcel.Constants;
-
 /**
  * This class represents a constant pool reference to a field.
- * 
- * @version $Id: ConstantFieldref.java,v 1.5 2009/09/16 00:43:49 aclement Exp $
+ *
  * @author <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
+ * @version $Id: ConstantFieldref.java,v 1.5 2009/09/16 00:43:49 aclement Exp $
  */
 public final class ConstantFieldref extends ConstantCP {
 
-	ConstantFieldref(DataInputStream file) throws IOException {
-		super(Constants.CONSTANT_Fieldref, file);
-	}
+  ConstantFieldref(DataInputStream file) throws IOException {
+    super(Constants.CONSTANT_Fieldref, file);
+  }
 
-	public ConstantFieldref(int class_index, int name_and_type_index) {
-		super(Constants.CONSTANT_Fieldref, class_index, name_and_type_index);
-	}
+  public ConstantFieldref(int class_index, int name_and_type_index) {
+    super(Constants.CONSTANT_Fieldref, class_index, name_and_type_index);
+  }
 
-	@Override
-	public void accept(ClassVisitor v) {
-		v.visitConstantFieldref(this);
-	}
+  @Override
+  public void accept(@NotNull ClassVisitor v) {
+    v.visitConstantFieldref(this);
+  }
 
-	@Override
-	public String getValue() {
-		return toString();
-	}
+  @Override
+  public String getValue() {
+    return toString();
+  }
 }

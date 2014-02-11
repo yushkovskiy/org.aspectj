@@ -15,20 +15,10 @@ package org.aspectj.ajdt.internal.compiler.ast;
 import org.aspectj.bridge.context.CompilationAndWeavingContext;
 import org.aspectj.bridge.context.ContextToken;
 import org.aspectj.org.eclipse.jdt.internal.compiler.ASTVisitor;
-import org.aspectj.org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
-import org.aspectj.org.eclipse.jdt.internal.compiler.ast.Expression;
-import org.aspectj.org.eclipse.jdt.internal.compiler.ast.MessageSend;
-import org.aspectj.org.eclipse.jdt.internal.compiler.ast.NameReference;
-import org.aspectj.org.eclipse.jdt.internal.compiler.ast.SingleNameReference;
+import org.aspectj.org.eclipse.jdt.internal.compiler.ast.*;
 import org.aspectj.org.eclipse.jdt.internal.compiler.impl.BooleanConstant;
 import org.aspectj.org.eclipse.jdt.internal.compiler.impl.Constant;
-import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.Binding;
-import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.BlockScope;
-import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.ClassScope;
-import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.LocalVariableBinding;
-import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
-import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
-import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
+import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.*;
 import org.aspectj.weaver.Advice;
 
 /**
@@ -37,236 +27,238 @@ import org.aspectj.weaver.Advice;
  */
 
 public class ThisJoinPointVisitor extends ASTVisitor {
-	boolean needsDynamic = false;
-	boolean needsStatic = false;
-	boolean needsStaticEnclosing = false;
-	boolean needsThisAspectInstance = false;
-	boolean hasEffectivelyStaticRef = false;
-	boolean hasConstantReference = false;
-	boolean constantReferenceValue = false; // only has valid value when hasConstantReference is true
+  boolean needsDynamic = false;
+  boolean needsStatic = false;
+  boolean needsStaticEnclosing = false;
+  boolean needsThisAspectInstance = false;
+  boolean hasEffectivelyStaticRef = false;
+  boolean hasConstantReference = false;
+  boolean constantReferenceValue = false; // only has valid value when hasConstantReference is true
 
-	LocalVariableBinding thisJoinPointDec;
-	LocalVariableBinding thisJoinPointStaticPartDec;
-	LocalVariableBinding thisEnclosingJoinPointStaticPartDec;
-	LocalVariableBinding thisAspectInstanceDec;
+  LocalVariableBinding thisJoinPointDec;
+  LocalVariableBinding thisJoinPointStaticPartDec;
+  LocalVariableBinding thisEnclosingJoinPointStaticPartDec;
+  LocalVariableBinding thisAspectInstanceDec;
 
-	LocalVariableBinding thisJoinPointDecLocal;
-	LocalVariableBinding thisJoinPointStaticPartDecLocal;
-	LocalVariableBinding thisEnclosingJoinPointStaticPartDecLocal;
-	LocalVariableBinding thisAspectInstanceDecLocal;
+  LocalVariableBinding thisJoinPointDecLocal;
+  LocalVariableBinding thisJoinPointStaticPartDecLocal;
+  LocalVariableBinding thisEnclosingJoinPointStaticPartDecLocal;
+  LocalVariableBinding thisAspectInstanceDecLocal;
 
-	boolean replaceEffectivelyStaticRefs = false;
+  boolean replaceEffectivelyStaticRefs = false;
 
-	boolean isIf = true;
+  boolean isIf = true;
 
-	AbstractMethodDeclaration method;
+  AbstractMethodDeclaration method;
 
-	ThisJoinPointVisitor(AbstractMethodDeclaration method) {
-		this.method = method;
-		if (method instanceof AdviceDeclaration) {
-			isIf = false;
-		}
-		int index = method.arguments.length - 3 - (isIf ? 1 : 0);
+  ThisJoinPointVisitor(AbstractMethodDeclaration method) {
+    this.method = method;
+    if (method instanceof AdviceDeclaration) {
+      isIf = false;
+    }
+    int index = method.arguments.length - 3 - (isIf ? 1 : 0);
 
-		thisJoinPointStaticPartDecLocal = method.scope.locals[index];
-		thisJoinPointStaticPartDec = method.arguments[index++].binding;
-		thisJoinPointDecLocal = method.scope.locals[index];
-		thisJoinPointDec = method.arguments[index++].binding;
-		thisEnclosingJoinPointStaticPartDecLocal = method.scope.locals[index];
-		thisEnclosingJoinPointStaticPartDec = method.arguments[index++].binding;
-		if (isIf) {
-			thisAspectInstanceDecLocal = method.scope.locals[index];
-			thisAspectInstanceDec = method.arguments[index++].binding;
-		}
-	}
+    thisJoinPointStaticPartDecLocal = method.scope.locals[index];
+    thisJoinPointStaticPartDec = method.arguments[index++].binding;
+    thisJoinPointDecLocal = method.scope.locals[index];
+    thisJoinPointDec = method.arguments[index++].binding;
+    thisEnclosingJoinPointStaticPartDecLocal = method.scope.locals[index];
+    thisEnclosingJoinPointStaticPartDec = method.arguments[index++].binding;
+    if (isIf) {
+      thisAspectInstanceDecLocal = method.scope.locals[index];
+      thisAspectInstanceDec = method.arguments[index++].binding;
+    }
+  }
 
-	public void computeJoinPointParams() {
-		// walk my body to see what is needed
-		method.traverse(this, (ClassScope) null);
+  public void computeJoinPointParams() {
+    // walk my body to see what is needed
+    method.traverse(this, (ClassScope) null);
 
-		// ??? add support for option to disable this optimization
-		// System.err.println("walked: " + method);
-		// System.err.println("check:  "+ hasEffectivelyStaticRef + ", " + needsDynamic);
-		if (hasEffectivelyStaticRef && !needsDynamic) {
-			// replace effectively static refs with thisJoinPointStaticPart
-			replaceEffectivelyStaticRefs = true;
-			needsStatic = true;
-			method.traverse(this, (ClassScope) null);
-		}
-		// System.err.println("done: " + method);
-	}
+    // ??? add support for option to disable this optimization
+    // System.err.println("walked: " + method);
+    // System.err.println("check:  "+ hasEffectivelyStaticRef + ", " + needsDynamic);
+    if (hasEffectivelyStaticRef && !needsDynamic) {
+      // replace effectively static refs with thisJoinPointStaticPart
+      replaceEffectivelyStaticRefs = true;
+      needsStatic = true;
+      method.traverse(this, (ClassScope) null);
+    }
+    // System.err.println("done: " + method);
+  }
 
-	boolean isRef(NameReference ref, Binding binding) {
-		// System.err.println("check ref: " + ref + " is " + System.identityHashCode(ref));
-		return ref.binding == binding;
-	}
+  static boolean isRef(NameReference ref, Binding binding) {
+    // System.err.println("check ref: " + ref + " is " + System.identityHashCode(ref));
+    return ref.binding == binding;
+  }
 
-	boolean isRef(Expression expr, Binding binding) {
-		return expr != null && expr instanceof NameReference && isRef((NameReference) expr, binding);
-	}
+  boolean isRef(Expression expr, Binding binding) {
+    return expr != null && expr instanceof NameReference && isRef((NameReference) expr, binding);
+  }
 
-	public void endVisit(SingleNameReference ref, BlockScope scope) {
-		if (isRef(ref, thisJoinPointDec)) {
-			needsDynamic = true;
-		} else if (isRef(ref, thisJoinPointStaticPartDec)) {
-			needsStatic = true;
-		} else if (isRef(ref, thisEnclosingJoinPointStaticPartDec)) {
-			needsStaticEnclosing = true;
-		} else if (isIf && isRef(ref, thisAspectInstanceDec)) {
-			needsThisAspectInstance = true;
-		} else if (ref.constant != null && ref.constant != Constant.NotAConstant) {
-			if (ref.constant instanceof BooleanConstant) {
-				hasConstantReference = true;
-				constantReferenceValue = ((BooleanConstant) ref.constant).booleanValue();
-			}
-		}
-	}
+  @Override
+  public void endVisit(SingleNameReference ref, BlockScope scope) {
+    if (isRef(ref, thisJoinPointDec)) {
+      needsDynamic = true;
+    } else if (isRef(ref, thisJoinPointStaticPartDec)) {
+      needsStatic = true;
+    } else if (isRef(ref, thisEnclosingJoinPointStaticPartDec)) {
+      needsStaticEnclosing = true;
+    } else if (isIf && isRef(ref, thisAspectInstanceDec)) {
+      needsThisAspectInstance = true;
+    } else if (ref.constant != null && ref.constant != Constant.NotAConstant) {
+      if (ref.constant instanceof BooleanConstant) {
+        hasConstantReference = true;
+        constantReferenceValue = ((BooleanConstant) ref.constant).booleanValue();
+      }
+    }
+  }
 
-	boolean canTreatAsStatic(String id) {
-		return id.equals("toString") || id.equals("toShortString") || id.equals("toLongString") || id.equals("getKind")
-				|| id.equals("getSignature") || id.equals("getSourceLocation");
-		// TODO: This is a good optimization, but requires more work than the above
-		// we have to replace a call with a direct reference, not just a different call
-		// || id.equals("getStaticPart");
-	}
+  static boolean canTreatAsStatic(String id) {
+    return id.equals("toString") || id.equals("toShortString") || id.equals("toLongString") || id.equals("getKind")
+        || id.equals("getSignature") || id.equals("getSourceLocation");
+    // TODO: This is a good optimization, but requires more work than the above
+    // we have to replace a call with a direct reference, not just a different call
+    // || id.equals("getStaticPart");
+  }
 
-	// boolean canTreatAsStatic(VarExpr varExpr) {
-	// ASTObject parent = varExpr.getParent();
-	// if (parent instanceof CallExpr) {
-	// Method calledMethod = ((CallExpr)parent).getMethod();
-	// return canTreatAsStatic(calledMethod);
-	//
-	// //??? should add a case here to catch
-	// //??? tjp.getEnclosingExecutionJoinPoint().STATIC_METHOD()
-	// } else if (parent instanceof BinopExpr) {
-	// BinopExpr binop = (BinopExpr)parent;
-	// if (binop.getType().isEquivalent(this.getTypeManager().getStringType())) {
-	// return true;
-	// } else {
-	// return false;
-	// }
-	// } else {
-	// return false;
-	// }
-	// }
+  // boolean canTreatAsStatic(VarExpr varExpr) {
+  // ASTObject parent = varExpr.getParent();
+  // if (parent instanceof CallExpr) {
+  // Method calledMethod = ((CallExpr)parent).getMethod();
+  // return canTreatAsStatic(calledMethod);
+  //
+  // //??? should add a case here to catch
+  // //??? tjp.getEnclosingExecutionJoinPoint().STATIC_METHOD()
+  // } else if (parent instanceof BinopExpr) {
+  // BinopExpr binop = (BinopExpr)parent;
+  // if (binop.getType().isEquivalent(this.getTypeManager().getStringType())) {
+  // return true;
+  // } else {
+  // return false;
+  // }
+  // } else {
+  // return false;
+  // }
+  // }
 
-	boolean inBlockThatCantRun = false;
+  boolean inBlockThatCantRun = false;
 
-	public boolean visit(MessageSend call, BlockScope scope) {
-		ContextToken tok = CompilationAndWeavingContext.enteringPhase(
-				CompilationAndWeavingContext.OPTIMIZING_THIS_JOIN_POINT_CALLS, call.selector);
-		Expression receiver = call.receiver;
-		if (isRef(receiver, thisJoinPointDec)) {
-			if (canTreatAsStatic(new String(call.selector))) {
-				if (replaceEffectivelyStaticRefs) {
-					replaceEffectivelyStaticRef(call);
-				} else {
-					// System.err.println("has static reg");
-					hasEffectivelyStaticRef = true;
-					if (call.arguments != null) {
-						int argumentsLength = call.arguments.length;
-						for (int i = 0; i < argumentsLength; i++)
-							call.arguments[i].traverse(this, scope);
-					}
-					CompilationAndWeavingContext.leavingPhase(tok);
-					return false;
-				}
-			}
-		}
+  @Override
+  public boolean visit(MessageSend call, BlockScope scope) {
+    final ContextToken tok = CompilationAndWeavingContext.enteringPhase(
+        CompilationAndWeavingContext.OPTIMIZING_THIS_JOIN_POINT_CALLS, call.selector);
+    final Expression receiver = call.receiver;
+    if (isRef(receiver, thisJoinPointDec)) {
+      if (canTreatAsStatic(new String(call.selector))) {
+        if (replaceEffectivelyStaticRefs) {
+          replaceEffectivelyStaticRef(call);
+        } else {
+          // System.err.println("has static reg");
+          hasEffectivelyStaticRef = true;
+          if (call.arguments != null) {
+            final int argumentsLength = call.arguments.length;
+            for (int i = 0; i < argumentsLength; i++)
+              call.arguments[i].traverse(this, scope);
+          }
+          CompilationAndWeavingContext.leavingPhase(tok);
+          return false;
+        }
+      }
+    }
 
-		boolean ret = super.visit(call, scope);
-		CompilationAndWeavingContext.leavingPhase(tok);
-		return ret;
-	}
+    final boolean ret = super.visit(call, scope);
+    CompilationAndWeavingContext.leavingPhase(tok);
+    return ret;
+  }
 
-	private void replaceEffectivelyStaticRef(MessageSend call) {
-		NameReference receiver = (NameReference) call.receiver;
+  private void replaceEffectivelyStaticRef(MessageSend call) {
+    final NameReference receiver = (NameReference) call.receiver;
 
-		// Don't continue if the call binding is null, as we are going to report an error about this line of code!
-		if (call.binding == null)
-			return;
+    // Don't continue if the call binding is null, as we are going to report an error about this line of code!
+    if (call.binding == null)
+      return;
 
-		// System.err.println("replace static ref: " + receiver + " is " + System.identityHashCode(receiver));
-		receiver.binding = thisJoinPointStaticPartDecLocal; // thisJoinPointStaticPartDec;
+    // System.err.println("replace static ref: " + receiver + " is " + System.identityHashCode(receiver));
+    receiver.binding = thisJoinPointStaticPartDecLocal; // thisJoinPointStaticPartDec;
 //		receiver.codegenBinding = thisJoinPointStaticPartDecLocal;
 
-		ReferenceBinding thisJoinPointStaticPartType = (ReferenceBinding) thisJoinPointStaticPartDec.type;
+    final ReferenceBinding thisJoinPointStaticPartType = (ReferenceBinding) thisJoinPointStaticPartDec.type;
 
-		receiver.actualReceiverType = receiver.resolvedType = thisJoinPointStaticPartType;
+    receiver.actualReceiverType = receiver.resolvedType = thisJoinPointStaticPartType;
 
-		call.setActualReceiverType(thisJoinPointStaticPartType);
+    call.setActualReceiverType(thisJoinPointStaticPartType);
 
-		AstUtil.replaceMethodBinding(call, getEquivalentStaticBinding(call.binding));
-	}
+    AstUtil.replaceMethodBinding(call, getEquivalentStaticBinding(call.binding));
+  }
 
-	private MethodBinding getEquivalentStaticBinding(MethodBinding template) {
-		ReferenceBinding b = (ReferenceBinding) thisJoinPointStaticPartDec.type;
-		return b.getExactMethod(template.selector, template.parameters, null);
-	}
+  private MethodBinding getEquivalentStaticBinding(MethodBinding template) {
+    final ReferenceBinding b = (ReferenceBinding) thisJoinPointStaticPartDec.type;
+    return b.getExactMethod(template.selector, template.parameters, null);
+  }
 
-	public int removeUnusedExtraArguments() {
-		int extraArgumentFlags = 0;
+  public int removeUnusedExtraArguments() {
+    int extraArgumentFlags = 0;
 
-		this.computeJoinPointParams();
-		MethodBinding binding = method.binding;
+    this.computeJoinPointParams();
+    final MethodBinding binding = method.binding;
 
-		int index = binding.parameters.length - 3 - (isIf ? 1 : 0);
+    final int index = binding.parameters.length - 3 - (isIf ? 1 : 0);
 
-		if (isIf) {
-			if (needsThisAspectInstance) {
-				extraArgumentFlags |= Advice.ThisAspectInstance;
-			} else {
-				removeParameter(index + 3);
-			}
-		}
+    if (isIf) {
+      if (needsThisAspectInstance) {
+        extraArgumentFlags |= Advice.ThisAspectInstance;
+      } else {
+        removeParameter(index + 3);
+      }
+    }
 
-		if (needsStaticEnclosing) {
-			extraArgumentFlags |= Advice.ThisEnclosingJoinPointStaticPart;
-		} else {
-			removeParameter(index + 2);
-		}
+    if (needsStaticEnclosing) {
+      extraArgumentFlags |= Advice.ThisEnclosingJoinPointStaticPart;
+    } else {
+      removeParameter(index + 2);
+    }
 
-		if (needsDynamic) {
-			extraArgumentFlags |= Advice.ThisJoinPoint;
-		} else {
-			removeParameter(index + 1);
-		}
+    if (needsDynamic) {
+      extraArgumentFlags |= Advice.ThisJoinPoint;
+    } else {
+      removeParameter(index + 1);
+    }
 
-		if (needsStatic) {
-			extraArgumentFlags |= Advice.ThisJoinPointStaticPart;
-		} else {
-			removeParameter(index + 0);
-		}
+    if (needsStatic) {
+      extraArgumentFlags |= Advice.ThisJoinPointStaticPart;
+    } else {
+      removeParameter(index + 0);
+    }
 
-		return extraArgumentFlags;
-	}
+    return extraArgumentFlags;
+  }
 
-	public boolean usedThisAspectInstance() {
-		return needsThisAspectInstance;
-	}
+  public boolean usedThisAspectInstance() {
+    return needsThisAspectInstance;
+  }
 
-	private void removeParameter(int indexToRemove) {
-		// TypeBinding[] parameters = method.binding.parameters;
-		method.scope.locals = removeLocalBinding(indexToRemove, method.scope.locals);
-		method.scope.localIndex -= 1;
-		method.binding.parameters = removeParameter(indexToRemove, method.binding.parameters);
-	}
+  private void removeParameter(int indexToRemove) {
+    // TypeBinding[] parameters = method.binding.parameters;
+    method.scope.locals = removeLocalBinding(indexToRemove, method.scope.locals);
+    method.scope.localIndex -= 1;
+    method.binding.parameters = removeParameter(indexToRemove, method.binding.parameters);
+  }
 
-	private static TypeBinding[] removeParameter(int index, TypeBinding[] bindings) {
-		int len = bindings.length;
-		TypeBinding[] ret = new TypeBinding[len - 1];
-		System.arraycopy(bindings, 0, ret, 0, index);
-		System.arraycopy(bindings, index + 1, ret, index, len - index - 1);
-		return ret;
-	}
+  private static TypeBinding[] removeParameter(int index, TypeBinding[] bindings) {
+    final int len = bindings.length;
+    final TypeBinding[] ret = new TypeBinding[len - 1];
+    System.arraycopy(bindings, 0, ret, 0, index);
+    System.arraycopy(bindings, index + 1, ret, index, len - index - 1);
+    return ret;
+  }
 
-	private static LocalVariableBinding[] removeLocalBinding(int index, LocalVariableBinding[] bindings) {
-		int len = bindings.length;
-		// ??? for performance we should do this in-place
-		LocalVariableBinding[] ret = new LocalVariableBinding[len - 1];
-		System.arraycopy(bindings, 0, ret, 0, index);
-		System.arraycopy(bindings, index + 1, ret, index, len - index - 1);
-		return ret;
-	}
+  private static LocalVariableBinding[] removeLocalBinding(int index, LocalVariableBinding[] bindings) {
+    final int len = bindings.length;
+    // ??? for performance we should do this in-place
+    final LocalVariableBinding[] ret = new LocalVariableBinding[len - 1];
+    System.arraycopy(bindings, 0, ret, 0, index);
+    System.arraycopy(bindings, index + 1, ret, index, len - index - 1);
+    return ret;
+  }
 
 }

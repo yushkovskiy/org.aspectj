@@ -16,29 +16,31 @@ import org.aspectj.weaver.Member;
 import org.aspectj.weaver.ResolvedType;
 
 public class FieldGet extends Expr {
-	Member field;
-	ResolvedType resolvedType;
+  Member field;
+  ResolvedType resolvedType;
 
-	public FieldGet(Member field, ResolvedType resolvedType) {
-		super();
-		this.field = field;
-		this.resolvedType = resolvedType;
-	}
+  public FieldGet(Member field, ResolvedType resolvedType) {
+    super();
+    this.field = field;
+    this.resolvedType = resolvedType;
+  }
 
-	public ResolvedType getType() {
-		return resolvedType;
-	}
+  @Override
+  public ResolvedType getType() {
+    return resolvedType;
+  }
 
-	public String toString() {
-		return "(FieldGet " + field + ")";
-	}
+  public String toString() {
+    return "(FieldGet " + field + ")";
+  }
 
-	public void accept(IExprVisitor v) {
-		v.visit(this);
-	}
+  @Override
+  public void accept(IExprVisitor v) {
+    v.visit(this);
+  }
 
-	public Member getField() {
-		return field;
-	}
+  public Member getField() {
+    return field;
+  }
 
 }

@@ -54,56 +54,57 @@ package org.aspectj.apache.bcel.classfile;
  * <http://www.apache.org/>.
  */
 
+import org.aspectj.apache.bcel.Constants;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import org.aspectj.apache.bcel.Constants;
-
 /**
  * This class is derived from the abstract <A HREF="org.aspectj.apache.bcel.classfile.Constant.html">Constant</A> class and
  * represents a reference to a Utf8 encoded string.
- * 
- * @version $Id: ConstantUtf8.java,v 1.5 2009/09/16 00:43:49 aclement Exp $
+ *
  * @author <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
+ * @version $Id: ConstantUtf8.java,v 1.5 2009/09/16 00:43:49 aclement Exp $
  * @see Constant
  */
 public final class ConstantUtf8 extends Constant implements SimpleConstant {
-	private String string;
+  private final String string;
 
-	ConstantUtf8(DataInputStream file) throws IOException {
-		super(Constants.CONSTANT_Utf8);
-		string = file.readUTF();
-	}
+  ConstantUtf8(@NotNull DataInputStream file) throws IOException {
+    super(Constants.CONSTANT_Utf8);
+    string = file.readUTF();
+  }
 
-	public ConstantUtf8(String string) {
-		super(Constants.CONSTANT_Utf8);
-		assert string != null;
-		this.string = string;
-	}
+  public ConstantUtf8(@NotNull String string) {
+    super(Constants.CONSTANT_Utf8);
+    assert string != null;
+    this.string = string;
+  }
 
-	@Override
-	public void accept(ClassVisitor v) {
-		v.visitConstantUtf8(this);
-	}
+  @Override
+  public void accept(@NotNull ClassVisitor v) {
+    v.visitConstantUtf8(this);
+  }
 
-	@Override
-	public final void dump(DataOutputStream file) throws IOException {
-		file.writeByte(tag);
-		file.writeUTF(string);
-	}
+  @Override
+  public final void dump(@NotNull DataOutputStream file) throws IOException {
+    file.writeByte(tag);
+    file.writeUTF(string);
+  }
 
-	@Override
-	public final String toString() {
-		return super.toString() + "(\"" + Utility.replace(string, "\n", "\\n") + "\")";
-	}
+  @Override
+  public final String toString() {
+    return super.toString() + "(\"" + Utility.replace(string, "\n", "\\n") + "\")";
+  }
 
-	@Override
-	public String getValue() {
-		return string;
-	}
+  @Override
+  public String getValue() {
+    return string;
+  }
 
-	public String getStringValue() {
-		return string;
-	}
+  public String getStringValue() {
+    return string;
+  }
 }

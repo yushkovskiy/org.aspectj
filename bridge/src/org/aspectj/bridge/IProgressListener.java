@@ -13,28 +13,30 @@
 
 package org.aspectj.bridge;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
-  * Used to give progress information typically to IDEs
-  */
+ * Used to give progress information typically to IDEs
+ */
 public interface IProgressListener {
-	/**
-	 * @param text the current phase of processing
-	 */
-	public void setText(String text);
-	
-	/**
-	 * @param percentDone how much work is completed so far
-	 */
-	public void setProgress(double percentDone);
-	
-    /**
-     * @param cancelRequested true if the caller wants the current compilation to stop asap
-     */
-	public void setCancelledRequested(boolean cancelRequested);
-	
-	/**
-	 * @return true if the consumer of the progress info would like the compileation to stop
-	 */
-	public boolean isCancelledRequested();
-	
+  /**
+   * @param text the current phase of processing
+   */
+  public void setText(@NotNull String text);
+
+  /**
+   * @param percentDone how much work is completed so far
+   */
+  public void setProgress(double percentDone);
+
+  /**
+   * @param cancelRequested true if the caller wants the current compilation to stop asap
+   */
+  public void setCancelledRequested(boolean cancelRequested);
+
+  /**
+   * @return true if the consumer of the progress info would like the compileation to stop
+   */
+  public boolean isCancelledRequested();
+
 }

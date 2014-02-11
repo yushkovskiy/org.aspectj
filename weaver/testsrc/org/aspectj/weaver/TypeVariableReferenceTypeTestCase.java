@@ -17,34 +17,33 @@ import org.aspectj.weaver.bcel.BcelWorld;
 
 /**
  * @author colyer
- * 
  */
 public class TypeVariableReferenceTypeTestCase extends TestCase {
 
-	ReferenceType javaLangClass;
-	ReferenceType javaLangObject;
-	BoundedReferenceType extendsClass;
-	BoundedReferenceType superClass;
-	BoundedReferenceType extendsWithExtras;
-	BcelWorld world;
+  ReferenceType javaLangClass;
+  ReferenceType javaLangObject;
+  BoundedReferenceType extendsClass;
+  BoundedReferenceType superClass;
+  BoundedReferenceType extendsWithExtras;
+  BcelWorld world;
 
-	public void testConstructionByNameAndVariable() {
-		TypeVariable tv = new TypeVariable("T", javaLangClass);
-		TypeVariableReferenceType tvrt = new TypeVariableReferenceType(tv, world);
-		assertEquals("T", tvrt.getTypeVariable().getName());
-		assertEquals(javaLangClass, tvrt.getTypeVariable().getUpperBound());
-	}
+  public void testConstructionByNameAndVariable() {
+    final TypeVariable tv = new TypeVariable("T", javaLangClass);
+    final TypeVariableReferenceType tvrt = new TypeVariableReferenceType(tv, world);
+    assertEquals("T", tvrt.getTypeVariable().getName());
+    assertEquals(javaLangClass, tvrt.getTypeVariable().getUpperBound());
+  }
 
-	@Override
-	protected void setUp() throws Exception {
-		super.setUp();
-		world = new BcelWorld();
-		javaLangClass = (ReferenceType) world.resolve(UnresolvedType.forName("java/lang/Class"));
-		javaLangObject = (ReferenceType) world.resolve(UnresolvedType.OBJECT);
-		extendsClass = new BoundedReferenceType(javaLangClass, true, world);
-		superClass = new BoundedReferenceType(javaLangClass, false, world);
-		extendsWithExtras = new BoundedReferenceType(javaLangClass, true, world, new ReferenceType[] { (ReferenceType) world
-				.resolve(UnresolvedType.forName("java/util/List")) });
-	}
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    world = new BcelWorld();
+    javaLangClass = (ReferenceType) world.resolve(UnresolvedType.forName("java/lang/Class"));
+    javaLangObject = (ReferenceType) world.resolve(UnresolvedType.OBJECT);
+    extendsClass = new BoundedReferenceType(javaLangClass, true, world);
+    superClass = new BoundedReferenceType(javaLangClass, false, world);
+    extendsWithExtras = new BoundedReferenceType(javaLangClass, true, world, new ReferenceType[]{(ReferenceType) world
+        .resolve(UnresolvedType.forName("java/util/List"))});
+  }
 
 }

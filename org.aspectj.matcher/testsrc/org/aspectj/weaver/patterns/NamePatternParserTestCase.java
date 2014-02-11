@@ -16,57 +16,57 @@ import junit.framework.TestCase;
 
 /**
  * @author hugunin
- * 
+ *         <p/>
  *         To change this generated comment edit the template variable
  *         "typecomment": Window>Preferences>Java>Templates. To enable and
  *         disable the creation of type comments go to
  *         Window>Preferences>Java>Code Generation.
  */
 public class NamePatternParserTestCase extends TestCase {
-	/**
-	 * Constructor for PatternTestCase.
-	 * 
-	 * @param name
-	 */
-	public NamePatternParserTestCase(String name) {
-		super(name);
-	}
+  /**
+   * Constructor for PatternTestCase.
+   *
+   * @param name
+   */
+  public NamePatternParserTestCase(String name) {
+    super(name);
+  }
 
-	public void testMatch() {
-		checkMatch(NamePatternTestCase.matchAll);
-		checkMatch(NamePatternTestCase.match1);
-		checkMatch(NamePatternTestCase.match2);
+  public void testMatch() {
+    checkMatch(NamePatternTestCase.matchAll);
+    checkMatch(NamePatternTestCase.match1);
+    checkMatch(NamePatternTestCase.match2);
 
-		NamePattern p = new PatternParser("abc *").parseNamePattern();
-		assertEquals(new NamePattern("abc"), p);
-	}
+    final NamePattern p = new PatternParser("abc *").parseNamePattern();
+    assertEquals(new NamePattern("abc"), p);
+  }
 
-	public void testTypePattern() {
-		TypePattern tp = null;
-		tp = new PatternParser(" @Ann *  ").parseTypePattern();
-		assertEquals(1, tp.start);
-		assertEquals(6, tp.end);
-		tp = new PatternParser("  (@Ann *)   ").parseTypePattern();
-		assertEquals(2, tp.start);
-		assertEquals(9, tp.end);
-	}
+  public void testTypePattern() {
+    TypePattern tp = null;
+    tp = new PatternParser(" @Ann *  ").parseTypePattern();
+    assertEquals(1, tp.start);
+    assertEquals(6, tp.end);
+    tp = new PatternParser("  (@Ann *)   ").parseTypePattern();
+    assertEquals(2, tp.start);
+    assertEquals(9, tp.end);
+  }
 
-	/**
-	 * Method checkMatch.
-	 * 
-	 * @param string
-	 * @param matchAll
-	 * @param b
-	 */
-	private void checkMatch(String[] patterns) {
-		for (int i = 0, len = patterns.length; i < len; i++) {
-			String pattern = patterns[i];
-			ITokenSource tokenSource = BasicTokenSource.makeTokenSource(
-					pattern, null);
-			NamePattern p1 = new PatternParser(tokenSource).parseNamePattern();
-			NamePattern p2 = new NamePattern(pattern);
-			assertEquals("pattern: " + pattern, p2, p1);
-			assertEquals("eof", IToken.EOF, tokenSource.next());
-		}
-	}
+  /**
+   * Method checkMatch.
+   *
+   * @param string
+   * @param matchAll
+   * @param b
+   */
+  private void checkMatch(String[] patterns) {
+    for (int i = 0, len = patterns.length; i < len; i++) {
+      final String pattern = patterns[i];
+      final ITokenSource tokenSource = BasicTokenSource.makeTokenSource(
+          pattern, null);
+      final NamePattern p1 = new PatternParser(tokenSource).parseNamePattern();
+      final NamePattern p2 = new NamePattern(pattern);
+      assertEquals("pattern: " + pattern, p2, p1);
+      assertEquals("eof", IToken.EOF, tokenSource.next());
+    }
+  }
 }

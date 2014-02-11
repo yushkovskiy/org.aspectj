@@ -54,10 +54,6 @@ package org.aspectj.apache.bcel.generic;
  * <http://www.apache.org/>.
  */
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
 import org.aspectj.apache.bcel.classfile.Attribute;
 import org.aspectj.apache.bcel.classfile.ConstantPool;
 import org.aspectj.apache.bcel.classfile.Modifiers;
@@ -65,94 +61,98 @@ import org.aspectj.apache.bcel.classfile.Utility;
 import org.aspectj.apache.bcel.classfile.annotation.AnnotationGen;
 import org.aspectj.apache.bcel.classfile.annotation.RuntimeAnnos;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 /**
  * Super class for FieldGen and MethodGen objects, since they have some methods in common!
- * 
- * @version $Id: FieldGenOrMethodGen.java,v 1.8 2009/09/15 19:40:14 aclement Exp $
+ *
  * @author <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
+ * @version $Id: FieldGenOrMethodGen.java,v 1.8 2009/09/15 19:40:14 aclement Exp $
  */
 public abstract class FieldGenOrMethodGen extends Modifiers {
 
-	protected String name;
-	protected Type type;
-	protected ConstantPool cp;
-	private ArrayList<Attribute> attributeList = new ArrayList<Attribute>();
-	protected ArrayList<AnnotationGen> annotationList = new ArrayList<AnnotationGen>();
+  protected String name;
+  protected Type type;
+  protected ConstantPool cp;
+  private final ArrayList<Attribute> attributeList = new ArrayList<Attribute>();
+  protected ArrayList<AnnotationGen> annotationList = new ArrayList<AnnotationGen>();
 
-	protected FieldGenOrMethodGen() {
-	}
+  protected FieldGenOrMethodGen() {
+  }
 
-	public void setType(Type type) {
-		this.type = type;
-	}
+  public void setType(Type type) {
+    this.type = type;
+  }
 
-	public Type getType() {
-		return type;
-	}
+  public Type getType() {
+    return type;
+  }
 
-	public String getName() {
-		return name;
-	}
+  public String getName() {
+    return name;
+  }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+  public void setName(String name) {
+    this.name = name;
+  }
 
-	public ConstantPool getConstantPool() {
-		return cp;
-	}
+  public ConstantPool getConstantPool() {
+    return cp;
+  }
 
-	public void setConstantPool(ConstantPool cp) {
-		this.cp = cp;
-	}
+  public void setConstantPool(ConstantPool cp) {
+    this.cp = cp;
+  }
 
-	public void addAttribute(Attribute a) {
-		attributeList.add(a);
-	}
+  public void addAttribute(Attribute a) {
+    attributeList.add(a);
+  }
 
-	public void removeAttribute(Attribute a) {
-		attributeList.remove(a);
-	}
+  public void removeAttribute(Attribute a) {
+    attributeList.remove(a);
+  }
 
-	public void removeAttributes() {
-		attributeList.clear();
-	}
+  public void removeAttributes() {
+    attributeList.clear();
+  }
 
-	public List<AnnotationGen> getAnnotations() {
-		return annotationList;
-	}
+  public List<AnnotationGen> getAnnotations() {
+    return annotationList;
+  }
 
-	public void addAnnotation(AnnotationGen ag) {
-		annotationList.add(ag);
-	}
+  public void addAnnotation(AnnotationGen ag) {
+    annotationList.add(ag);
+  }
 
-	public void removeAnnotation(AnnotationGen ag) {
-		annotationList.remove(ag);
-	}
+  public void removeAnnotation(AnnotationGen ag) {
+    annotationList.remove(ag);
+  }
 
-	public void removeAnnotations() {
-		annotationList.clear();
-	}
+  public void removeAnnotations() {
+    annotationList.clear();
+  }
 
-	public List<Attribute> getAttributes() {
-		return attributeList;
-	}
+  public List<Attribute> getAttributes() {
+    return attributeList;
+  }
 
-	public Attribute[] getAttributesImmutable() {
-		Attribute[] attributes = new Attribute[attributeList.size()];
-		attributeList.toArray(attributes);
-		return attributes;
-	}
+  public Attribute[] getAttributesImmutable() {
+    final Attribute[] attributes = new Attribute[attributeList.size()];
+    attributeList.toArray(attributes);
+    return attributes;
+  }
 
-	protected void addAnnotationsAsAttribute(ConstantPool cp) {
-		Collection<RuntimeAnnos> attrs = Utility.getAnnotationAttributes(cp, annotationList);
-		if (attrs != null) {
-			for (Attribute attr : attrs) {
-				addAttribute(attr);
-			}
-		}
-	}
+  protected void addAnnotationsAsAttribute(ConstantPool cp) {
+    final Collection<RuntimeAnnos> attrs = Utility.getAnnotationAttributes(cp, annotationList);
+    if (attrs != null) {
+      for (Attribute attr : attrs) {
+        addAttribute(attr);
+      }
+    }
+  }
 
-	public abstract String getSignature();
+  public abstract String getSignature();
 
 }

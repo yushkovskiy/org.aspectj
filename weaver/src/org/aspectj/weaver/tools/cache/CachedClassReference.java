@@ -23,63 +23,63 @@ package org.aspectj.weaver.tools.cache;
  * objects manually.
  */
 public class CachedClassReference {
-	static enum EntryType {
-		GENERATED,
-		WEAVED,
-		IGNORED,
-	}
+  static enum EntryType {
+    GENERATED,
+    WEAVED,
+    IGNORED,
+  }
 
-	private final String key;
-	private final String className;
+  private final String key;
+  private final String className;
 
-	protected CachedClassReference(String key, CacheKeyResolver resolver) {
-		this(key, resolver.keyToClass(key));
-	}
+  protected CachedClassReference(String key, CacheKeyResolver resolver) {
+    this(key, resolver.keyToClass(key));
+  }
 
-	/**
-	 * Protected to allow only the WeavedClassCache initialization rights
-	 *
-	 * @param key	   encoded key of the class
-	 * @param className the classname
-	 */
-	protected CachedClassReference(String key, String className) {
-		this.key = key;
-		this.className = className;
-	}
+  /**
+   * Protected to allow only the WeavedClassCache initialization rights
+   *
+   * @param key       encoded key of the class
+   * @param className the classname
+   */
+  protected CachedClassReference(String key, String className) {
+    this.key = key;
+    this.className = className;
+  }
 
-	public String getKey() {
-		return key;
-	}
+  public String getKey() {
+    return key;
+  }
 
-	public String getClassName() {
-		return className;
-	}
+  public String getClassName() {
+    return className;
+  }
 
-	@Override
-	public int hashCode() {
-		return getKey().hashCode() + getClassName().hashCode();
-	}
+  @Override
+  public int hashCode() {
+    return getKey().hashCode() + getClassName().hashCode();
+  }
 
-	@Override
-	public boolean equals(Object obj) {
-        if (obj == null)
-            return false;
-        if (this == obj)
-            return true;
-        if (getClass() != obj.getClass())
-            return false;
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == null)
+      return false;
+    if (this == obj)
+      return true;
+    if (getClass() != obj.getClass())
+      return false;
 
-        CachedClassReference	other=(CachedClassReference) obj;
-		if (getKey().equals(other.getKey())
-		 && getClassName().equals(other.getClassName())) {
-			return true;
-		} else {
-			return false;
-		}
-	}
+    final CachedClassReference other = (CachedClassReference) obj;
+    if (getKey().equals(other.getKey())
+        && getClassName().equals(other.getClassName())) {
+      return true;
+    } else {
+      return false;
+    }
+  }
 
-	@Override
-	public String toString() {
-		return getClassName() + "[" + getKey() + "]";
-	}
+  @Override
+  public String toString() {
+    return getClassName() + "[" + getKey() + "]";
+  }
 }

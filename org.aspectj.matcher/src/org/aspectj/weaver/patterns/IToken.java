@@ -16,38 +16,38 @@ package org.aspectj.weaver.patterns;
 import org.aspectj.weaver.IHasPosition;
 
 public interface IToken extends IHasPosition {
-	public static final IToken EOF = BasicToken.makeOperator("<eof>", 0, 0);
-	
-	/**
-	 * Returns the string value of this token.
-	 * 
-	 * If isIdentifier is false, then this string must be intern'd
-	 * so that == matching can be used.
-	 * 
-	 * If isIdentifier is true, interning is not required.
-	 */
-    public String getString();
-    
-    /**
-     * Whether this should be treated as a token or a generic identifier
-     */
-    public boolean isIdentifier();
-    
-    /**
-     * Whether this should be treated as a literal value
-     * 
-     * Kinds == "string", ???
-     * 
-     * returns null if this isn't a literal
-     */
-    public String getLiteralKind();
-    
-    
-    /**
-     * If this token represents a pre-parsed Pointcut, then return it;
-     * otherwise returns null.
-     * 
-     * Needed for the implementation of 'if'
-     */
-    public Pointcut maybeGetParsedPointcut();
+  public static final IToken EOF = BasicToken.makeOperator("<eof>", 0, 0);
+
+  /**
+   * Returns the string value of this token.
+   * <p/>
+   * If isIdentifier is false, then this string must be intern'd
+   * so that == matching can be used.
+   * <p/>
+   * If isIdentifier is true, interning is not required.
+   */
+  public String getString();
+
+  /**
+   * Whether this should be treated as a token or a generic identifier
+   */
+  public boolean isIdentifier();
+
+  /**
+   * Whether this should be treated as a literal value
+   * <p/>
+   * Kinds == "string", ???
+   * <p/>
+   * returns null if this isn't a literal
+   */
+  public String getLiteralKind();
+
+
+  /**
+   * If this token represents a pre-parsed Pointcut, then return it;
+   * otherwise returns null.
+   * <p/>
+   * Needed for the implementation of 'if'
+   */
+  public Pointcut maybeGetParsedPointcut();
 }

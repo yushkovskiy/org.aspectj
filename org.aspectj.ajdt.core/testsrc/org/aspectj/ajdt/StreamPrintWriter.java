@@ -11,7 +11,7 @@
  *     Xerox/PARC     initial implementation 
  * ******************************************************************/
 
- 
+
 package org.aspectj.ajdt;
 
 import java.io.*;
@@ -25,77 +25,89 @@ import java.io.*;
  * ... write to pw
  * String result = sw.getBuffer().toString();
  * </pre>
- * @deprecated use StringWriter to construct PrintWriter
+ *
  * @author Mik Kersten
+ * @deprecated use StringWriter to construct PrintWriter
  */
 public class StreamPrintWriter extends PrintWriter {
-    private String contents = "";
+  private String contents = "";
 
-    public StreamPrintWriter(Writer out) {
-        super(out);
-    }
+  public StreamPrintWriter(Writer out) {
+    super(out);
+  }
 
-    public String getContents() {
-        return contents;
-    }
+  public String getContents() {
+    return contents;
+  }
 
-    public void flushBuffer() {
-        contents = "";
-        super.flush();
-    }
+  public void flushBuffer() {
+    contents = "";
+    super.flush();
+  }
 
-    public void print(char x) {
-        contents += x + "\n";
-    }
+  @Override
+  public void print(char x) {
+    contents += x + "\n";
+  }
 
-    public void print(char[] x) {
-        contents += new String( x );
-    }
+  @Override
+  public void print(char[] x) {
+    contents += new String(x);
+  }
 
-    public void print(int x) {
-        contents += x;
-    }
+  @Override
+  public void print(int x) {
+    contents += x;
+  }
 
-    public void print(String x) {
-        contents += x;
-    }
+  @Override
+  public void print(String x) {
+    contents += x;
+  }
 
-    public void println(char x) {
-        contents += x + "\n";
-    }
+  @Override
+  public void println(char x) {
+    contents += x + "\n";
+  }
 
-    public void println(char[] x) {
-        contents += new String( x ) + "\n";
-    }
+  @Override
+  public void println(char[] x) {
+    contents += new String(x) + "\n";
+  }
 
-    public void println(int x) {
-        contents += x + "\n";
-    }
+  @Override
+  public void println(int x) {
+    contents += x + "\n";
+  }
 
-    public void println(String x) {
-        contents += x + "\n";
-    }
+  @Override
+  public void println(String x) {
+    contents += x + "\n";
+  }
 
-    public void write( byte[] x ) {
-        contents += new String( x );
-    }
+  public void write(byte[] x) {
+    contents += new String(x);
+  }
 
-    public void write( byte[] x, int i1, int i2 ) {
-        StringWriter writer = new StringWriter();
-        String s = new String( x );
-        writer.write( s.toCharArray(), i1, i2 );
-        contents += writer.getBuffer().toString();
-    }
+  public void write(byte[] x, int i1, int i2) {
+    final StringWriter writer = new StringWriter();
+    final String s = new String(x);
+    writer.write(s.toCharArray(), i1, i2);
+    contents += writer.getBuffer().toString();
+  }
 
-    public void write( int c ) {
-        contents += c;
-    }
+  @Override
+  public void write(int c) {
+    contents += c;
+  }
 
-    public void write( String s ) {
-        contents += s;
-    }
+  @Override
+  public void write(String s) {
+    contents += s;
+  }
 
-    public void write( String s, int i1, int i2 ) {
-        contents += s;
-    }
+  @Override
+  public void write(String s, int i1, int i2) {
+    contents += s;
+  }
 }

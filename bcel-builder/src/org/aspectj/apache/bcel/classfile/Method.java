@@ -53,221 +53,223 @@
  */
 package org.aspectj.apache.bcel.classfile;
 
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.aspectj.apache.bcel.Constants;
 import org.aspectj.apache.bcel.classfile.annotation.AnnotationGen;
 import org.aspectj.apache.bcel.classfile.annotation.RuntimeInvisParamAnnos;
 import org.aspectj.apache.bcel.classfile.annotation.RuntimeVisParamAnnos;
 import org.aspectj.apache.bcel.generic.Type;
 
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * This class represents the method info structure, i.e., the representation for a method in the class. See JVM specification for
  * details. A method has access flags, a name, a signature and a number of attributes.
- * 
- * @version $Id: Method.java,v 1.11 2009/09/15 19:40:12 aclement Exp $
+ *
  * @author <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
+ * @version $Id: Method.java,v 1.11 2009/09/15 19:40:12 aclement Exp $
  */
 public final class Method extends FieldOrMethod {
 
-	public static final AnnotationGen[][] NO_PARAMETER_ANNOTATIONS = new AnnotationGen[][] {};
+  public static final AnnotationGen[][] NO_PARAMETER_ANNOTATIONS = new AnnotationGen[][]{};
 
-	public static final Method[] NoMethods = new Method[0];
+  public static final Method[] NoMethods = new Method[0];
 
-	private boolean parameterAnnotationsOutOfDate = true;
-	private AnnotationGen[][] unpackedParameterAnnotations;
+  private boolean parameterAnnotationsOutOfDate = true;
+  private AnnotationGen[][] unpackedParameterAnnotations;
 
-	private Method() {
-		parameterAnnotationsOutOfDate = true;
-	}
+  private Method() {
+    parameterAnnotationsOutOfDate = true;
+  }
 
-	/**
-	 * Initialize from another object. Note that both objects use the same references (shallow copy). Use clone() for a physical
-	 * copy.
-	 */
-	public Method(Method c) {
-		super(c);
-		parameterAnnotationsOutOfDate = true;
-	}
+  /**
+   * Initialize from another object. Note that both objects use the same references (shallow copy). Use clone() for a physical
+   * copy.
+   */
+  public Method(Method c) {
+    super(c);
+    parameterAnnotationsOutOfDate = true;
+  }
 
-	Method(DataInputStream file, ConstantPool constant_pool) throws IOException {
-		super(file, constant_pool);
-	}
+  Method(DataInputStream file, ConstantPool constant_pool) throws IOException {
+    super(file, constant_pool);
+  }
 
-	public Method(int access_flags, int name_index, int signature_index, Attribute[] attributes, ConstantPool constant_pool) {
-		super(access_flags, name_index, signature_index, attributes, constant_pool);
-		parameterAnnotationsOutOfDate = true;
-	}
+  public Method(int access_flags, int name_index, int signature_index, Attribute[] attributes, ConstantPool constant_pool) {
+    super(access_flags, name_index, signature_index, attributes, constant_pool);
+    parameterAnnotationsOutOfDate = true;
+  }
 
-	public void accept(ClassVisitor v) {
-		v.visitMethod(this);
-	}
+  public void accept(ClassVisitor v) {
+    v.visitMethod(this);
+  }
 
-	// CUSTARD mutable or not?
-	@Override
-	public void setAttributes(Attribute[] attributes) {
-		parameterAnnotationsOutOfDate = true;
-		super.setAttributes(attributes);
-	}
+  // CUSTARD mutable or not?
+  @Override
+  public void setAttributes(Attribute[] attributes) {
+    parameterAnnotationsOutOfDate = true;
+    super.setAttributes(attributes);
+  }
 
-	/**
-	 * @return Code attribute of method, if any
-	 */
-	public final Code getCode() {
-		return AttributeUtils.getCodeAttribute(attributes);
-	}
+  /**
+   * @return Code attribute of method, if any
+   */
+  public final Code getCode() {
+    return AttributeUtils.getCodeAttribute(attributes);
+  }
 
-	public final ExceptionTable getExceptionTable() {
-		return AttributeUtils.getExceptionTableAttribute(attributes);
-	}
+  public final ExceptionTable getExceptionTable() {
+    return AttributeUtils.getExceptionTableAttribute(attributes);
+  }
 
-	/**
-	 * Return LocalVariableTable of code attribute if any (the call is forwarded to the Code attribute)
-	 */
-	public final LocalVariableTable getLocalVariableTable() {
-		Code code = getCode();
-		if (code != null)
-			return code.getLocalVariableTable();
-		return null;
-	}
+  /**
+   * Return LocalVariableTable of code attribute if any (the call is forwarded to the Code attribute)
+   */
+  public final LocalVariableTable getLocalVariableTable() {
+    final Code code = getCode();
+    if (code != null)
+      return code.getLocalVariableTable();
+    return null;
+  }
 
-	/**
-	 * Return LineNumberTable of code attribute if any (the call is forwarded to the Code attribute)
-	 */
-	public final LineNumberTable getLineNumberTable() {
-		Code code = getCode();
-		if (code != null)
-			return code.getLineNumberTable();
-		return null;
-	}
+  /**
+   * Return LineNumberTable of code attribute if any (the call is forwarded to the Code attribute)
+   */
+  public final LineNumberTable getLineNumberTable() {
+    final Code code = getCode();
+    if (code != null)
+      return code.getLineNumberTable();
+    return null;
+  }
 
-	/**
-	 * Return string representation close to declaration format, eg: 'public static void main(String[] args) throws IOException'
-	 */
-	@Override
-	public final String toString() {
-		ConstantUtf8 c;
-		String name, signature, access; // Short cuts to constant pool
-		StringBuffer buf;
+  /**
+   * Return string representation close to declaration format, eg: 'public static void main(String[] args) throws IOException'
+   */
+  @Override
+  public final String toString() {
+    ConstantUtf8 c;
+    final String name; // Short cuts to constant pool
+    String signature;
+    final String access;
+    final StringBuffer buf;
 
-		access = Utility.accessToString(modifiers);
+    access = Utility.accessToString(modifiers);
 
-		// Get name and signature from constant pool
-		c = (ConstantUtf8) cpool.getConstant(signatureIndex, Constants.CONSTANT_Utf8);
-		signature = c.getValue();
+    // Get name and signature from constant pool
+    c = (ConstantUtf8) cpool.getConstant(signatureIndex, Constants.CONSTANT_Utf8);
+    signature = c.getValue();
 
-		c = (ConstantUtf8) cpool.getConstant(nameIndex, Constants.CONSTANT_Utf8);
-		name = c.getValue();
+    c = (ConstantUtf8) cpool.getConstant(nameIndex, Constants.CONSTANT_Utf8);
+    name = c.getValue();
 
-		signature = Utility.methodSignatureToString(signature, name, access, true, getLocalVariableTable());
-		buf = new StringBuffer(signature);
+    signature = Utility.methodSignatureToString(signature, name, access, true, getLocalVariableTable());
+    buf = new StringBuffer(signature);
 
-		for (int i = 0; i < attributes.length; i++) {
-			Attribute a = attributes[i];
-			if (!((a instanceof Code) || (a instanceof ExceptionTable)))
-				buf.append(" [" + a.toString() + "]");
-		}
+    for (int i = 0; i < attributes.length; i++) {
+      final Attribute a = attributes[i];
+      if (!((a instanceof Code) || (a instanceof ExceptionTable)))
+        buf.append(" [" + a.toString() + "]");
+    }
 
-		ExceptionTable e = getExceptionTable();
-		if (e != null) {
-			String str = e.toString();
-			if (!str.equals(""))
-				buf.append("\n\t\tthrows " + str);
-		}
+    final ExceptionTable e = getExceptionTable();
+    if (e != null) {
+      final String str = e.toString();
+      if (!str.equals(""))
+        buf.append("\n\t\tthrows " + str);
+    }
 
-		return buf.toString();
-	}
+    return buf.toString();
+  }
 
-	/**
-	 * @return return type of method
-	 */
-	public Type getReturnType() {
-		return Type.getReturnType(getSignature());
-	}
+  /**
+   * @return return type of method
+   */
+  public Type getReturnType() {
+    return Type.getReturnType(getSignature());
+  }
 
-	/**
-	 * @return array of method argument types
-	 */
-	public Type[] getArgumentTypes() {
-		return Type.getArgumentTypes(getSignature());
-	}
+  /**
+   * @return array of method argument types
+   */
+  public Type[] getArgumentTypes() {
+    return Type.getArgumentTypes(getSignature());
+  }
 
-	private void ensureParameterAnnotationsUnpacked() {
-		if (!parameterAnnotationsOutOfDate)
-			return;
-		parameterAnnotationsOutOfDate = false;
+  private void ensureParameterAnnotationsUnpacked() {
+    if (!parameterAnnotationsOutOfDate)
+      return;
+    parameterAnnotationsOutOfDate = false;
 
-		int parameterCount = getArgumentTypes().length;
-		if (parameterCount == 0) {
-			unpackedParameterAnnotations = NO_PARAMETER_ANNOTATIONS;
-			return;
-		}
+    final int parameterCount = getArgumentTypes().length;
+    if (parameterCount == 0) {
+      unpackedParameterAnnotations = NO_PARAMETER_ANNOTATIONS;
+      return;
+    }
 
-		RuntimeVisParamAnnos parameterAnnotationsVis = null;
-		RuntimeInvisParamAnnos parameterAnnotationsInvis = null;
+    RuntimeVisParamAnnos parameterAnnotationsVis = null;
+    RuntimeInvisParamAnnos parameterAnnotationsInvis = null;
 
-		// Find attributes that contain annotation data
-		Attribute[] attrs = getAttributes();
+    // Find attributes that contain annotation data
+    final Attribute[] attrs = getAttributes();
 
-		for (int i = 0; i < attrs.length; i++) {
-			Attribute attribute = attrs[i];
-			if (attribute instanceof RuntimeVisParamAnnos) {
-				parameterAnnotationsVis = (RuntimeVisParamAnnos) attribute;
-			} else if (attribute instanceof RuntimeInvisParamAnnos) {
-				parameterAnnotationsInvis = (RuntimeInvisParamAnnos) attribute;
-			}
-		}
+    for (int i = 0; i < attrs.length; i++) {
+      final Attribute attribute = attrs[i];
+      if (attribute instanceof RuntimeVisParamAnnos) {
+        parameterAnnotationsVis = (RuntimeVisParamAnnos) attribute;
+      } else if (attribute instanceof RuntimeInvisParamAnnos) {
+        parameterAnnotationsInvis = (RuntimeInvisParamAnnos) attribute;
+      }
+    }
 
-		boolean foundSome = false;
-		// Build a list of annotation arrays, one per argument
-		if (parameterAnnotationsInvis != null || parameterAnnotationsVis != null) {
-			List<AnnotationGen[]> annotationsForEachParameter = new ArrayList<AnnotationGen[]>();
-			AnnotationGen[] visibleOnes = null;
-			AnnotationGen[] invisibleOnes = null;
-			for (int i = 0; i < parameterCount; i++) {
-				int count = 0;
-				visibleOnes = new AnnotationGen[0];
-				invisibleOnes = new AnnotationGen[0];
-				if (parameterAnnotationsVis != null) {
-					visibleOnes = parameterAnnotationsVis.getAnnotationsOnParameter(i);
-					count += visibleOnes.length;
-				}
-				if (parameterAnnotationsInvis != null) {
-					invisibleOnes = parameterAnnotationsInvis.getAnnotationsOnParameter(i);
-					count += invisibleOnes.length;
-				}
+    boolean foundSome = false;
+    // Build a list of annotation arrays, one per argument
+    if (parameterAnnotationsInvis != null || parameterAnnotationsVis != null) {
+      final List<AnnotationGen[]> annotationsForEachParameter = new ArrayList<AnnotationGen[]>();
+      AnnotationGen[] visibleOnes = null;
+      AnnotationGen[] invisibleOnes = null;
+      for (int i = 0; i < parameterCount; i++) {
+        int count = 0;
+        visibleOnes = new AnnotationGen[0];
+        invisibleOnes = new AnnotationGen[0];
+        if (parameterAnnotationsVis != null) {
+          visibleOnes = parameterAnnotationsVis.getAnnotationsOnParameter(i);
+          count += visibleOnes.length;
+        }
+        if (parameterAnnotationsInvis != null) {
+          invisibleOnes = parameterAnnotationsInvis.getAnnotationsOnParameter(i);
+          count += invisibleOnes.length;
+        }
 
-				AnnotationGen[] complete = AnnotationGen.NO_ANNOTATIONS;
-				if (count != 0) {
-					complete = new AnnotationGen[visibleOnes.length + invisibleOnes.length];
-					System.arraycopy(visibleOnes, 0, complete, 0, visibleOnes.length);
-					System.arraycopy(invisibleOnes, 0, complete, visibleOnes.length, invisibleOnes.length);
-					foundSome = true;
-				}
-				annotationsForEachParameter.add(complete);
-			}
-			if (foundSome) {
-				unpackedParameterAnnotations = annotationsForEachParameter.toArray(new AnnotationGen[][] {});
-				return;
-			}
-		}
-		unpackedParameterAnnotations = NO_PARAMETER_ANNOTATIONS;
-	}
+        AnnotationGen[] complete = AnnotationGen.NO_ANNOTATIONS;
+        if (count != 0) {
+          complete = new AnnotationGen[visibleOnes.length + invisibleOnes.length];
+          System.arraycopy(visibleOnes, 0, complete, 0, visibleOnes.length);
+          System.arraycopy(invisibleOnes, 0, complete, visibleOnes.length, invisibleOnes.length);
+          foundSome = true;
+        }
+        annotationsForEachParameter.add(complete);
+      }
+      if (foundSome) {
+        unpackedParameterAnnotations = annotationsForEachParameter.toArray(new AnnotationGen[][]{});
+        return;
+      }
+    }
+    unpackedParameterAnnotations = NO_PARAMETER_ANNOTATIONS;
+  }
 
-	public AnnotationGen[] getAnnotationsOnParameter(int i) {
-		ensureParameterAnnotationsUnpacked();
-		if (unpackedParameterAnnotations == NO_PARAMETER_ANNOTATIONS) {
-			return AnnotationGen.NO_ANNOTATIONS;
-		}
-		return unpackedParameterAnnotations[i];
-	}
+  public AnnotationGen[] getAnnotationsOnParameter(int i) {
+    ensureParameterAnnotationsUnpacked();
+    if (unpackedParameterAnnotations == NO_PARAMETER_ANNOTATIONS) {
+      return AnnotationGen.NO_ANNOTATIONS;
+    }
+    return unpackedParameterAnnotations[i];
+  }
 
-	public AnnotationGen[][] getParameterAnnotations() {
-		ensureParameterAnnotationsUnpacked();
-		return unpackedParameterAnnotations;
-	}
+  public AnnotationGen[][] getParameterAnnotations() {
+    ensureParameterAnnotationsUnpacked();
+    return unpackedParameterAnnotations;
+  }
 
 }

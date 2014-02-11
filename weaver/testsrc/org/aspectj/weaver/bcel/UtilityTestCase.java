@@ -12,41 +12,43 @@
 
 
 package org.aspectj.weaver.bcel;
+
 import java.io.*;
 
 import junit.framework.TestCase;
 
 public class UtilityTestCase extends TestCase {
 
-    public UtilityTestCase(String name) {
-        super(name);
-    }
+  public UtilityTestCase(String name) {
+    super(name);
+  }
 
-    public void disassembleTest(String name) throws IOException {
-        BcelWorld world = new BcelWorld("../weaver/bin");
+  public void disassembleTest(String name) throws IOException {
+    final BcelWorld world = new BcelWorld("../weaver/bin");
 //        world.setFastDelegateSupport(false);
-        world.addPath(WeaveTestCase.classDir);
+    world.addPath(WeaveTestCase.classDir);
 
-        LazyClassGen clazz = new LazyClassGen(BcelWorld.getBcelObjectType(world.resolve(name)));
-        clazz.print();
-        System.out.println();
-    }
+    final LazyClassGen clazz = new LazyClassGen(BcelWorld.getBcelObjectType(world.resolve(name)));
+    clazz.print();
+    System.out.println();
+  }
 
 
-    public void testHelloWorld() throws IOException {
-        disassembleTest("Test");
-    }
-    public void testFancyHelloWorld() throws IOException {
-        disassembleTest("FancyHelloWorld");
-    }
+  public void testHelloWorld() throws IOException {
+    disassembleTest("Test");
+  }
+
+  public void testFancyHelloWorld() throws IOException {
+    disassembleTest("FancyHelloWorld");
+  }
 //    public void testSwitchy() throws IOException {
 //        disassembleTest("TestSwitchy");
 //    }
-    
-    public static void main(String[] args) throws IOException {
-    	BcelWorld world = new BcelWorld();
-        LazyClassGen clazz = new LazyClassGen(BcelWorld.getBcelObjectType(world.resolve(args[0])));
-        clazz.print();
-    } 
+
+  public static void main(String[] args) throws IOException {
+    final BcelWorld world = new BcelWorld();
+    final LazyClassGen clazz = new LazyClassGen(BcelWorld.getBcelObjectType(world.resolve(args[0])));
+    clazz.print();
+  }
 }
 

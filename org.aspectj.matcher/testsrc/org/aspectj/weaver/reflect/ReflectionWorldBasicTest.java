@@ -16,12 +16,13 @@ import org.aspectj.weaver.World;
 
 public class ReflectionWorldBasicTest extends CommonWorldTests {
 
-	protected boolean getSupportsAutoboxing() {
-		return false;
-	}
+  protected boolean getSupportsAutoboxing() {
+    return false;
+  }
 
-	protected World getWorld() {
-		return new ReflectionWorld(true, getClass().getClassLoader());
-	}
+  @Override
+  protected World getWorld() {
+    return new ReflectionWorld(true, getClass().getClassLoader());
+  }
 
 }

@@ -13,11 +13,7 @@ package org.aspectj.ajdt.internal.core.builder;
 
 import org.aspectj.org.eclipse.jdt.core.compiler.CharOperation;
 import org.aspectj.org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
-import org.aspectj.org.eclipse.jdt.internal.compiler.env.IBinaryAnnotation;
-import org.aspectj.org.eclipse.jdt.internal.compiler.env.IBinaryField;
-import org.aspectj.org.eclipse.jdt.internal.compiler.env.IBinaryMethod;
-import org.aspectj.org.eclipse.jdt.internal.compiler.env.IBinaryNestedType;
-import org.aspectj.org.eclipse.jdt.internal.compiler.env.IBinaryType;
+import org.aspectj.org.eclipse.jdt.internal.compiler.env.*;
 
 /**
  * Used to determine if a type has structurally changed during incremental compilation. At the end of compilation we create one of
@@ -26,152 +22,172 @@ import org.aspectj.org.eclipse.jdt.internal.compiler.env.IBinaryType;
  * recompile other dependent types.
  */
 public class CompactTypeStructureRepresentation implements IBinaryType {
-	static char[][] NoInterface = CharOperation.NO_CHAR_CHAR;
-	static IBinaryNestedType[] NoNestedType = new IBinaryNestedType[0];
-	static IBinaryField[] NoField = new IBinaryField[0];
-	static IBinaryMethod[] NoMethod = new IBinaryMethod[0];
+  static char[][] NoInterface = CharOperation.NO_CHAR_CHAR;
+  static IBinaryNestedType[] NoNestedType = new IBinaryNestedType[0];
+  static IBinaryField[] NoField = new IBinaryField[0];
+  static IBinaryMethod[] NoMethod = new IBinaryMethod[0];
 
-	// this is the core state for comparison
-	char[] className;
-	int modifiers;
-	char[] genericSignature;
-	char[] superclassName;
-	char[][] interfaces;
-	
-	char[] enclosingMethod;
-	
-	char[][][] missingTypeNames;
+  // this is the core state for comparison
+  char[] className;
+  int modifiers;
+  char[] genericSignature;
+  char[] superclassName;
+  char[][] interfaces;
 
-	// this is the extra state that enables us to be an IBinaryType
-	char[] enclosingTypeName;
-	boolean isLocal, isAnonymous, isMember;
-	char[] sourceFileName;
-	char[] fileName;
-	char[] sourceName;
-	long tagBits;
-	boolean isBinaryType;
-	IBinaryField[] binFields;
-	IBinaryMethod[] binMethods;
-	IBinaryNestedType[] memberTypes;
-	IBinaryAnnotation[] annotations;
-	
+  char[] enclosingMethod;
 
-	public CompactTypeStructureRepresentation(ClassFileReader cfr, boolean isAspect) {
+  char[][][] missingTypeNames;
 
-		this.enclosingTypeName = cfr.getEnclosingTypeName();
-		this.isLocal = cfr.isLocal();
-		this.isAnonymous = cfr.isAnonymous();
-		this.isMember = cfr.isMember();
-		this.sourceFileName = cfr.sourceFileName();
-		this.fileName = cfr.getFileName();
-		this.missingTypeNames = cfr.getMissingTypeNames();
-		this.tagBits = cfr.getTagBits();
-		this.enclosingMethod = cfr.getEnclosingMethod();
-		this.isBinaryType = cfr.isBinaryType();
-		this.binFields = cfr.getFields();
-		if (binFields == null) {
-			binFields = NoField;
-		}
-		this.binMethods = cfr.getMethods();
-		if (binMethods == null) {
-			binMethods = NoMethod;
-		}
-		// If we are an aspect we (for now) need to grab even the malformed inner type info as it
-		// may be there because it refers to an ITD'd innertype. This needs to be improved - perhaps
-		// using a real attribute against which memberTypes can be compared to see which are just
-		// references and which were real declarations
-		this.memberTypes = cfr.getMemberTypes(isAspect);
-		this.annotations = cfr.getAnnotations();
-		this.sourceName = cfr.getSourceName();
-		this.className = cfr.getName(); // slashes...
-		this.modifiers = cfr.getModifiers();
-		this.genericSignature = cfr.getGenericSignature();
-		// if (this.genericSignature.length == 0) {
-		// this.genericSignature = null;
-		// }
-		this.superclassName = cfr.getSuperclassName(); // slashes...
-		interfaces = cfr.getInterfaceNames();
+  // this is the extra state that enables us to be an IBinaryType
+  char[] enclosingTypeName;
+  boolean isLocal, isAnonymous, isMember;
+  char[] sourceFileName;
+  char[] fileName;
+  char[] sourceName;
+  long tagBits;
+  boolean isBinaryType;
+  IBinaryField[] binFields;
+  IBinaryMethod[] binMethods;
+  IBinaryNestedType[] memberTypes;
+  IBinaryAnnotation[] annotations;
 
-	}
 
-	public char[][][] getMissingTypeNames() {
-		return missingTypeNames;
-	}
-	
-	public char[] getEnclosingTypeName() {
-		return enclosingTypeName;
-	}
+  public CompactTypeStructureRepresentation(ClassFileReader cfr, boolean isAspect) {
 
-	public int getModifiers() {
-		return modifiers;
-	}
+    this.enclosingTypeName = cfr.getEnclosingTypeName();
+    this.isLocal = cfr.isLocal();
+    this.isAnonymous = cfr.isAnonymous();
+    this.isMember = cfr.isMember();
+    this.sourceFileName = cfr.sourceFileName();
+    this.fileName = cfr.getFileName();
+    this.missingTypeNames = cfr.getMissingTypeNames();
+    this.tagBits = cfr.getTagBits();
+    this.enclosingMethod = cfr.getEnclosingMethod();
+    this.isBinaryType = cfr.isBinaryType();
+    this.binFields = cfr.getFields();
+    if (binFields == null) {
+      binFields = NoField;
+    }
+    this.binMethods = cfr.getMethods();
+    if (binMethods == null) {
+      binMethods = NoMethod;
+    }
+    // If we are an aspect we (for now) need to grab even the malformed inner type info as it
+    // may be there because it refers to an ITD'd innertype. This needs to be improved - perhaps
+    // using a real attribute against which memberTypes can be compared to see which are just
+    // references and which were real declarations
+    this.memberTypes = cfr.getMemberTypes(isAspect);
+    this.annotations = cfr.getAnnotations();
+    this.sourceName = cfr.getSourceName();
+    this.className = cfr.getName(); // slashes...
+    this.modifiers = cfr.getModifiers();
+    this.genericSignature = cfr.getGenericSignature();
+    // if (this.genericSignature.length == 0) {
+    // this.genericSignature = null;
+    // }
+    this.superclassName = cfr.getSuperclassName(); // slashes...
+    interfaces = cfr.getInterfaceNames();
 
-	public char[] getGenericSignature() {
-		return genericSignature;
-	}
-	
-	public char[] getEnclosingMethod() {
-		return enclosingMethod;
-	}
+  }
 
-	public char[][] getInterfaceNames() {
-		return interfaces;
-	}
+  @Override
+  public char[][][] getMissingTypeNames() {
+    return missingTypeNames;
+  }
 
-	public boolean isAnonymous() {
-		return isAnonymous;
-	}
+  @Override
+  public char[] getEnclosingTypeName() {
+    return enclosingTypeName;
+  }
 
-	public char[] sourceFileName() {
-		return sourceFileName;
-	}
+  @Override
+  public int getModifiers() {
+    return modifiers;
+  }
 
-	public boolean isLocal() {
-		return isLocal;
-	}
+  @Override
+  public char[] getGenericSignature() {
+    return genericSignature;
+  }
 
-	public boolean isMember() {
-		return isMember;
-	}
+  @Override
+  public char[] getEnclosingMethod() {
+    return enclosingMethod;
+  }
 
-	public char[] getSuperclassName() {
-		return superclassName;
-	}
+  @Override
+  public char[][] getInterfaceNames() {
+    return interfaces;
+  }
 
-	public char[] getFileName() {
-		return fileName;
-	}
+  @Override
+  public boolean isAnonymous() {
+    return isAnonymous;
+  }
 
-	public char[] getName() {
-		return className;
-	}
+  @Override
+  public char[] sourceFileName() {
+    return sourceFileName;
+  }
 
-	public long getTagBits() {
-		return tagBits;
-	}
+  @Override
+  public boolean isLocal() {
+    return isLocal;
+  }
 
-	public boolean isBinaryType() {
-		return isBinaryType;
-	}
+  @Override
+  public boolean isMember() {
+    return isMember;
+  }
 
-	public IBinaryField[] getFields() {
-		return binFields;
-	}
+  @Override
+  public char[] getSuperclassName() {
+    return superclassName;
+  }
 
-	public IBinaryMethod[] getMethods() {
-		return binMethods;
-	}
+  @Override
+  public char[] getFileName() {
+    return fileName;
+  }
 
-	public IBinaryNestedType[] getMemberTypes() {
-		return memberTypes;
-	}
+  @Override
+  public char[] getName() {
+    return className;
+  }
 
-	public IBinaryAnnotation[] getAnnotations() {
-		return annotations;
-	}
+  @Override
+  public long getTagBits() {
+    return tagBits;
+  }
 
-	public char[] getSourceName() {
-		return sourceName;
-	}
+  @Override
+  public boolean isBinaryType() {
+    return isBinaryType;
+  }
+
+  @Override
+  public IBinaryField[] getFields() {
+    return binFields;
+  }
+
+  @Override
+  public IBinaryMethod[] getMethods() {
+    return binMethods;
+  }
+
+  @Override
+  public IBinaryNestedType[] getMemberTypes() {
+    return memberTypes;
+  }
+
+  @Override
+  public IBinaryAnnotation[] getAnnotations() {
+    return annotations;
+  }
+
+  @Override
+  public char[] getSourceName() {
+    return sourceName;
+  }
 
 }

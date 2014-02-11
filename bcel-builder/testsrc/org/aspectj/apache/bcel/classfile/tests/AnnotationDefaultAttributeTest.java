@@ -20,30 +20,30 @@ import org.aspectj.apache.bcel.classfile.annotation.SimpleElementValue;
 
 public class AnnotationDefaultAttributeTest extends BcelTestCase {
 
-	protected void setUp() throws Exception {
-		super.setUp();
-	}
+  protected void setUp() throws Exception {
+    super.setUp();
+  }
 
-	
-	/**
-	 * For values in an annotation that have default values, we should be able to
-	 * query the AnnotationDefault attribute against the method to discover the
-	 * default value that was originally declared.
-	 */
-	public void testMethodAnnotations() throws ClassNotFoundException {
-		JavaClass clazz = getClassFromJar("SimpleAnnotation");
-		
-		Method m = getMethod(clazz,"fruit");
-		AnnotationDefault a = (AnnotationDefault) findAttribute("AnnotationDefault",m.getAttributes());
-		SimpleElementValue val = (SimpleElementValue) a.getElementValue();
-		assertTrue("Should be STRING but is "+val.getElementValueType(),
-				val.getElementValueType()==ElementValue.STRING);
-		assertTrue("Should have default of bananas but default is "+val.getValueString(),
-				val.getValueString().equals("bananas"));
-	}
 
-	protected void tearDown() throws Exception {
-		super.tearDown();
-	}
-	
+  /**
+   * For values in an annotation that have default values, we should be able to
+   * query the AnnotationDefault attribute against the method to discover the
+   * default value that was originally declared.
+   */
+  public void testMethodAnnotations() throws ClassNotFoundException {
+    final JavaClass clazz = getClassFromJar("SimpleAnnotation");
+
+    final Method m = getMethod(clazz, "fruit");
+    final AnnotationDefault a = (AnnotationDefault) findAttribute("AnnotationDefault", m.getAttributes());
+    final SimpleElementValue val = (SimpleElementValue) a.getElementValue();
+    assertTrue("Should be STRING but is " + val.getElementValueType(),
+        val.getElementValueType() == ElementValue.STRING);
+    assertTrue("Should have default of bananas but default is " + val.getValueString(),
+        val.getValueString().equals("bananas"));
+  }
+
+  protected void tearDown() throws Exception {
+    super.tearDown();
+  }
+
 }

@@ -11,141 +11,136 @@
  * ******************************************************************/
 package org.aspectj.ajdt.internal.core.builder;
 
+import org.aspectj.ajdt.internal.compiler.CompilationResultDestinationManager;
+import org.aspectj.weaver.CompressingDataOutputStream;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.aspectj.ajdt.internal.compiler.CompilationResultDestinationManager;
-import org.aspectj.weaver.CompressingDataOutputStream;
+import java.util.*;
 
 /**
  * Central point for all things incremental... - keeps track of the state recorded for each different config file - allows limited
  * interaction with these states
- * 
+ * <p/>
  * - records dependency/change info for particular classpaths > this will become what JDT keeps in its 'State' object when its
  * finished
  */
 public class IncrementalStateManager {
 
-	// FIXME asc needs an API through Ajde for trashing its contents
-	// FIXME asc needs some memory mgmt (softrefs?) to recover memory
-	// SECRETAPI will consume more memory, so turn on at your own risk ;) Set to 'true' when memory usage is understood
-	public static boolean recordIncrementalStates = false;
-	public static boolean debugIncrementalStates = false;
-	private static Hashtable<String, AjState> incrementalStates = new Hashtable<String, AjState>();
+  // FIXME asc needs an API through Ajde for trashing its contents
+  // FIXME asc needs some memory mgmt (softrefs?) to recover memory
+  // SECRETAPI will consume more memory, so turn on at your own risk ;) Set to 'true' when memory usage is understood
+  public static boolean recordIncrementalStates = false;
+  public static boolean debugIncrementalStates = false;
+  private static Hashtable<String, AjState> incrementalStates = new Hashtable<String, AjState>();
 
-	public static void recordSuccessfulBuild(String buildConfig, AjState state) {
-		if (!recordIncrementalStates) {
-			return;
-		}
-		incrementalStates.put(buildConfig, state);
-		// persist();
-	}
+  public static void recordSuccessfulBuild(String buildConfig, AjState state) {
+    if (!recordIncrementalStates) {
+      return;
+    }
+    incrementalStates.put(buildConfig, state);
+    // persist();
+  }
 
-	/**
-	 * Store states on disk
-	 */
-	public static void persist() {
-		// check serialization works
-		Set<Map.Entry<String, AjState>> entries = incrementalStates.entrySet();
-		for (Iterator<Map.Entry<String, AjState>> iterator = entries.iterator(); iterator.hasNext();) {
-			Map.Entry<String, AjState> entry = iterator.next();
-			System.out.println("Name " + entry.getKey());
-			File f = new File("n:/temp/foo.ajstate");
-			try {
-				AjState state = (AjState) entry.getValue();
-				CompressingDataOutputStream dos = new CompressingDataOutputStream(new FileOutputStream(f));
-				state.write(dos);
-				dos.close();
-			} catch (FileNotFoundException e) {
-				throw new RuntimeException(e);
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		}
-	}
+  /**
+   * Store states on disk
+   */
+  public static void persist() {
+    // check serialization works
+    final Set<Map.Entry<String, AjState>> entries = incrementalStates.entrySet();
+    for (final Iterator<Map.Entry<String, AjState>> iterator = entries.iterator(); iterator.hasNext(); ) {
+      final Map.Entry<String, AjState> entry = iterator.next();
+      System.out.println("Name " + entry.getKey());
+      final File f = new File("n:/temp/foo.ajstate");
+      try {
+        final AjState state = (AjState) entry.getValue();
+        final CompressingDataOutputStream dos = new CompressingDataOutputStream(new FileOutputStream(f));
+        state.write(dos);
+        dos.close();
+      } catch (FileNotFoundException e) {
+        throw new RuntimeException(e);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
 
-	public static boolean removeIncrementalStateInformationFor(String buildConfig) {
-		return incrementalStates.remove(buildConfig) != null;
-	}
+  public static boolean removeIncrementalStateInformationFor(String buildConfig) {
+    return incrementalStates.remove(buildConfig) != null;
+  }
 
-	public static void clearIncrementalStates() {
-		for (Iterator iter = incrementalStates.values().iterator(); iter.hasNext();) {
-			AjState element = (AjState) iter.next();
-			element.wipeAllKnowledge();
-		}
-		incrementalStates.clear();
-		// AsmManager.getDefault().createNewStructureModel(); // forget what you know...
-	}
+  public static void clearIncrementalStates() {
+    for (final Iterator iter = incrementalStates.values().iterator(); iter.hasNext(); ) {
+      final AjState element = (AjState) iter.next();
+      element.wipeAllKnowledge();
+    }
+    incrementalStates.clear();
+    // AsmManager.getDefault().createNewStructureModel(); // forget what you know...
+  }
 
-	public static Set getConfigFilesKnown() {
-		return incrementalStates.keySet();
-	}
+  public static Set getConfigFilesKnown() {
+    return incrementalStates.keySet();
+  }
 
-	public static AjState retrieveStateFor(String configFile) {
-		return (AjState) incrementalStates.get(configFile);
-	}
+  public static AjState retrieveStateFor(String configFile) {
+    return (AjState) incrementalStates.get(configFile);
+  }
 
-	// now, managing changes to entries on a classpath
+  // now, managing changes to entries on a classpath
 
-	public static AjState findStateManagingOutputLocation(File location) {
-		Collection<AjState> allStates = incrementalStates.values();
-		if (debugIncrementalStates) {
-			System.err.println("> findStateManagingOutputLocation(" + location + ") has " + allStates.size()
-					+ " states to look through");
-		}
-		for (Iterator<AjState> iter = allStates.iterator(); iter.hasNext();) {
-			AjState element = iter.next();
-			AjBuildConfig ajbc = element.getBuildConfig();
-			if (ajbc == null) {
-				// FIXME asc why can it ever be null?
-				if (debugIncrementalStates) {
-					System.err.println("  No build configuration for state " + element);
-				}
-				continue;
-			}
-			File outputDir = ajbc.getOutputDir();
-			if (outputDir != null && outputDir.equals(location)) {
-				if (debugIncrementalStates) {
-					System.err.println("< findStateManagingOutputLocation(" + location + ") returning " + element);
-				}
-				return element;
-			}
-			CompilationResultDestinationManager outputManager = ajbc.getCompilationResultDestinationManager();
-			if (outputManager != null) {
-				List outputDirs = outputManager.getAllOutputLocations();
-				for (Iterator iterator = outputDirs.iterator(); iterator.hasNext();) {
-					File dir = (File) iterator.next();
-					if (dir.equals(location)) {
-						if (debugIncrementalStates) {
-							System.err.println("< findStateManagingOutputLocation(" + location + ") returning " + element);
-						}
-						return element;
-					}
-				}
-			}
-			if (outputDir == null && outputManager == null) {
-				// FIXME why can it ever be null? due to using outjar?
-				if (debugIncrementalStates) {
-					System.err.println("  output directory and output location manager for " + ajbc + " are null");
-				}
-				continue;
-			}
+  public static AjState findStateManagingOutputLocation(File location) {
+    final Collection<AjState> allStates = incrementalStates.values();
+    if (debugIncrementalStates) {
+      System.err.println("> findStateManagingOutputLocation(" + location + ") has " + allStates.size()
+          + " states to look through");
+    }
+    for (final Iterator<AjState> iter = allStates.iterator(); iter.hasNext(); ) {
+      final AjState element = iter.next();
+      final AjBuildConfig ajbc = element.getBuildConfig();
+      if (ajbc == null) {
+        // FIXME asc why can it ever be null?
+        if (debugIncrementalStates) {
+          System.err.println("  No build configuration for state " + element);
+        }
+        continue;
+      }
+      final File outputDir = ajbc.getOutputDir();
+      if (outputDir != null && outputDir.equals(location)) {
+        if (debugIncrementalStates) {
+          System.err.println("< findStateManagingOutputLocation(" + location + ") returning " + element);
+        }
+        return element;
+      }
+      final CompilationResultDestinationManager outputManager = ajbc.getCompilationResultDestinationManager();
+      if (outputManager != null) {
+        final List outputDirs = outputManager.getAllOutputLocations();
+        for (final Iterator iterator = outputDirs.iterator(); iterator.hasNext(); ) {
+          final File dir = (File) iterator.next();
+          if (dir.equals(location)) {
+            if (debugIncrementalStates) {
+              System.err.println("< findStateManagingOutputLocation(" + location + ") returning " + element);
+            }
+            return element;
+          }
+        }
+      }
+      if (outputDir == null && outputManager == null) {
+        // FIXME why can it ever be null? due to using outjar?
+        if (debugIncrementalStates) {
+          System.err.println("  output directory and output location manager for " + ajbc + " are null");
+        }
+        continue;
+      }
 
-		}
-		if (debugIncrementalStates) {
-			System.err.println("< findStateManagingOutputLocation(" + location + ") returning null");
-		}
-		return null;
-	}
+    }
+    if (debugIncrementalStates) {
+      System.err.println("< findStateManagingOutputLocation(" + location + ") returning null");
+    }
+    return null;
+  }
 
-	// FIXME asc needs a persistence mechanism for storing/loading all state info
-	// FIXME asc needs to understand two config files might point at the same output dir... what to do about this?
+  // FIXME asc needs a persistence mechanism for storing/loading all state info
+  // FIXME asc needs to understand two config files might point at the same output dir... what to do about this?
 }

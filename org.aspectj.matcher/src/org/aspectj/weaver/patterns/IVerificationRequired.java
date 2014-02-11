@@ -15,8 +15,9 @@ package org.aspectj.weaver.patterns;
 /**
  * Implementors provide a 'verify()' method that is invoked at the end of type
  * binding completion.
+ *
  * @see WildTypePattern.VerifyBoundsForTypePattern
  */
 public interface IVerificationRequired {
-	public void verify();
+  public void verify();
 }

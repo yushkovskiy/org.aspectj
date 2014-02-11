@@ -17,32 +17,32 @@ import junit.framework.TestSuite;
 
 public class AllTests {
 
-	public static Test suite() {
-		TestSuite suite = new TestSuite("Tests for BCEL");
-		// $JUnit-BEGIN$
-		suite.addTestSuite(Fundamentals.class);
-		suite.addTestSuite(RuntimeVisibleParameterAnnotationAttributeTest.class);
-		suite.addTestSuite(AnnotationDefaultAttributeTest.class);
-		suite.addTestSuite(EnclosingMethodAttributeTest.class);
-		suite.addTestSuite(MethodAnnotationsTest.class);
-		suite.addTestSuite(RuntimeVisibleAnnotationAttributeTest.class);
-		suite.addTestSuite(ClassloaderRepositoryTest.class);
-		suite.addTestSuite(NonCachingClassLoaderRepositoryTest.class);
-		suite.addTestSuite(EnumAccessFlagTest.class);
-		suite.addTestSuite(LocalVariableTypeTableTest.class);
-		suite.addTestSuite(VarargsTest.class);
-		suite.addTestSuite(AnnotationAccessFlagTest.class);
-		suite.addTestSuite(ElementValueGenTest.class);
-		suite.addTestSuite(FieldAnnotationsTest.class);
-		suite.addTestSuite(AnnotationGenTest.class);
-		suite.addTestSuite(ParameterAnnotationsTest.class);
-		suite.addTestSuite(GeneratingAnnotatedClassesTest.class);
-		suite.addTestSuite(TypeAnnotationsTest.class);
-		suite.addTestSuite(UtilTests.class);
-		suite.addTestSuite(GenericSignatureParsingTest.class);
-		suite.addTestSuite(GenericsErasureTesting.class);
-		suite.addTestSuite(AnonymousClassTest.class);
-		// $JUnit-END$
-		return suite;
-	}
+  public static Test suite() {
+    final TestSuite suite = new TestSuite("Tests for BCEL");
+    // $JUnit-BEGIN$
+    suite.addTestSuite(Fundamentals.class);
+    suite.addTestSuite(RuntimeVisibleParameterAnnotationAttributeTest.class);
+    suite.addTestSuite(AnnotationDefaultAttributeTest.class);
+    suite.addTestSuite(EnclosingMethodAttributeTest.class);
+    suite.addTestSuite(MethodAnnotationsTest.class);
+    suite.addTestSuite(RuntimeVisibleAnnotationAttributeTest.class);
+    suite.addTestSuite(ClassloaderRepositoryTest.class);
+    suite.addTestSuite(NonCachingClassLoaderRepositoryTest.class);
+    suite.addTestSuite(EnumAccessFlagTest.class);
+    suite.addTestSuite(LocalVariableTypeTableTest.class);
+    suite.addTestSuite(VarargsTest.class);
+    suite.addTestSuite(AnnotationAccessFlagTest.class);
+    suite.addTestSuite(ElementValueGenTest.class);
+    suite.addTestSuite(FieldAnnotationsTest.class);
+    suite.addTestSuite(AnnotationGenTest.class);
+    suite.addTestSuite(ParameterAnnotationsTest.class);
+    suite.addTestSuite(GeneratingAnnotatedClassesTest.class);
+    suite.addTestSuite(TypeAnnotationsTest.class);
+    suite.addTestSuite(UtilTests.class);
+    suite.addTestSuite(GenericSignatureParsingTest.class);
+    suite.addTestSuite(GenericsErasureTesting.class);
+    suite.addTestSuite(AnonymousClassTest.class);
+    // $JUnit-END$
+    return suite;
+  }
 }

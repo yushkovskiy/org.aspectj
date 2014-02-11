@@ -33,452 +33,455 @@ import org.aspectj.org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants
  */
 public class BuildArgParserTestCase extends TestCase {
 
-	private static final String TEST_DIR = AjdtAjcTests.TESTDATA_PATH + File.separator + "ajc" + File.separator;
-	private MessageWriter messageWriter = new MessageWriter(new PrintWriter(System.out), false);
+  private static final String TEST_DIR = AjdtAjcTests.TESTDATA_PATH + File.separator + "ajc" + File.separator;
+  private MessageWriter messageWriter = new MessageWriter(new PrintWriter(System.out), false);
 
-	public BuildArgParserTestCase(String name) {
-		super(name);
-	}
-	
-	private AjBuildConfig genBuildConfig(String[] args, IMessageHandler handler) {
-		return new BuildArgParser(handler).genBuildConfig(args);
-	}
+  public BuildArgParserTestCase(String name) {
+    super(name);
+  }
 
-	public void testDefaultClasspathAndTargetCombo() throws Exception {
-		String ENTRY = "1.jar" + File.pathSeparator + "2.jar";
-		final String classpath = System.getProperty("java.class.path");
-		try {
-            System.setProperty("java.class.path", ENTRY); // see finally below
-            BuildArgParser parser = new BuildArgParser(messageWriter);
-    		AjBuildConfig config = parser.genBuildConfig(new String[] { });
-            /*String err = */parser.getOtherMessages(true);       
-            //!!!assertTrue(err, null == err);
-            assertTrue(
-    			config.getClasspath().toString(),
-    			config.getClasspath().contains("1.jar"));
-    		assertTrue(
-    			config.getClasspath().toString(),
-    			config.getClasspath().contains("2.jar"));
-    
-    		config = genBuildConfig(new String[] { "-1.3" }, messageWriter);
-    		// these errors are deffered to the compiler now
-            //err = parser.getOtherMessages(true);       
-            //!!!assertTrue(err, null == err);
-    		assertTrue(
-    			config.getClasspath().toString(),
-    			config.getClasspath().contains("1.jar"));
-    		assertTrue(
-    			config.getClasspath().toString(),
-    			config.getClasspath().contains("2.jar"));
-    
-			parser = new BuildArgParser(messageWriter);
-    		config = parser.genBuildConfig(new String[] { "-1.3" });
-            /*err = */parser.getOtherMessages(true);       
-            //!!!assertTrue(err, null == err);
-    		assertTrue(
-    			config.getClasspath().toString(),
-    			config.getClasspath().contains("1.jar"));
-    		assertTrue(
-    			config.getClasspath().toString(),
-    			config.getClasspath().contains("2.jar"));
-    			
-    		config = genBuildConfig(new String[] { 
-    			"-classpath", ENTRY, "-1.4" }, messageWriter);
-			//			these errors are deffered to the compiler now
-            //err = parser.getOtherMessages(true);       
-            //assertTrue("expected errors for missing jars", null != err);
-    		List cp = config.getClasspath();
-    		boolean jar1Found = false;
-    		boolean jar2Found = false;
-    		for (Iterator iter = cp.iterator(); iter.hasNext();) {
-                String element = (String) iter.next();
-                if (element.indexOf("1.jar") != -1) jar1Found = true;
-                if (element.indexOf("2.jar") != -1) jar2Found = true;
-            }
-    		assertTrue(
-    			config.getClasspath().toString(),
-    			jar1Found);
-    		assertTrue(
-    			config.getClasspath().toString(),
-    			jar2Found);
-    			
-        } finally {
-            // do finally to avoid messing up classpath for other tests
-            System.setProperty("java.class.path", classpath);
-            String setPath = System.getProperty("java.class.path");
-            String m = "other tests will fail - classpath not reset";
-            assertEquals(m, classpath, setPath); 
-        }
-	}
-	
-	public void testPathResolutionFromConfigArgs() {
-		String FILE_PATH =   "@" + TEST_DIR + "configWithClasspathExtdirsBootCPArgs.lst";
-		AjBuildConfig config = genBuildConfig(new String[] { FILE_PATH }, messageWriter);
-		List classpath = config.getFullClasspath();
-		// note that empty or corrupt jars are NOT included in the classpath
-		// should have three entries, resolved relative to location of .lst file
-		assertEquals("Three entries in classpath",3,classpath.size());
-		Iterator cpIter = classpath.iterator();
-		try {
-		    assertEquals("Should be relative to TESTDIR",new File(TEST_DIR+File.separator+"xyz").getCanonicalPath(),cpIter.next());
-		    assertEquals("Should be relative to TESTDIR",new File(TEST_DIR+File.separator+"myextdir" + File.separator + "dummy.jar").getCanonicalPath(),cpIter.next());
-		    assertEquals("Should be relative to TESTDIR",new File(TEST_DIR+File.separator+"abc.jar").getCanonicalPath(),cpIter.next());
-			List files = config.getFiles();
-			assertEquals("Two source files",2,files.size());
-			Iterator fIter = files.iterator();
-			assertEquals("Should be relative to TESTDIR",new File(TEST_DIR+File.separator+"Abc.java").getCanonicalFile(),fIter.next());
-			assertEquals("Should be relative to TESTDIR",new File(TEST_DIR+File.separator+"xyz"+File.separator+"Def.aj").getCanonicalFile(),fIter.next());
-		    
-		} catch (IOException ex) {
-		    fail("Test case failure attempting to create canonical path: " + ex);
-		}
-		
-	}
-	
-	public void testAjOptions() throws InvalidInputException {
-		AjBuildConfig config = genBuildConfig(new String[] {  "-Xlint" }, messageWriter);
- 	
-		assertTrue(
-			"default options",
-			config.getLintMode().equals(AjBuildConfig.AJLINT_DEFAULT));			
-	}
+  private static AjBuildConfig genBuildConfig(String[] args, IMessageHandler handler) {
+    return new BuildArgParser(handler).genBuildConfig(args);
+  }
 
-	public void testAspectpath() throws InvalidInputException {
-		final String SOURCE_JAR = AjdtAjcTests.TESTDATA_PATH + "/testclasses.jar";
-		final String SOURCE_JARS = AjdtAjcTests.TESTDATA_PATH + "/testclasses.jar" + File.pathSeparator 
-			+ "../weaver/testdata/tracing.jar" + File.pathSeparator 
-			+ "../weaver/testdata/dummyAspect.jar";
-		AjBuildConfig config = genBuildConfig(new String[] { 
-			"-aspectpath", SOURCE_JAR }, 
-			messageWriter);
-		
-		assertTrue(((File)config.getAspectpath().get(0)).getName(), ((File)config.getAspectpath().get(0)).getName().equals("testclasses.jar"));
+  public void testDefaultClasspathAndTargetCombo() throws Exception {
+    final String ENTRY = "1.jar" + File.pathSeparator + "2.jar";
+    final String classpath = System.getProperty("java.class.path");
+    try {
+      System.setProperty("java.class.path", ENTRY); // see finally below
+      BuildArgParser parser = new BuildArgParser(messageWriter);
+      AjBuildConfig config = parser.genBuildConfig(new String[]{});
+            /*String err = */
+      parser.getOtherMessages(true);
+      //!!!assertTrue(err, null == err);
+      assertTrue(
+          config.getClasspath().toString(),
+          config.getClasspath().contains("1.jar"));
+      assertTrue(
+          config.getClasspath().toString(),
+          config.getClasspath().contains("2.jar"));
 
-		config = genBuildConfig(new String[] { 
-			"-aspectpath", SOURCE_JARS }, 
-			messageWriter);
-		assertTrue("size", + config.getAspectpath().size() == 3);
-	}
+      config = genBuildConfig(new String[]{"-1.3"}, messageWriter);
+      // these errors are deffered to the compiler now
+      //err = parser.getOtherMessages(true);
+      //!!!assertTrue(err, null == err);
+      assertTrue(
+          config.getClasspath().toString(),
+          config.getClasspath().contains("1.jar"));
+      assertTrue(
+          config.getClasspath().toString(),
+          config.getClasspath().contains("2.jar"));
 
-	public void testInJars() throws InvalidInputException {
-		final String SOURCE_JAR = AjdtAjcTests.TESTDATA_PATH + "/testclasses.jar";
-		final String SOURCE_JARS = AjdtAjcTests.TESTDATA_PATH + "/testclasses.jar" + File.pathSeparator 
-			+ "../weaver/testdata/tracing.jar" + File.pathSeparator 
-			+ "../weaver/testdata/dummyAspect.jar";
-		AjBuildConfig config = genBuildConfig(new String[] { 
-			"-injars", SOURCE_JAR }, 
-			messageWriter);
-		//XXX don't let this remain in both places in beta1			
+      parser = new BuildArgParser(messageWriter);
+      config = parser.genBuildConfig(new String[]{"-1.3"});
+            /*err = */
+      parser.getOtherMessages(true);
+      //!!!assertTrue(err, null == err);
+      assertTrue(
+          config.getClasspath().toString(),
+          config.getClasspath().contains("1.jar"));
+      assertTrue(
+          config.getClasspath().toString(),
+          config.getClasspath().contains("2.jar"));
+
+      config = genBuildConfig(new String[]{
+          "-classpath", ENTRY, "-1.4"}, messageWriter);
+      //			these errors are deffered to the compiler now
+      //err = parser.getOtherMessages(true);
+      //assertTrue("expected errors for missing jars", null != err);
+      final List cp = config.getClasspath();
+      boolean jar1Found = false;
+      boolean jar2Found = false;
+      for (final Iterator iter = cp.iterator(); iter.hasNext(); ) {
+        final String element = (String) iter.next();
+        if (element.indexOf("1.jar") != -1) jar1Found = true;
+        if (element.indexOf("2.jar") != -1) jar2Found = true;
+      }
+      assertTrue(
+          config.getClasspath().toString(),
+          jar1Found);
+      assertTrue(
+          config.getClasspath().toString(),
+          jar2Found);
+
+    } finally {
+      // do finally to avoid messing up classpath for other tests
+      System.setProperty("java.class.path", classpath);
+      final String setPath = System.getProperty("java.class.path");
+      final String m = "other tests will fail - classpath not reset";
+      assertEquals(m, classpath, setPath);
+    }
+  }
+
+  public void testPathResolutionFromConfigArgs() {
+    final String FILE_PATH = "@" + TEST_DIR + "configWithClasspathExtdirsBootCPArgs.lst";
+    final AjBuildConfig config = genBuildConfig(new String[]{FILE_PATH}, messageWriter);
+    final List classpath = config.getFullClasspath();
+    // note that empty or corrupt jars are NOT included in the classpath
+    // should have three entries, resolved relative to location of .lst file
+    assertEquals("Three entries in classpath", 3, classpath.size());
+    final Iterator cpIter = classpath.iterator();
+    try {
+      assertEquals("Should be relative to TESTDIR", new File(TEST_DIR + File.separator + "xyz").getCanonicalPath(), cpIter.next());
+      assertEquals("Should be relative to TESTDIR", new File(TEST_DIR + File.separator + "myextdir" + File.separator + "dummy.jar").getCanonicalPath(), cpIter.next());
+      assertEquals("Should be relative to TESTDIR", new File(TEST_DIR + File.separator + "abc.jar").getCanonicalPath(), cpIter.next());
+      final List files = config.getFiles();
+      assertEquals("Two source files", 2, files.size());
+      final Iterator fIter = files.iterator();
+      assertEquals("Should be relative to TESTDIR", new File(TEST_DIR + File.separator + "Abc.java").getCanonicalFile(), fIter.next());
+      assertEquals("Should be relative to TESTDIR", new File(TEST_DIR + File.separator + "xyz" + File.separator + "Def.aj").getCanonicalFile(), fIter.next());
+
+    } catch (IOException ex) {
+      fail("Test case failure attempting to create canonical path: " + ex);
+    }
+
+  }
+
+  public void testAjOptions() throws InvalidInputException {
+    final AjBuildConfig config = genBuildConfig(new String[]{"-Xlint"}, messageWriter);
+
+    assertTrue(
+        "default options",
+        config.getLintMode().equals(AjBuildConfig.AJLINT_DEFAULT));
+  }
+
+  public void testAspectpath() throws InvalidInputException {
+    final String SOURCE_JAR = AjdtAjcTests.TESTDATA_PATH + "/testclasses.jar";
+    final String SOURCE_JARS = AjdtAjcTests.TESTDATA_PATH + "/testclasses.jar" + File.pathSeparator
+        + "../weaver/testdata/tracing.jar" + File.pathSeparator
+        + "../weaver/testdata/dummyAspect.jar";
+    AjBuildConfig config = genBuildConfig(new String[]{
+        "-aspectpath", SOURCE_JAR},
+        messageWriter);
+
+    assertTrue(((File) config.getAspectpath().get(0)).getName(), ((File) config.getAspectpath().get(0)).getName().equals("testclasses.jar"));
+
+    config = genBuildConfig(new String[]{
+        "-aspectpath", SOURCE_JARS},
+        messageWriter);
+    assertTrue("size", +config.getAspectpath().size() == 3);
+  }
+
+  public void testInJars() throws InvalidInputException {
+    final String SOURCE_JAR = AjdtAjcTests.TESTDATA_PATH + "/testclasses.jar";
+    final String SOURCE_JARS = AjdtAjcTests.TESTDATA_PATH + "/testclasses.jar" + File.pathSeparator
+        + "../weaver/testdata/tracing.jar" + File.pathSeparator
+        + "../weaver/testdata/dummyAspect.jar";
+    AjBuildConfig config = genBuildConfig(new String[]{
+        "-injars", SOURCE_JAR},
+        messageWriter);
+    //XXX don't let this remain in both places in beta1
 //		assertTrue(
 //			"" + config.getAjOptions().get(AjCompilerOptions.OPTION_InJARs),  
 //			config.getAjOptions().get(AjCompilerOptions.OPTION_InJARs).equals(CompilerOptions.PRESERVE));
-		assertTrue(((File)config.getInJars().get(0)).getName(), ((File)config.getInJars().get(0)).getName().equals("testclasses.jar"));
+    assertTrue(((File) config.getInJars().get(0)).getName(), ((File) config.getInJars().get(0)).getName().equals("testclasses.jar"));
 
-		config = genBuildConfig(new String[] { 
-			"-injars", SOURCE_JARS }, 
-			messageWriter);
-		assertTrue("size", + config.getInJars().size() == 3);
-	}
+    config = genBuildConfig(new String[]{
+        "-injars", SOURCE_JARS},
+        messageWriter);
+    assertTrue("size", +config.getInJars().size() == 3);
+  }
 
-	public void testBadInJars() throws InvalidInputException {
-		final String SOURCE_JARS = AjdtAjcTests.TESTDATA_PATH + "/testclasses.jar" + File.pathSeparator + "b.far" + File.pathSeparator + "c.jar";
-		AjBuildConfig config = genBuildConfig(new String[] { 
-			"-injars", SOURCE_JARS }, 
-			messageWriter);
-		assertTrue("size: " + config.getInJars().size(), config.getInJars().size() == 1);
-	}
+  public void testBadInJars() throws InvalidInputException {
+    final String SOURCE_JARS = AjdtAjcTests.TESTDATA_PATH + "/testclasses.jar" + File.pathSeparator + "b.far" + File.pathSeparator + "c.jar";
+    final AjBuildConfig config = genBuildConfig(new String[]{
+        "-injars", SOURCE_JARS},
+        messageWriter);
+    assertTrue("size: " + config.getInJars().size(), config.getInJars().size() == 1);
+  }
 
-	public void testBadPathToSourceFiles() {
-		CountingMessageHandler countingHandler = new CountingMessageHandler(messageWriter);
-		/*AjBuildConfig config = */genBuildConfig(new String[]{ "inventedDir/doesntexist/*.java"},countingHandler);
-		assertTrue("Expected an error for the invalid path.",countingHandler.numMessages(IMessage.ERROR,false)==1);	
-	}
+  public void testBadPathToSourceFiles() {
+    final CountingMessageHandler countingHandler = new CountingMessageHandler(messageWriter);
+    /*AjBuildConfig config = */
+    genBuildConfig(new String[]{"inventedDir/doesntexist/*.java"}, countingHandler);
+    assertTrue("Expected an error for the invalid path.", countingHandler.numMessages(IMessage.ERROR, false) == 1);
+  }
 
-	public void testMultipleSourceRoots() throws InvalidInputException, IOException {
-		final String SRCROOT_1 = AjdtAjcTests.TESTDATA_PATH + "/src1/p1";
-		final String SRCROOT_2 = AjdtAjcTests.TESTDATA_PATH + "/ajc";
-		AjBuildConfig config = genBuildConfig(new String[] { 
-			"-sourceroots", SRCROOT_1 + File.pathSeparator + SRCROOT_2 }, 
-			messageWriter);
-		
-		assertEquals(getCanonicalPath(new File(SRCROOT_1)), ((File)config.getSourceRoots().get(0)).getAbsolutePath());
-		
-		Collection expectedFiles = Arrays.asList(new File[] {
-			new File(SRCROOT_1+File.separator+"A.java").getCanonicalFile(),
-			new File(SRCROOT_1+File.separator+"Foo.java").getCanonicalFile(),
-			new File(SRCROOT_2+File.separator+"A.java").getCanonicalFile(),
-			new File(SRCROOT_2+File.separator+"B.java").getCanonicalFile(),
-			new File(SRCROOT_2+File.separator+"X.aj").getCanonicalFile(),
-			new File(SRCROOT_2+File.separator+"Y.aj").getCanonicalFile(),
-			new File(SRCROOT_2+File.separator+"pkg"+File.separator+"Hello.java").getCanonicalFile(),
-		});
-  
-		//System.out.println(config.getFiles());
+  public void testMultipleSourceRoots() throws InvalidInputException, IOException {
+    final String SRCROOT_1 = AjdtAjcTests.TESTDATA_PATH + "/src1/p1";
+    final String SRCROOT_2 = AjdtAjcTests.TESTDATA_PATH + "/ajc";
+    final AjBuildConfig config = genBuildConfig(new String[]{
+        "-sourceroots", SRCROOT_1 + File.pathSeparator + SRCROOT_2},
+        messageWriter);
 
-		TestUtil.assertSetEquals(expectedFiles, config.getFiles());
-	}
+    assertEquals(getCanonicalPath(new File(SRCROOT_1)), ((File) config.getSourceRoots().get(0)).getAbsolutePath());
 
-	/**
-	 * @param file
-	 * @return String
-	 */
-	private String getCanonicalPath(File file) {
-		String ret = "";
-		try {
-			ret = file.getCanonicalPath();
-		} catch (IOException ioEx) {
-			fail("Unable to canonicalize " + file + " : " + ioEx);
-		}
-		return ret;
-	}
+    final Collection expectedFiles = Arrays.asList(new File[]{
+        new File(SRCROOT_1 + File.separator + "A.java").getCanonicalFile(),
+        new File(SRCROOT_1 + File.separator + "Foo.java").getCanonicalFile(),
+        new File(SRCROOT_2 + File.separator + "A.java").getCanonicalFile(),
+        new File(SRCROOT_2 + File.separator + "B.java").getCanonicalFile(),
+        new File(SRCROOT_2 + File.separator + "X.aj").getCanonicalFile(),
+        new File(SRCROOT_2 + File.separator + "Y.aj").getCanonicalFile(),
+        new File(SRCROOT_2 + File.separator + "pkg" + File.separator + "Hello.java").getCanonicalFile(),
+    });
 
-	public void testSourceRootDir() throws InvalidInputException, IOException {
-		final String SRCROOT = AjdtAjcTests.TESTDATA_PATH + "/ajc";
-		AjBuildConfig config = genBuildConfig(new String[] { 
-			"-sourceroots", SRCROOT }, 
-			messageWriter);
+    //System.out.println(config.getFiles());
 
-		assertEquals(getCanonicalPath(new File(SRCROOT)), ((File)config.getSourceRoots().get(0)).getAbsolutePath());
-		
-		Collection expectedFiles = Arrays.asList(new File[] {
-			new File(SRCROOT+File.separator+"A.java").getCanonicalFile(),
-			new File(SRCROOT+File.separator+"B.java").getCanonicalFile(),
-			new File(SRCROOT+File.separator+"X.aj").getCanonicalFile(),
-			new File(SRCROOT+File.separator+"Y.aj").getCanonicalFile(),
-			new File(SRCROOT+File.separator+"pkg"+File.separator+"Hello.java").getCanonicalFile(),
-		});
+    TestUtil.assertSetEquals(expectedFiles, config.getFiles());
+  }
 
-		//System.out.println(config.getFiles());
+  /**
+   * @param file
+   * @return String
+   */
+  private static String getCanonicalPath(File file) {
+    String ret = "";
+    try {
+      ret = file.getCanonicalPath();
+    } catch (IOException ioEx) {
+      fail("Unable to canonicalize " + file + " : " + ioEx);
+    }
+    return ret;
+  }
 
-		TestUtil.assertSetEquals(expectedFiles, config.getFiles());
-	}
+  public void testSourceRootDir() throws InvalidInputException, IOException {
+    final String SRCROOT = AjdtAjcTests.TESTDATA_PATH + "/ajc";
+    final AjBuildConfig config = genBuildConfig(new String[]{
+        "-sourceroots", SRCROOT},
+        messageWriter);
 
-	public void testBadSourceRootDir() throws InvalidInputException {
-		AjBuildConfig config = genBuildConfig(new String[] {   
-			"-sourceroots", 
-			AjdtAjcTests.TESTDATA_PATH + "/mumbleDoesNotExist" + File.pathSeparator 
-            + AjdtAjcTests.TESTDATA_PATH + "/ajc" }, 
-			messageWriter);
+    assertEquals(getCanonicalPath(new File(SRCROOT)), ((File) config.getSourceRoots().get(0)).getAbsolutePath());
 
-		assertTrue(config.getSourceRoots().toString(), config.getSourceRoots().size() == 1);
+    final Collection expectedFiles = Arrays.asList(new File[]{
+        new File(SRCROOT + File.separator + "A.java").getCanonicalFile(),
+        new File(SRCROOT + File.separator + "B.java").getCanonicalFile(),
+        new File(SRCROOT + File.separator + "X.aj").getCanonicalFile(),
+        new File(SRCROOT + File.separator + "Y.aj").getCanonicalFile(),
+        new File(SRCROOT + File.separator + "pkg" + File.separator + "Hello.java").getCanonicalFile(),
+    });
 
-		config = genBuildConfig(new String[] { 
-			"-sourceroots" }, 
-			messageWriter);
+    //System.out.println(config.getFiles());
 
-		assertTrue("" + config.getSourceRoots(), config.getSourceRoots().size() == 0);
-			
-	}
+    TestUtil.assertSetEquals(expectedFiles, config.getFiles());
+  }
 
-	//??? we've decided not to make this an error
-	public void testSourceRootDirWithFiles() throws InvalidInputException, IOException {
-		final String SRCROOT = AjdtAjcTests.TESTDATA_PATH + "/ajc/pkg";
-		AjBuildConfig config = genBuildConfig(new String[] { 
-			"-sourceroots", SRCROOT,  AjdtAjcTests.TESTDATA_PATH + "/src1/A.java"}, 
-			messageWriter);
+  public void testBadSourceRootDir() throws InvalidInputException {
+    AjBuildConfig config = genBuildConfig(new String[]{
+        "-sourceroots",
+        AjdtAjcTests.TESTDATA_PATH + "/mumbleDoesNotExist" + File.pathSeparator
+            + AjdtAjcTests.TESTDATA_PATH + "/ajc"},
+        messageWriter);
 
-		assertEquals(getCanonicalPath(new File(SRCROOT)), ((File)config.getSourceRoots().get(0)).getAbsolutePath());
-		
-		Collection expectedFiles = Arrays.asList(new File[] {
-			new File(SRCROOT+File.separator+"Hello.java").getCanonicalFile(),
-			new File(AjdtAjcTests.TESTDATA_PATH +File.separator+"src1"+File.separator+"A.java").getCanonicalFile(),
-		});
+    assertTrue(config.getSourceRoots().toString(), config.getSourceRoots().size() == 1);
 
-		TestUtil.assertSetEquals(expectedFiles, config.getFiles());
-		
-	}
+    config = genBuildConfig(new String[]{
+        "-sourceroots"},
+        messageWriter);
 
-	public void testExtDirs() throws Exception {
-		final String DIR = AjdtAjcTests.TESTDATA_PATH;
-		AjBuildConfig config = genBuildConfig(new String[] { 
-			"-extdirs", DIR }, 
-			messageWriter);
-		assertTrue(config.getClasspath().toString(), config.getClasspath().contains(
-			new File(DIR + File.separator + "testclasses.jar").getCanonicalPath()
-		));
-	}
+    assertTrue("" + config.getSourceRoots(), config.getSourceRoots().size() == 0);
 
-	public void testBootclasspath() throws InvalidInputException {
-		final String PATH = "mumble" + File.separator + "rt.jar";
-		AjBuildConfig config = genBuildConfig(new String[] { 
-			"-bootclasspath", PATH }, 
-			messageWriter);		
-		assertTrue("Should find '" + PATH + "' contained in the first entry of '" + config.getBootclasspath().toString(),
-				((String)config.getBootclasspath().get(0)).indexOf(PATH) != -1); 
+  }
 
-		config = genBuildConfig(new String[] { 
-			}, 
-			messageWriter);		
-		assertTrue(config.getBootclasspath().toString(), !config.getBootclasspath().get(0).equals(PATH)); 
-	}
+  //??? we've decided not to make this an error
+  public void testSourceRootDirWithFiles() throws InvalidInputException, IOException {
+    final String SRCROOT = AjdtAjcTests.TESTDATA_PATH + "/ajc/pkg";
+    final AjBuildConfig config = genBuildConfig(new String[]{
+        "-sourceroots", SRCROOT, AjdtAjcTests.TESTDATA_PATH + "/src1/A.java"},
+        messageWriter);
 
-	public void testOutputJar() throws InvalidInputException {
-		final String OUT_JAR = AjdtAjcTests.TESTDATA_PATH + "/testclasses.jar";
-		
-		AjBuildConfig config = genBuildConfig(new String[] { 
-			"-outjar", OUT_JAR }, 
-			messageWriter);
+    assertEquals(getCanonicalPath(new File(SRCROOT)), ((File) config.getSourceRoots().get(0)).getAbsolutePath());
 
-		//XXX don't let this remain in both places in beta1
+    final Collection expectedFiles = Arrays.asList(new File[]{
+        new File(SRCROOT + File.separator + "Hello.java").getCanonicalFile(),
+        new File(AjdtAjcTests.TESTDATA_PATH + File.separator + "src1" + File.separator + "A.java").getCanonicalFile(),
+    });
+
+    TestUtil.assertSetEquals(expectedFiles, config.getFiles());
+
+  }
+
+  public void testExtDirs() throws Exception {
+    final String DIR = AjdtAjcTests.TESTDATA_PATH;
+    final AjBuildConfig config = genBuildConfig(new String[]{
+        "-extdirs", DIR},
+        messageWriter);
+    assertTrue(config.getClasspath().toString(), config.getClasspath().contains(
+        new File(DIR + File.separator + "testclasses.jar").getCanonicalPath()
+    ));
+  }
+
+  public void testBootclasspath() throws InvalidInputException {
+    final String PATH = "mumble" + File.separator + "rt.jar";
+    AjBuildConfig config = genBuildConfig(new String[]{
+        "-bootclasspath", PATH},
+        messageWriter);
+    assertTrue("Should find '" + PATH + "' contained in the first entry of '" + config.getBootclasspath().toString(),
+        ((String) config.getBootclasspath().get(0)).indexOf(PATH) != -1);
+
+    config = genBuildConfig(new String[]{
+    },
+        messageWriter);
+    assertTrue(config.getBootclasspath().toString(), !config.getBootclasspath().get(0).equals(PATH));
+  }
+
+  public void testOutputJar() throws InvalidInputException {
+    final String OUT_JAR = AjdtAjcTests.TESTDATA_PATH + "/testclasses.jar";
+
+    AjBuildConfig config = genBuildConfig(new String[]{
+        "-outjar", OUT_JAR},
+        messageWriter);
+
+    //XXX don't let this remain in both places in beta1
 //		assertTrue(
 //			"will generate: " + config.getAjOptions().get(AjCompilerOptions.OPTION_OutJAR),  
 //			config.getAjOptions().get(AjCompilerOptions.OPTION_OutJAR).equals(CompilerOptions.GENERATE));
-		assertEquals(
-			getCanonicalPath(new File(OUT_JAR)),config.getOutputJar().getAbsolutePath()); 
-	
-		File nonExistingJar = new File(AjdtAjcTests.TESTDATA_PATH + "/mumbleDoesNotExist.jar");
-		config = genBuildConfig(new String[] { 
-			"-outjar", nonExistingJar.getAbsolutePath() }, 
-			messageWriter);
-		assertEquals(
-			getCanonicalPath(nonExistingJar), 
-			config.getOutputJar().getAbsolutePath());	
+    assertEquals(
+        getCanonicalPath(new File(OUT_JAR)), config.getOutputJar().getAbsolutePath());
 
-		nonExistingJar.delete();
-	}
-	
-	//XXX shouldn't need -1.4 to get this to pass
-	public void testCombinedOptions() throws InvalidInputException {
-		AjBuildConfig config = genBuildConfig(new String[] {  "-Xlint:error", "-target", "1.4"}, messageWriter);
-		assertTrue(
-				"target set",  
-				config.getOptions().targetJDK == ClassFileConstants.JDK1_4); 
+    final File nonExistingJar = new File(AjdtAjcTests.TESTDATA_PATH + "/mumbleDoesNotExist.jar");
+    config = genBuildConfig(new String[]{
+        "-outjar", nonExistingJar.getAbsolutePath()},
+        messageWriter);
+    assertEquals(
+        getCanonicalPath(nonExistingJar),
+        config.getOutputJar().getAbsolutePath());
 
-		assertTrue(
-			"Xlint option set",
-			config.getLintMode().equals(AjBuildConfig.AJLINT_ERROR));			
-	}
-	
-	public void testOutputDirectorySetting() throws InvalidInputException {
-		AjBuildConfig config = genBuildConfig(new String[] {  "-d", TEST_DIR }, messageWriter);
-		
-		assertTrue(
-			new File(config.getOutputDir().getPath()).getAbsolutePath() + " ?= " + 
-			new File(TEST_DIR).getAbsolutePath(),
-			config.getOutputDir().getAbsolutePath().equals((new File(TEST_DIR)).getAbsolutePath()));	
-	}
+    nonExistingJar.delete();
+  }
 
-	public void testClasspathSetting() throws InvalidInputException {
-		String ENTRY = "1.jar" + File.pathSeparator + "2.jar";
-		AjBuildConfig config = genBuildConfig(new String[] {  "-classpath", ENTRY }, messageWriter);
-		
-   		List cp = config.getClasspath();
-		boolean jar1Found = false;
-		boolean jar2Found = false;
-		for (Iterator iter = cp.iterator(); iter.hasNext();) {
-            String element = (String) iter.next();
-            if (element.indexOf("1.jar") != -1) jar1Found = true;
-            if (element.indexOf("2.jar") != -1) jar2Found = true;
-        }
-		assertTrue(
-			config.getClasspath().toString(),
-			jar1Found);
-		assertTrue(
-			config.getClasspath().toString(),
-			jar2Found);
-	}
+  //XXX shouldn't need -1.4 to get this to pass
+  public void testCombinedOptions() throws InvalidInputException {
+    final AjBuildConfig config = genBuildConfig(new String[]{"-Xlint:error", "-target", "1.4"}, messageWriter);
+    assertTrue(
+        "target set",
+        config.getOptions().targetJDK == ClassFileConstants.JDK1_4);
 
-	public void testArgInConfigFile() throws InvalidInputException {
-		String FILE_PATH =   "@" + TEST_DIR + "configWithArgs.lst";
-		String OUT_PATH = "bin";
-		AjBuildConfig config = genBuildConfig(new String[] { FILE_PATH }, messageWriter);
-		
-        assertNotNull(config);
-        File outputDir = config.getOutputDir();
-        assertNotNull(outputDir);        
-		assertEquals(outputDir.getPath(), OUT_PATH);
-	}
+    assertTrue(
+        "Xlint option set",
+        config.getLintMode().equals(AjBuildConfig.AJLINT_ERROR));
+  }
 
-	public void testNonExistentConfigFile() throws IOException {
-		String FILE_PATH =   "@" + TEST_DIR + "../bug-40257/d1/test.lst";
-		AjBuildConfig config = genBuildConfig(new String[] { FILE_PATH }, messageWriter);
+  public void testOutputDirectorySetting() throws InvalidInputException {
+    final AjBuildConfig config = genBuildConfig(new String[]{"-d", TEST_DIR}, messageWriter);
 
-		String a = new File(TEST_DIR + "../bug-40257/d1/A.java").getCanonicalPath();
-		String b = new File(TEST_DIR + "../bug-40257/d1/d2/B.java").getCanonicalPath();
-		String c = new File(TEST_DIR + "../bug-40257/d3/C.java").getCanonicalPath();
-		List pathList = new ArrayList();
-		for (Iterator it = config.getFiles().iterator(); it.hasNext(); ) {
-			pathList.add(((File)it.next()).getCanonicalPath());
-		}
-		assertTrue(pathList.contains(a));
-		assertTrue(pathList.contains(b));
-		assertTrue(pathList.contains(c));
-			
-	}
+    assertTrue(
+        new File(config.getOutputDir().getPath()).getAbsolutePath() + " ?= " +
+            new File(TEST_DIR).getAbsolutePath(),
+        config.getOutputDir().getAbsolutePath().equals((new File(TEST_DIR)).getAbsolutePath()));
+  }
 
-	public void testXlint() throws InvalidInputException {
+  public void testClasspathSetting() throws InvalidInputException {
+    final String ENTRY = "1.jar" + File.pathSeparator + "2.jar";
+    final AjBuildConfig config = genBuildConfig(new String[]{"-classpath", ENTRY}, messageWriter);
+
+    final List cp = config.getClasspath();
+    boolean jar1Found = false;
+    boolean jar2Found = false;
+    for (final Iterator iter = cp.iterator(); iter.hasNext(); ) {
+      final String element = (String) iter.next();
+      if (element.indexOf("1.jar") != -1) jar1Found = true;
+      if (element.indexOf("2.jar") != -1) jar2Found = true;
+    }
+    assertTrue(
+        config.getClasspath().toString(),
+        jar1Found);
+    assertTrue(
+        config.getClasspath().toString(),
+        jar2Found);
+  }
+
+  public void testArgInConfigFile() throws InvalidInputException {
+    final String FILE_PATH = "@" + TEST_DIR + "configWithArgs.lst";
+    final String OUT_PATH = "bin";
+    final AjBuildConfig config = genBuildConfig(new String[]{FILE_PATH}, messageWriter);
+
+    assertNotNull(config);
+    final File outputDir = config.getOutputDir();
+    assertNotNull(outputDir);
+    assertEquals(outputDir.getPath(), OUT_PATH);
+  }
+
+  public void testNonExistentConfigFile() throws IOException {
+    final String FILE_PATH = "@" + TEST_DIR + "../bug-40257/d1/test.lst";
+    final AjBuildConfig config = genBuildConfig(new String[]{FILE_PATH}, messageWriter);
+
+    final String a = new File(TEST_DIR + "../bug-40257/d1/A.java").getCanonicalPath();
+    final String b = new File(TEST_DIR + "../bug-40257/d1/d2/B.java").getCanonicalPath();
+    final String c = new File(TEST_DIR + "../bug-40257/d3/C.java").getCanonicalPath();
+    final List pathList = new ArrayList();
+    for (final Iterator it = config.getFiles().iterator(); it.hasNext(); ) {
+      pathList.add(((File) it.next()).getCanonicalPath());
+    }
+    assertTrue(pathList.contains(a));
+    assertTrue(pathList.contains(b));
+    assertTrue(pathList.contains(c));
+
+  }
+
+  public void testXlint() throws InvalidInputException {
 //		AjdtCommand command = new AjdtCommand();
-		AjBuildConfig config = genBuildConfig(new String[] {"-Xlint"}, messageWriter);
-		assertTrue("", config.getLintMode().equals(AjBuildConfig.AJLINT_DEFAULT));
-		config = genBuildConfig(new String[] {"-Xlint:warn"}, messageWriter);
-		assertTrue("", config.getLintMode().equals(AjBuildConfig.AJLINT_WARN));
-		config = genBuildConfig(new String[] {"-Xlint:error"}, messageWriter);
-		assertTrue("", config.getLintMode().equals(AjBuildConfig.AJLINT_ERROR));
-		config = genBuildConfig(new String[] {"-Xlint:ignore"}, messageWriter);
-		assertTrue("", config.getLintMode().equals(AjBuildConfig.AJLINT_IGNORE));
-	}
+    AjBuildConfig config = genBuildConfig(new String[]{"-Xlint"}, messageWriter);
+    assertTrue("", config.getLintMode().equals(AjBuildConfig.AJLINT_DEFAULT));
+    config = genBuildConfig(new String[]{"-Xlint:warn"}, messageWriter);
+    assertTrue("", config.getLintMode().equals(AjBuildConfig.AJLINT_WARN));
+    config = genBuildConfig(new String[]{"-Xlint:error"}, messageWriter);
+    assertTrue("", config.getLintMode().equals(AjBuildConfig.AJLINT_ERROR));
+    config = genBuildConfig(new String[]{"-Xlint:ignore"}, messageWriter);
+    assertTrue("", config.getLintMode().equals(AjBuildConfig.AJLINT_IGNORE));
+  }
 
-	public void testXlintfile() throws InvalidInputException {
-		String lintFile = AjdtAjcTests.TESTDATA_PATH + "/lintspec.properties"; 
+  public void testXlintfile() throws InvalidInputException {
+    final String lintFile = AjdtAjcTests.TESTDATA_PATH + "/lintspec.properties";
 //		String badLintFile = "lint.props";
-		AjBuildConfig config = genBuildConfig(new String[] {"-Xlintfile", lintFile}, messageWriter);
-		assertTrue(new File(lintFile).exists());
-		assertEquals(getCanonicalPath(new File(lintFile)),config.getLintSpecFile().getAbsolutePath());	
-	}
-	
-	/**
-	 * The option '-1.5' are currently eaten by the AspectJ argument parser - since
-	 * the JDT compiler upon which we are based doesn't understand them - *this should change* when we
-	 * switch to a 1.5 compiler base.  They are currently used to determine whether the weaver should
-	 * behave in a '1.5' way - for example autoboxing behaves differently when the 1.5 flag is specified.
-	 * Under 1.4 Integer != int
-	 * Under 1.5 Integer == int
-	 * (this applies to all primitive types)
-	 */
-	public void testSource15() throws InvalidInputException {
+    final AjBuildConfig config = genBuildConfig(new String[]{"-Xlintfile", lintFile}, messageWriter);
+    assertTrue(new File(lintFile).exists());
+    assertEquals(getCanonicalPath(new File(lintFile)), config.getLintSpecFile().getAbsolutePath());
+  }
+
+  /**
+   * The option '-1.5' are currently eaten by the AspectJ argument parser - since
+   * the JDT compiler upon which we are based doesn't understand them - *this should change* when we
+   * switch to a 1.5 compiler base.  They are currently used to determine whether the weaver should
+   * behave in a '1.5' way - for example autoboxing behaves differently when the 1.5 flag is specified.
+   * Under 1.4 Integer != int
+   * Under 1.5 Integer == int
+   * (this applies to all primitive types)
+   */
+  public void testSource15() throws InvalidInputException {
 //		AjBuildConfig config = genBuildConfig(new String[]{"-source","1.5"},messageWriter);
 //		assertTrue("should be in 1.5 mode",config.getJave5Behaviour());
-		AjBuildConfig config = genBuildConfig(new String[]{"-1.5"},messageWriter);
-		assertTrue("should be in 1.5 mode",config.getBehaveInJava5Way());
-		config = genBuildConfig(new String[]{"-source","1.4"},messageWriter);
-		assertTrue("should not be in 1.5 mode",!config.getBehaveInJava5Way());
-		assertTrue("should be in 1.4 mode",config.getOptions().sourceLevel == ClassFileConstants.JDK1_4);
-		config = genBuildConfig(new String[]{"-source","1.3"},messageWriter);
-		assertTrue("should not be in 1.5 mode",!config.getBehaveInJava5Way());
-		assertTrue("should be in 1.3 mode",config.getOptions().sourceLevel == ClassFileConstants.JDK1_3);
-	}
+    AjBuildConfig config = genBuildConfig(new String[]{"-1.5"}, messageWriter);
+    assertTrue("should be in 1.5 mode", config.getBehaveInJava5Way());
+    config = genBuildConfig(new String[]{"-source", "1.4"}, messageWriter);
+    assertTrue("should not be in 1.5 mode", !config.getBehaveInJava5Way());
+    assertTrue("should be in 1.4 mode", config.getOptions().sourceLevel == ClassFileConstants.JDK1_4);
+    config = genBuildConfig(new String[]{"-source", "1.3"}, messageWriter);
+    assertTrue("should not be in 1.5 mode", !config.getBehaveInJava5Way());
+    assertTrue("should be in 1.3 mode", config.getOptions().sourceLevel == ClassFileConstants.JDK1_3);
+  }
 
-	public void testOptions() throws InvalidInputException {
+  public void testOptions() throws InvalidInputException {
 //		AjdtCommand command = new AjdtCommand();
-		String TARGET = "1.4";
-		AjBuildConfig config = genBuildConfig(new String[] {"-target", TARGET, "-source", TARGET}, messageWriter);
-		assertTrue(
-			"target set",  
-			config.getOptions().targetJDK == ClassFileConstants.JDK1_4);
-		assertTrue(
-			"source set",  
-			config.getOptions().sourceLevel == ClassFileConstants.JDK1_4);
-	}
-	
-	public void testLstFileExpansion() throws IOException, FileNotFoundException, InvalidInputException {
-		String FILE_PATH =  TEST_DIR + "config.lst";
-		String SOURCE_PATH_1 = "A.java";
-		String SOURCE_PATH_2 = "B.java";
+    final String TARGET = "1.4";
+    final AjBuildConfig config = genBuildConfig(new String[]{"-target", TARGET, "-source", TARGET}, messageWriter);
+    assertTrue(
+        "target set",
+        config.getOptions().targetJDK == ClassFileConstants.JDK1_4);
+    assertTrue(
+        "source set",
+        config.getOptions().sourceLevel == ClassFileConstants.JDK1_4);
+  }
+
+  public void testLstFileExpansion() throws IOException, FileNotFoundException, InvalidInputException {
+    final String FILE_PATH = TEST_DIR + "config.lst";
+    final String SOURCE_PATH_1 = "A.java";
+    final String SOURCE_PATH_2 = "B.java";
 
 //        File f = new File(FILE_PATH);
-		
-		AjBuildConfig config = genBuildConfig(new String[] { "@" + FILE_PATH }, messageWriter);
-		List resultList = config.getFiles();
-		
-		assertTrue("correct number of files", resultList.size() == 2);	
-		assertTrue(resultList.toString() + new File(TEST_DIR + SOURCE_PATH_1).getCanonicalFile(),
-			resultList.contains(new File(TEST_DIR + SOURCE_PATH_1).getCanonicalFile()));
-		assertTrue(resultList.toString() + SOURCE_PATH_2,
-			resultList.contains(new File(TEST_DIR + SOURCE_PATH_2).getCanonicalFile()));			
-	}
-	
 
-	//??? do we need to remove this limitation
+    final AjBuildConfig config = genBuildConfig(new String[]{"@" + FILE_PATH}, messageWriter);
+    final List resultList = config.getFiles();
+
+    assertTrue("correct number of files", resultList.size() == 2);
+    assertTrue(resultList.toString() + new File(TEST_DIR + SOURCE_PATH_1).getCanonicalFile(),
+        resultList.contains(new File(TEST_DIR + SOURCE_PATH_1).getCanonicalFile()));
+    assertTrue(resultList.toString() + SOURCE_PATH_2,
+        resultList.contains(new File(TEST_DIR + SOURCE_PATH_2).getCanonicalFile()));
+  }
+
+
+  //??? do we need to remove this limitation
 //	public void testArgInConfigFileAndRelativizingPathParam() throws InvalidInputException {
 //		String FILE_PATH =   "@" + TEST_DIR + "configWithArgs.lst";
 //		String OUT_PATH = TEST_DIR + "bin";
@@ -488,97 +491,99 @@ public class BuildArgParserTestCase extends TestCase {
 //			config.getOutputDir().getPath() + " ?= " + OUT_PATH,
 //			config.getOutputDir().getAbsolutePath().equals((new File(OUT_PATH)).getAbsolutePath()));	
 //	}
-	
-	public void testAjFileInclusion() throws InvalidInputException {
-		genBuildConfig(new String[] { TEST_DIR + "X.aj", TEST_DIR + "Y.aj"}, messageWriter);
-	}
-	
-	public void testOutxml () {
-		IMessageHolder messageHolder = new MessageHandler();
-		AjBuildConfig config = genBuildConfig(new String[] { "-outxml", "-showWeaveInfo" }, messageHolder);
-        assertTrue("Warnings: " + messageHolder,!messageHolder.hasAnyMessage(IMessage.WARNING, true));
-		assertEquals("Wrong outxml","META-INF/aop-ajc.xml",config.getOutxmlName());
-		assertTrue("Following option currupted",config.getShowWeavingInformation());
-	}
-	
-	public void testOutxmlfile () {
-		IMessageHolder messageHolder = new MessageHandler();
-		AjBuildConfig config = genBuildConfig(new String[] { "-outxmlfile", "custom/aop.xml", "-showWeaveInfo" }, messageHolder);
-        assertTrue("Warnings: " + messageHolder,!messageHolder.hasAnyMessage(IMessage.WARNING, true));
-		assertEquals("Wrong outxml","custom/aop.xml",config.getOutxmlName());
-		assertTrue("Following option currupted",config.getShowWeavingInformation());
-	}
 
-	public void testNonstandardInjars() {
-		AjBuildConfig config = setupNonstandardPath("-injars");
-		assertEquals("bad path: " + config.getInJars(), 3, config.getInJars().size());
-	}
-	
-	public void testNonstandardInpath() {
-		AjBuildConfig config = setupNonstandardPath("-inpath");
-		assertEquals("bad path: " + config.getInpath(), 3, config.getInpath().size());
-	}
-	
-	public void testNonstandardAspectpath() {
-		AjBuildConfig config = setupNonstandardPath("-aspectpath");
-		assertEquals("bad path: " + config.getAspectpath(), 3, config.getAspectpath().size());
-	}
+  public void testAjFileInclusion() throws InvalidInputException {
+    genBuildConfig(new String[]{TEST_DIR + "X.aj", TEST_DIR + "Y.aj"}, messageWriter);
+  }
 
-	public void testNonstandardClasspath() throws IOException {
-		AjBuildConfig config = setupNonstandardPath("-classpath");
-		checkPathSubset(config.getClasspath());
-	}
-	
-	public void testNonstandardBootpath() throws IOException {
-		AjBuildConfig config = setupNonstandardPath("-bootclasspath");
-		checkPathSubset(config.getBootclasspath());
-	}
-	
-	private void checkPathSubset(List path) throws IOException {
-		String files[] = { "aspectjJar.file", "jarChild", "parent.zip" };
-		for (int i = 0; i < files.length; i++) {
-			File file = new File(NONSTANDARD_JAR_DIR+files[i]);
-			assertTrue("bad path: " + path, path.contains(file.getCanonicalPath()));			
-		}
-	}
+  public void testOutxml() {
+    final IMessageHolder messageHolder = new MessageHandler();
+    final AjBuildConfig config = genBuildConfig(new String[]{"-outxml", "-showWeaveInfo"}, messageHolder);
+    assertTrue("Warnings: " + messageHolder, !messageHolder.hasAnyMessage(IMessage.WARNING, true));
+    assertEquals("Wrong outxml", "META-INF/aop-ajc.xml", config.getOutxmlName());
+    assertTrue("Following option currupted", config.getShowWeavingInformation());
+  }
 
-	public void testNonstandardOutjar() {
-		final String OUT_JAR = NONSTANDARD_JAR_DIR + File.pathSeparator + "outputFile";
-		
-		AjBuildConfig config = genBuildConfig(new String[] { 
-			"-outjar", OUT_JAR }, 
-			messageWriter);
+  public void testOutxmlfile() {
+    final IMessageHolder messageHolder = new MessageHandler();
+    final AjBuildConfig config = genBuildConfig(new String[]{"-outxmlfile", "custom/aop.xml", "-showWeaveInfo"}, messageHolder);
+    assertTrue("Warnings: " + messageHolder, !messageHolder.hasAnyMessage(IMessage.WARNING, true));
+    assertEquals("Wrong outxml", "custom/aop.xml", config.getOutxmlName());
+    assertTrue("Following option currupted", config.getShowWeavingInformation());
+  }
 
-		File newJar = new File(OUT_JAR);
-		assertEquals(
-			getCanonicalPath(newJar),config.getOutputJar().getAbsolutePath()); 
-	
-		newJar.delete();
-	}
+  public void testNonstandardInjars() {
+    final AjBuildConfig config = setupNonstandardPath("-injars");
+    assertEquals("bad path: " + config.getInJars(), 3, config.getInJars().size());
+  }
 
-	public void testNonstandardOutputDirectorySetting() throws InvalidInputException {
-		String filePath = AjdtAjcTests.TESTDATA_PATH + File.separator + "ajc.jar" + File.separator;
-		File testDir = new File(filePath);
-		AjBuildConfig config = genBuildConfig(new String[] {  "-d", filePath }, messageWriter);
-		
-		assertEquals(testDir.getAbsolutePath(), config.getOutputDir().getAbsolutePath());	
-	}
-	
-	private static final String NONSTANDARD_JAR_DIR = AjdtAjcTests.TESTDATA_PATH + "/OutjarTest/folder.jar/";
-	
-	private AjBuildConfig setupNonstandardPath(String pathType) {
-		String NONSTANDARD_PATH_ENTRY = NONSTANDARD_JAR_DIR+"aspectjJar.file" + File.pathSeparator + NONSTANDARD_JAR_DIR+"aspectJar.file" + File.pathSeparator + NONSTANDARD_JAR_DIR+"jarChild" + File.pathSeparator + NONSTANDARD_JAR_DIR+"parent.zip";		
-		
-		return genBuildConfig(new String[] { 
-			pathType, NONSTANDARD_PATH_ENTRY }, 
-			messageWriter);
-	}
-	
-	protected void setUp() throws Exception {
-		super.setUp();
-	}
-	
-	protected void tearDown() throws Exception {
-		super.tearDown();
-	}
+  public void testNonstandardInpath() {
+    final AjBuildConfig config = setupNonstandardPath("-inpath");
+    assertEquals("bad path: " + config.getInpath(), 3, config.getInpath().size());
+  }
+
+  public void testNonstandardAspectpath() {
+    final AjBuildConfig config = setupNonstandardPath("-aspectpath");
+    assertEquals("bad path: " + config.getAspectpath(), 3, config.getAspectpath().size());
+  }
+
+  public void testNonstandardClasspath() throws IOException {
+    final AjBuildConfig config = setupNonstandardPath("-classpath");
+    checkPathSubset(config.getClasspath());
+  }
+
+  public void testNonstandardBootpath() throws IOException {
+    final AjBuildConfig config = setupNonstandardPath("-bootclasspath");
+    checkPathSubset(config.getBootclasspath());
+  }
+
+  private static void checkPathSubset(List path) throws IOException {
+    final String[] files = {"aspectjJar.file", "jarChild", "parent.zip"};
+    for (int i = 0; i < files.length; i++) {
+      final File file = new File(NONSTANDARD_JAR_DIR + files[i]);
+      assertTrue("bad path: " + path, path.contains(file.getCanonicalPath()));
+    }
+  }
+
+  public void testNonstandardOutjar() {
+    final String OUT_JAR = NONSTANDARD_JAR_DIR + File.pathSeparator + "outputFile";
+
+    final AjBuildConfig config = genBuildConfig(new String[]{
+        "-outjar", OUT_JAR},
+        messageWriter);
+
+    final File newJar = new File(OUT_JAR);
+    assertEquals(
+        getCanonicalPath(newJar), config.getOutputJar().getAbsolutePath());
+
+    newJar.delete();
+  }
+
+  public void testNonstandardOutputDirectorySetting() throws InvalidInputException {
+    final String filePath = AjdtAjcTests.TESTDATA_PATH + File.separator + "ajc.jar" + File.separator;
+    final File testDir = new File(filePath);
+    final AjBuildConfig config = genBuildConfig(new String[]{"-d", filePath}, messageWriter);
+
+    assertEquals(testDir.getAbsolutePath(), config.getOutputDir().getAbsolutePath());
+  }
+
+  private static final String NONSTANDARD_JAR_DIR = AjdtAjcTests.TESTDATA_PATH + "/OutjarTest/folder.jar/";
+
+  private AjBuildConfig setupNonstandardPath(String pathType) {
+    final String NONSTANDARD_PATH_ENTRY = NONSTANDARD_JAR_DIR + "aspectjJar.file" + File.pathSeparator + NONSTANDARD_JAR_DIR + "aspectJar.file" + File.pathSeparator + NONSTANDARD_JAR_DIR + "jarChild" + File.pathSeparator + NONSTANDARD_JAR_DIR + "parent.zip";
+
+    return genBuildConfig(new String[]{
+        pathType, NONSTANDARD_PATH_ENTRY},
+        messageWriter);
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    super.tearDown();
+  }
 }

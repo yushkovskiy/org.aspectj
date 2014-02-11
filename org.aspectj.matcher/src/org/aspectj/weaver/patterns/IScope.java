@@ -21,39 +21,39 @@ import org.aspectj.weaver.World;
 
 public interface IScope {
 
-	/**
-	 * @return the type corresponding to the name in this scope, or ResolvedType.MISSING if no such type exists
-	 */
-	UnresolvedType lookupType(String name, IHasPosition location);
+  /**
+   * @return the type corresponding to the name in this scope, or ResolvedType.MISSING if no such type exists
+   */
+  UnresolvedType lookupType(String name, IHasPosition location);
 
-	World getWorld();
+  World getWorld();
 
-	ResolvedType getEnclosingType();
+  ResolvedType getEnclosingType();
 
-	// these next three are used to create {@link BindingTypePattern} objects.
-	IMessageHandler getMessageHandler();
+  // these next three are used to create {@link BindingTypePattern} objects.
+  IMessageHandler getMessageHandler();
 
-	/**
-	 * @return the formal associated with the name, or null if no such formal exists
-	 */
-	FormalBinding lookupFormal(String name);
+  /**
+   * @return the formal associated with the name, or null if no such formal exists
+   */
+  FormalBinding lookupFormal(String name);
 
-	/**
-	 * @return the formal with the index. Throws ArrayOutOfBounds exception if out of bounds
-	 */
-	FormalBinding getFormal(int i);
+  /**
+   * @return the formal with the index. Throws ArrayOutOfBounds exception if out of bounds
+   */
+  FormalBinding getFormal(int i);
 
-	int getFormalCount();
+  int getFormalCount();
 
-	String[] getImportedPrefixes();
+  String[] getImportedPrefixes();
 
-	String[] getImportedNames();
+  String[] getImportedNames();
 
-	void message(IMessage.Kind kind, IHasPosition location, String message);
+  void message(IMessage.Kind kind, IHasPosition location, String message);
 
-	void message(IMessage.Kind kind, IHasPosition location1, IHasPosition location2, String message);
+  void message(IMessage.Kind kind, IHasPosition location1, IHasPosition location2, String message);
 
-	void message(IMessage aMessage);
+  void message(IMessage aMessage);
 
-	// ISourceLocation makeSourceLocation(ILocation location);
+  // ISourceLocation makeSourceLocation(ILocation location);
 }

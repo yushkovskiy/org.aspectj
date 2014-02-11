@@ -15,8 +15,8 @@ package org.aspectj.weaver.ast;
 
 public abstract class ASTNode {
 
-    public ASTNode() {
-        super();
-    }
+  public ASTNode() {
+    super();
+  }
 
 }

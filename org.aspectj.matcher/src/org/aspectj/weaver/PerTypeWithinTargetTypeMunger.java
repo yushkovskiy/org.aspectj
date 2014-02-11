@@ -12,71 +12,73 @@
 
 package org.aspectj.weaver;
 
-import java.io.IOException;
-
 import org.aspectj.util.FuzzyBoolean;
 import org.aspectj.weaver.patterns.PerTypeWithin;
 import org.aspectj.weaver.patterns.Pointcut;
 
+import java.io.IOException;
+
 // PTWIMPL Target type munger adds the localAspectOf() method
 public class PerTypeWithinTargetTypeMunger extends ResolvedTypeMunger {
-	private UnresolvedType aspectType;
-	private PerTypeWithin testPointcut;
+  private final UnresolvedType aspectType;
+  private final PerTypeWithin testPointcut;
 
-	public PerTypeWithinTargetTypeMunger(UnresolvedType aspectType, PerTypeWithin testPointcut) {
-		super(PerTypeWithinInterface, null);
-		this.aspectType = aspectType;
-		this.testPointcut = testPointcut;
-	}
+  public PerTypeWithinTargetTypeMunger(UnresolvedType aspectType, PerTypeWithin testPointcut) {
+    super(PerTypeWithinInterface, null);
+    this.aspectType = aspectType;
+    this.testPointcut = testPointcut;
+  }
 
-	public boolean equals(Object other) {
-		if (!(other instanceof PerTypeWithinTargetTypeMunger)) {
-			return false;
-		}
-		PerTypeWithinTargetTypeMunger o = (PerTypeWithinTargetTypeMunger) other;
-		return ((o.testPointcut == null) ? (testPointcut == null) : testPointcut.equals(o.testPointcut))
-				&& ((o.aspectType == null) ? (aspectType == null) : aspectType.equals(o.aspectType));
-	}
+  public boolean equals(Object other) {
+    if (!(other instanceof PerTypeWithinTargetTypeMunger)) {
+      return false;
+    }
+    final PerTypeWithinTargetTypeMunger o = (PerTypeWithinTargetTypeMunger) other;
+    return ((o.testPointcut == null) ? (testPointcut == null) : testPointcut.equals(o.testPointcut))
+        && ((o.aspectType == null) ? (aspectType == null) : aspectType.equals(o.aspectType));
+  }
 
-	private volatile int hashCode = 0;
+  private volatile int hashCode = 0;
 
-	public int hashCode() {
-		if (hashCode == 0) {
-			int result = 17;
-			result = 37 * result + ((testPointcut == null) ? 0 : testPointcut.hashCode());
-			result = 37 * result + ((aspectType == null) ? 0 : aspectType.hashCode());
-			hashCode = result;
-		}
-		return hashCode;
-	}
+  public int hashCode() {
+    if (hashCode == 0) {
+      int result = 17;
+      result = 37 * result + ((testPointcut == null) ? 0 : testPointcut.hashCode());
+      result = 37 * result + ((aspectType == null) ? 0 : aspectType.hashCode());
+      hashCode = result;
+    }
+    return hashCode;
+  }
 
-	public void write(CompressingDataOutputStream s) throws IOException {
-		throw new RuntimeException("shouldn't be serialized");
-	}
+  @Override
+  public void write(CompressingDataOutputStream s) throws IOException {
+    throw new RuntimeException("shouldn't be serialized");
+  }
 
-	public UnresolvedType getAspectType() {
-		return aspectType;
-	}
+  public UnresolvedType getAspectType() {
+    return aspectType;
+  }
 
-	public Pointcut getTestPointcut() {
-		return testPointcut;
-	}
+  public Pointcut getTestPointcut() {
+    return testPointcut;
+  }
 
-	// This is a lexical within() so if you say PerTypeWithin(Test) and matchType is an
-	// inner type (e.g. Test$NestedType) then it should match successfully
-	// Does not match if the target is an interface
-	public boolean matches(ResolvedType matchType, ResolvedType aspectType) {
-		return isWithinType(matchType).alwaysTrue() && !matchType.isInterface();
-	}
+  // This is a lexical within() so if you say PerTypeWithin(Test) and matchType is an
+  // inner type (e.g. Test$NestedType) then it should match successfully
+  // Does not match if the target is an interface
+  @Override
+  public boolean matches(ResolvedType matchType, ResolvedType aspectType) {
+    return isWithinType(matchType).alwaysTrue() && !matchType.isInterface();
+  }
 
-	private FuzzyBoolean isWithinType(ResolvedType type) {
-		while (type != null) {
-			if (testPointcut.getTypePattern().matchesStatically(type)) {
-				return FuzzyBoolean.YES;
-			}
-			type = type.getDeclaringType();
-		}
-		return FuzzyBoolean.NO;
-	}
+  private FuzzyBoolean isWithinType(ResolvedType type) {
+    while (type != null) {
+      if (testPointcut.getTypePattern().matchesStatically(type)) {
+        return FuzzyBoolean.YES;
+      }
+      type = type.getDeclaringType();
+    }
+    return FuzzyBoolean.NO;
+  }
 
 }

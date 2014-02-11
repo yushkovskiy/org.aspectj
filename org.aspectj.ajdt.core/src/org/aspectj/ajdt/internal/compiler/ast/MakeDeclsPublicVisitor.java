@@ -14,15 +14,16 @@
 package org.aspectj.ajdt.internal.compiler.ast;
 
 import org.aspectj.org.eclipse.jdt.internal.compiler.ASTVisitor;
-//import org.aspectj.org.eclipse.jdt.internal.compiler.ast.AnonymousLocalTypeDeclaration;
 import org.aspectj.org.eclipse.jdt.internal.compiler.ast.ConstructorDeclaration;
 import org.aspectj.org.eclipse.jdt.internal.compiler.ast.FieldDeclaration;
-import org.aspectj.org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
-//import org.aspectj.org.eclipse.jdt.internal.compiler.ast.LocalTypeDeclaration;
 import org.aspectj.org.eclipse.jdt.internal.compiler.ast.MethodDeclaration;
+import org.aspectj.org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.BlockScope;
 import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.ClassScope;
 import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.MethodScope;
+
+//import org.aspectj.org.eclipse.jdt.internal.compiler.ast.AnonymousLocalTypeDeclaration;
+//import org.aspectj.org.eclipse.jdt.internal.compiler.ast.LocalTypeDeclaration;
 
 /**
  * Takes a method that already has the three extra parameters
@@ -31,40 +32,45 @@ import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.MethodScope;
 
 public class MakeDeclsPublicVisitor extends ASTVisitor {
 
-	public void endVisit(ConstructorDeclaration decl, ClassScope scope) {
-		if (decl.binding==null) return; 
-		decl.binding.modifiers = AstUtil.makePublic(decl.binding.modifiers);
-	}
+  @Override
+  public void endVisit(ConstructorDeclaration decl, ClassScope scope) {
+    if (decl.binding == null) return;
+    decl.binding.modifiers = AstUtil.makePublic(decl.binding.modifiers);
+  }
 
-	public void endVisit(FieldDeclaration decl, MethodScope scope) {
-		if (decl.binding==null) return; 
-		decl.binding.modifiers = AstUtil.makePublic(decl.binding.modifiers);
-	}
+  @Override
+  public void endVisit(FieldDeclaration decl, MethodScope scope) {
+    if (decl.binding == null) return;
+    decl.binding.modifiers = AstUtil.makePublic(decl.binding.modifiers);
+  }
 
 
-	public void endVisit(MethodDeclaration decl, ClassScope scope) {
-		if (decl.binding==null) return; 
-		decl.binding.modifiers = AstUtil.makePublic(decl.binding.modifiers);
-	}
+  @Override
+  public void endVisit(MethodDeclaration decl, ClassScope scope) {
+    if (decl.binding == null) return;
+    decl.binding.modifiers = AstUtil.makePublic(decl.binding.modifiers);
+  }
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.jdt.internal.compiler.ASTVisitor#endVisit(org.eclipse.jdt.internal.compiler.ast.TypeDeclaration, org.eclipse.jdt.internal.compiler.lookup.BlockScope)
-	 */
-	public void endVisit(
-		TypeDeclaration localTypeDeclaration,
-		BlockScope scope) {
-		if (localTypeDeclaration.binding==null) return; 
-		localTypeDeclaration.binding.modifiers = AstUtil.makePublic(localTypeDeclaration.binding.modifiers);
-	}
+  /* (non-Javadoc)
+   * @see org.eclipse.jdt.internal.compiler.ASTVisitor#endVisit(org.eclipse.jdt.internal.compiler.ast.TypeDeclaration, org.eclipse.jdt.internal.compiler.lookup.BlockScope)
+   */
+  @Override
+  public void endVisit(
+      TypeDeclaration localTypeDeclaration,
+      BlockScope scope) {
+    if (localTypeDeclaration.binding == null) return;
+    localTypeDeclaration.binding.modifiers = AstUtil.makePublic(localTypeDeclaration.binding.modifiers);
+  }
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.jdt.internal.compiler.ASTVisitor#endVisit(org.eclipse.jdt.internal.compiler.ast.TypeDeclaration, org.eclipse.jdt.internal.compiler.lookup.ClassScope)
-	 */
-	public void endVisit(
-		TypeDeclaration memberTypeDeclaration,
-		ClassScope scope) {
-		if (memberTypeDeclaration.binding==null) return; 
-		memberTypeDeclaration.binding.modifiers = AstUtil.makePublic(memberTypeDeclaration.binding.modifiers);
-	}
+  /* (non-Javadoc)
+   * @see org.eclipse.jdt.internal.compiler.ASTVisitor#endVisit(org.eclipse.jdt.internal.compiler.ast.TypeDeclaration, org.eclipse.jdt.internal.compiler.lookup.ClassScope)
+   */
+  @Override
+  public void endVisit(
+      TypeDeclaration memberTypeDeclaration,
+      ClassScope scope) {
+    if (memberTypeDeclaration.binding == null) return;
+    memberTypeDeclaration.binding.modifiers = AstUtil.makePublic(memberTypeDeclaration.binding.modifiers);
+  }
 
 }

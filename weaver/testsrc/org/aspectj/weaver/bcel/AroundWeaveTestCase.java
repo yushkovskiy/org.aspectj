@@ -20,74 +20,72 @@ import java.util.*;
 import org.aspectj.weaver.*;
 
 public class AroundWeaveTestCase extends WeaveTestCase {
-	{
-		regenerate = false;
-	}
+  {
+    regenerate = false;
+  }
 
-	public AroundWeaveTestCase(String name) {
-		super(name);
-	}
-	
-	public void testAround() throws IOException {
-		aroundTest("Around", true);
-	}
-	
-	public void testAroundAll() throws IOException {
-		aroundTest("AroundAll", false);
-	}
-	
-    public void testAroundAndOthers() throws IOException {
-    	aroundTestAndOthers("AroundAndOthers", true);
-    }
+  public AroundWeaveTestCase(String name) {
+    super(name);
+  }
 
-    public void testAroundAllAndOthers() throws IOException {
-    	aroundTestAndOthers("AroundAllAndOthers", false);
-    }
+  public void testAround() throws IOException {
+    aroundTest("Around", true);
+  }
+
+  public void testAroundAll() throws IOException {
+    aroundTest("AroundAll", false);
+  }
+
+  public void testAroundAndOthers() throws IOException {
+    aroundTestAndOthers("AroundAndOthers", true);
+  }
+
+  public void testAroundAllAndOthers() throws IOException {
+    aroundTestAndOthers("AroundAllAndOthers", false);
+  }
 
 
-    private BcelAdvice makeAroundMunger(final boolean matchOnlyPrintln) {
-        BcelWorld world = super.world;
-        final Member sig =
-            MemberImpl.method(
-                UnresolvedType.forName("Aspect"),
-                Modifier.STATIC,
-                "ajc_around",
-                "(Lorg/aspectj/runtime/internal/AroundClosure;)Ljava/lang/Object;");
-        
-        return new BcelAdvice(
-        	AdviceKind.stringToKind("around"), 
-        	matchOnlyPrintln ? makePointcutPrintln() : makePointcutAll(),
-	        sig, 0, -1, -1, null, UnresolvedType.forName("Aspect").resolve(world))
-	    {
-            public void specializeOn(Shadow s) {
-            	super.specializeOn(s);
-                ((BcelShadow) s).initializeForAroundClosure();
-            }
-        };    
-    }  
+  private BcelAdvice makeAroundMunger(final boolean matchOnlyPrintln) {
+    final BcelWorld world = super.world;
+    final Member sig =
+        MemberImpl.method(
+            UnresolvedType.forName("Aspect"),
+            Modifier.STATIC,
+            "ajc_around",
+            "(Lorg/aspectj/runtime/internal/AroundClosure;)Ljava/lang/Object;");
 
-	private void aroundTest(String outName, final boolean matchOnlyPrintln) throws IOException {
-		weaveTest(getStandardTargets(), outName, makeAroundMunger(matchOnlyPrintln));
-	}  
+    return new BcelAdvice(
+        AdviceKind.stringToKind("around"),
+        matchOnlyPrintln ? makePointcutPrintln() : makePointcutAll(),
+        sig, 0, -1, -1, null, UnresolvedType.forName("Aspect").resolve(world)) {
+      public void specializeOn(Shadow s) {
+        super.specializeOn(s);
+        ((BcelShadow) s).initializeForAroundClosure();
+      }
+    };
+  }
 
-    private void aroundTestAndOthers(String outName, final boolean matchOnlyPrintln)
-            throws IOException 
-    {
-                
-        List l = new ArrayList();
+  private void aroundTest(String outName, final boolean matchOnlyPrintln) throws IOException {
+    weaveTest(getStandardTargets(), outName, makeAroundMunger(matchOnlyPrintln));
+  }
 
-		// the afterReturning was taken out to avoid circular advice dependency        
+  private void aroundTestAndOthers(String outName, final boolean matchOnlyPrintln)
+      throws IOException {
 
-        l.addAll(makeAdviceAll("before", matchOnlyPrintln));
-        //l.addAll(makeAdviceAll("afterReturning", matchOnlyPrintln));
+    final List l = new ArrayList();
 
-        l.add(makeAroundMunger(matchOnlyPrintln));
+    // the afterReturning was taken out to avoid circular advice dependency
 
-        l.addAll(makeAdviceAll("before", matchOnlyPrintln));
-        //l.addAll(makeAdviceAll("afterReturning", matchOnlyPrintln));
+    l.addAll(makeAdviceAll("before", matchOnlyPrintln));
+    //l.addAll(makeAdviceAll("afterReturning", matchOnlyPrintln));
 
-        l.add(makeAroundMunger(matchOnlyPrintln));
-        weaveTest(getStandardTargets(), outName, addLexicalOrder(l));
-    } 
+    l.add(makeAroundMunger(matchOnlyPrintln));
+
+    l.addAll(makeAdviceAll("before", matchOnlyPrintln));
+    //l.addAll(makeAdviceAll("afterReturning", matchOnlyPrintln));
+
+    l.add(makeAroundMunger(matchOnlyPrintln));
+    weaveTest(getStandardTargets(), outName, addLexicalOrder(l));
+  }
 
 }

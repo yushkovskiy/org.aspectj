@@ -54,171 +54,163 @@ package org.aspectj.apache.bcel.generic;
  * <http://www.apache.org/>.
  */
 
+import org.aspectj.apache.bcel.Constants;
+import org.aspectj.apache.bcel.classfile.*;
+
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import org.aspectj.apache.bcel.Constants;
-import org.aspectj.apache.bcel.classfile.Constant;
-import org.aspectj.apache.bcel.classfile.ConstantClass;
-import org.aspectj.apache.bcel.classfile.ConstantDouble;
-import org.aspectj.apache.bcel.classfile.ConstantFloat;
-import org.aspectj.apache.bcel.classfile.ConstantInteger;
-import org.aspectj.apache.bcel.classfile.ConstantLong;
-import org.aspectj.apache.bcel.classfile.ConstantPool;
-import org.aspectj.apache.bcel.classfile.ConstantString;
-import org.aspectj.apache.bcel.classfile.ConstantUtf8;
-
 /**
  * Class for instructions that use an index into the constant pool such as LDC, INVOKEVIRTUAL, etc.
- * 
- * @version $Id: InstructionCP.java,v 1.6 2009/10/05 17:35:36 aclement Exp $
+ *
  * @author <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
+ * @version $Id: InstructionCP.java,v 1.6 2009/10/05 17:35:36 aclement Exp $
  */
 public class InstructionCP extends Instruction {
-	protected int index;
+  protected int index;
 
-	public InstructionCP(short opcode, int index) {
-		super(opcode);
-		this.index = index;
-	}
+  public InstructionCP(short opcode, int index) {
+    super(opcode);
+    this.index = index;
+  }
 
-	@Override
-	public void dump(DataOutputStream out) throws IOException {
-		if (opcode == LDC_W && index < 256) {
-			out.writeByte(LDC);
-			out.writeByte(index);
-		} else {
-			out.writeByte(opcode);
-			if (Constants.iLen[opcode] == 2) {
-				if (index > 255) {
-					throw new IllegalStateException();
-				}
-				out.writeByte(index);
-			} else {
-				out.writeShort(index);
-			}
-		}
-	}
+  @Override
+  public void dump(DataOutputStream out) throws IOException {
+    if (opcode == LDC_W && index < 256) {
+      out.writeByte(LDC);
+      out.writeByte(index);
+    } else {
+      out.writeByte(opcode);
+      if (Constants.iLen[opcode] == 2) {
+        if (index > 255) {
+          throw new IllegalStateException();
+        }
+        out.writeByte(index);
+      } else {
+        out.writeShort(index);
+      }
+    }
+  }
 
-	@Override
-	public int getLength() {
-		if (opcode == LDC_W && index < 256) {
-			return 2;
-		} else {
-			return super.getLength();
-		}
-	}
+  @Override
+  public int getLength() {
+    if (opcode == LDC_W && index < 256) {
+      return 2;
+    } else {
+      return super.getLength();
+    }
+  }
 
-	/**
-	 * Long output format:
-	 * 
-	 * &lt;name of opcode&gt; "["&lt;opcode number&gt;"]" "("&lt;length of instruction&gt;")" "&lt;"&lt; constant pool
-	 * index&gt;"&gt;"
-	 * 
-	 * @param verbose long/short format switch
-	 * @return mnemonic for instruction
-	 */
-	@Override
-	public String toString(boolean verbose) {
-		return super.toString(verbose) + " " + index;
-	}
+  /**
+   * Long output format:
+   * <p/>
+   * &lt;name of opcode&gt; "["&lt;opcode number&gt;"]" "("&lt;length of instruction&gt;")" "&lt;"&lt; constant pool
+   * index&gt;"&gt;"
+   *
+   * @param verbose long/short format switch
+   * @return mnemonic for instruction
+   */
+  @Override
+  public String toString(boolean verbose) {
+    return super.toString(verbose) + " " + index;
+  }
 
-	/**
-	 * @return mnemonic for instruction with symbolic references resolved
-	 */
-	public String toString(ConstantPool cp) {
-		Constant c = cp.getConstant(index);
-		String str = cp.constantToString(c);
+  /**
+   * @return mnemonic for instruction with symbolic references resolved
+   */
+  public String toString(ConstantPool cp) {
+    final Constant c = cp.getConstant(index);
+    String str = cp.constantToString(c);
 
-		if (c instanceof ConstantClass) {
-			str = str.replace('.', '/');
-		}
+    if (c instanceof ConstantClass) {
+      str = str.replace('.', '/');
+    }
 
-		return org.aspectj.apache.bcel.Constants.OPCODE_NAMES[opcode] + " " + str;
-	}
+    return org.aspectj.apache.bcel.Constants.OPCODE_NAMES[opcode] + " " + str;
+  }
 
-	/**
-	 * @return index in constant pool referred by this instruction.
-	 */
-	@Override
-	public final int getIndex() {
-		return index;
-	}
+  /**
+   * @return index in constant pool referred by this instruction.
+   */
+  @Override
+  public final int getIndex() {
+    return index;
+  }
 
-	@Override
-	public void setIndex(int index) {
-		this.index = index;
-		if (this.index > 255 && opcode == LDC) {
-			// promote it
-			opcode = LDC_W;
-		}
-	}
+  @Override
+  public void setIndex(int index) {
+    this.index = index;
+    if (this.index > 255 && opcode == LDC) {
+      // promote it
+      opcode = LDC_W;
+    }
+  }
 
-	@Override
-	public Type getType(ConstantPool cpg) {
-		switch (cpg.getConstant(index).getTag()) {
-		case CONSTANT_String:
-			return Type.STRING;
-		case CONSTANT_Float:
-			return Type.FLOAT;
-		case CONSTANT_Integer:
-			return Type.INT;
-		case CONSTANT_Long:
-			return Type.LONG;
-		case CONSTANT_Double:
-			return Type.DOUBLE;
-		case CONSTANT_Class:
-			String name = cpg.getConstantString_CONSTANTClass(index);
-			// ConstantPool cp = cpg.getConstantPool();
-			// String name = cp.getConstantString(index, CONSTANT_Class);
-			if (!name.startsWith("[")) {
-				StringBuffer sb = new StringBuffer();
-				sb.append("L").append(name).append(";");
-				return Type.getType(sb.toString());
-			} else {
-				return Type.getType(name);
-			}
-		default:
-			throw new RuntimeException("Unknown or invalid constant type at " + index);
-		}
-	}
+  @Override
+  public Type getType(ConstantPool cpg) {
+    switch (cpg.getConstant(index).getTag()) {
+      case CONSTANT_String:
+        return Type.STRING;
+      case CONSTANT_Float:
+        return Type.FLOAT;
+      case CONSTANT_Integer:
+        return Type.INT;
+      case CONSTANT_Long:
+        return Type.LONG;
+      case CONSTANT_Double:
+        return Type.DOUBLE;
+      case CONSTANT_Class:
+        final String name = cpg.getConstantString_CONSTANTClass(index);
+        // ConstantPool cp = cpg.getConstantPool();
+        // String name = cp.getConstantString(index, CONSTANT_Class);
+        if (!name.startsWith("[")) {
+          final StringBuilder sb = new StringBuilder();
+          sb.append("L").append(name).append(";");
+          return Type.getType(sb.toString());
+        } else {
+          return Type.getType(name);
+        }
+      default:
+        throw new RuntimeException("Unknown or invalid constant type at " + index);
+    }
+  }
 
-	@Override
-	public Object getValue(ConstantPool constantPool) {
-		Constant constant = constantPool.getConstant(index);
+  @Override
+  public Object getValue(ConstantPool constantPool) {
+    Constant constant = constantPool.getConstant(index);
 
-		switch (constant.getTag()) {
-		case Constants.CONSTANT_String:
-			int i = ((ConstantString) constant).getStringIndex();
-			constant = constantPool.getConstant(i);
-			return ((ConstantUtf8) constant).getValue();
+    switch (constant.getTag()) {
+      case Constants.CONSTANT_String:
+        final int i = ((ConstantString) constant).getStringIndex();
+        constant = constantPool.getConstant(i);
+        return ((ConstantUtf8) constant).getValue();
 
-		case Constants.CONSTANT_Float:
-			return ((ConstantFloat) constant).getValue();
+      case Constants.CONSTANT_Float:
+        return ((ConstantFloat) constant).getValue();
 
-		case Constants.CONSTANT_Integer:
-			return ((ConstantInteger) constant).getValue();
+      case Constants.CONSTANT_Integer:
+        return ((ConstantInteger) constant).getValue();
 
-		case Constants.CONSTANT_Long:
-			return ((ConstantLong) constant).getValue();
+      case Constants.CONSTANT_Long:
+        return ((ConstantLong) constant).getValue();
 
-		case Constants.CONSTANT_Double:
-			return ((ConstantDouble) constant).getValue();
-		default:
-			throw new RuntimeException("Unknown or invalid constant type at " + index);
-		}
-	}
+      case Constants.CONSTANT_Double:
+        return ((ConstantDouble) constant).getValue();
+      default:
+        throw new RuntimeException("Unknown or invalid constant type at " + index);
+    }
+  }
 
-	public boolean equals(Object other) {
-		if (!(other instanceof InstructionCP)) {
-			return false;
-		}
-		InstructionCP o = (InstructionCP) other;
-		return o.opcode == opcode && o.index == index;
-	}
+  public boolean equals(Object other) {
+    if (!(other instanceof InstructionCP)) {
+      return false;
+    }
+    final InstructionCP o = (InstructionCP) other;
+    return o.opcode == opcode && o.index == index;
+  }
 
-	public int hashCode() {
-		return opcode * 37 + index;
-	}
+  public int hashCode() {
+    return opcode * 37 + index;
+  }
 
 }

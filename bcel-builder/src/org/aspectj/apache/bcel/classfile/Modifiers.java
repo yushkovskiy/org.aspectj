@@ -60,81 +60,82 @@ import org.aspectj.apache.bcel.Constants;
  * Super class for all objects that have modifiers like private, final, ... I.e.
  * classes, fields, and methods.
  * was AccessFlags
- * 
- * @version $Id: Modifiers.java,v 1.2 2008/05/28 23:53:01 aclement Exp $
+ *
  * @author <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
+ * @version $Id: Modifiers.java,v 1.2 2008/05/28 23:53:01 aclement Exp $
  */
 public abstract class Modifiers {
 
-	protected int modifiers;
+  protected int modifiers;
 
-	public Modifiers() { }
+  public Modifiers() {
+  }
 
-	public Modifiers(int a) {
-		modifiers = a;
-	}
+  public Modifiers(int a) {
+    modifiers = a;
+  }
 
-	public final int getModifiers() {
-		return modifiers;
-	}
-	
-	public final void setModifiers(int modifiers) {
-		this.modifiers = modifiers;
-	}
+  public final int getModifiers() {
+    return modifiers;
+  }
 
-	public final boolean isPublic() {
-		return (modifiers & Constants.ACC_PUBLIC) != 0;
-	}
+  public final void setModifiers(int modifiers) {
+    this.modifiers = modifiers;
+  }
 
-	public final boolean isPrivate() {
-		return (modifiers & Constants.ACC_PRIVATE) != 0;
-	}
+  public final boolean isPublic() {
+    return (modifiers & Constants.ACC_PUBLIC) != 0;
+  }
 
-	public final boolean isProtected() {
-		return (modifiers & Constants.ACC_PROTECTED) != 0;
-	}
+  public final boolean isPrivate() {
+    return (modifiers & Constants.ACC_PRIVATE) != 0;
+  }
 
-	public final boolean isStatic() {
-		return (modifiers & Constants.ACC_STATIC) != 0;
-	}
+  public final boolean isProtected() {
+    return (modifiers & Constants.ACC_PROTECTED) != 0;
+  }
 
-	public final boolean isFinal() {
-		return (modifiers & Constants.ACC_FINAL) != 0;
-	}
+  public final boolean isStatic() {
+    return (modifiers & Constants.ACC_STATIC) != 0;
+  }
 
-	public final boolean isSynchronized() {
-		return (modifiers & Constants.ACC_SYNCHRONIZED) != 0;
-	}
+  public final boolean isFinal() {
+    return (modifiers & Constants.ACC_FINAL) != 0;
+  }
 
-	public final boolean isVolatile() {
-		return (modifiers & Constants.ACC_VOLATILE) != 0;
-	}
+  public final boolean isSynchronized() {
+    return (modifiers & Constants.ACC_SYNCHRONIZED) != 0;
+  }
 
-	public final boolean isTransient() {
-		return (modifiers & Constants.ACC_TRANSIENT) != 0;
-	}
+  public final boolean isVolatile() {
+    return (modifiers & Constants.ACC_VOLATILE) != 0;
+  }
 
-	public final boolean isNative() {
-		return (modifiers & Constants.ACC_NATIVE) != 0;
-	}
+  public final boolean isTransient() {
+    return (modifiers & Constants.ACC_TRANSIENT) != 0;
+  }
 
-	public final boolean isInterface() {
-		return (modifiers & Constants.ACC_INTERFACE) != 0;
-	}
+  public final boolean isNative() {
+    return (modifiers & Constants.ACC_NATIVE) != 0;
+  }
 
-	public final boolean isAbstract() {
-		return (modifiers & Constants.ACC_ABSTRACT) != 0;
-	}
+  public final boolean isInterface() {
+    return (modifiers & Constants.ACC_INTERFACE) != 0;
+  }
 
-	public final boolean isStrictfp() {
-		return (modifiers & Constants.ACC_STRICT) != 0;
-	}
+  public final boolean isAbstract() {
+    return (modifiers & Constants.ACC_ABSTRACT) != 0;
+  }
 
-	public final boolean isVarargs() {
-		return (modifiers & Constants.ACC_VARARGS) != 0;
-	}
+  public final boolean isStrictfp() {
+    return (modifiers & Constants.ACC_STRICT) != 0;
+  }
 
-	public final boolean isBridge() {
-		return (modifiers & Constants.ACC_BRIDGE) != 0;
-	}
+  public final boolean isVarargs() {
+    return (modifiers & Constants.ACC_VARARGS) != 0;
+  }
+
+  public final boolean isBridge() {
+    return (modifiers & Constants.ACC_BRIDGE) != 0;
+  }
 }

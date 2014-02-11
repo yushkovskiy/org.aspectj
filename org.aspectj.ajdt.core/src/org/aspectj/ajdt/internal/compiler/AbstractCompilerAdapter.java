@@ -11,43 +11,52 @@
  * ******************************************************************/
 package org.aspectj.ajdt.internal.compiler;
 
-import java.util.List;
-
 import org.aspectj.org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.aspectj.org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.aspectj.org.eclipse.jdt.internal.compiler.env.ICompilationUnit;
 
+import java.util.List;
+
 /**
- * 
  * @author AndyClement
- *
  */
 public abstract class AbstractCompilerAdapter implements ICompilerAdapter {
-	
-	public abstract List /*InterimResult*/ getResultsPendingWeave();
-	
-	public abstract void acceptResult(CompilationResult result);
 
-	public abstract void afterAnalysing(CompilationUnitDeclaration unit);
+  public abstract List /*InterimResult*/ getResultsPendingWeave();
 
-	public abstract void afterCompiling(CompilationUnitDeclaration[] units);
+  public abstract void acceptResult(CompilationResult result);
 
-	public abstract void afterDietParsing(CompilationUnitDeclaration[] units);
+  @Override
+  public abstract void afterAnalysing(CompilationUnitDeclaration unit);
 
-	public abstract void afterGenerating(CompilationUnitDeclaration unit);
+  @Override
+  public abstract void afterCompiling(CompilationUnitDeclaration[] units);
 
-	public abstract void afterProcessing(CompilationUnitDeclaration unit, int unitIndex);
+  @Override
+  public abstract void afterDietParsing(CompilationUnitDeclaration[] units);
 
-	public abstract void afterResolving(CompilationUnitDeclaration unit);
+  @Override
+  public abstract void afterGenerating(CompilationUnitDeclaration unit);
 
-	public abstract void beforeAnalysing(CompilationUnitDeclaration unit);
+  @Override
+  public abstract void afterProcessing(CompilationUnitDeclaration unit, int unitIndex);
 
-	public abstract void beforeCompiling(ICompilationUnit[] sourceUnits);
-	
-	public abstract void beforeGenerating(CompilationUnitDeclaration unit);
+  @Override
+  public abstract void afterResolving(CompilationUnitDeclaration unit);
 
-	public abstract void beforeProcessing(CompilationUnitDeclaration unit);
+  @Override
+  public abstract void beforeAnalysing(CompilationUnitDeclaration unit);
 
-	public abstract void beforeResolving(CompilationUnitDeclaration unit);
+  @Override
+  public abstract void beforeCompiling(ICompilationUnit[] sourceUnits);
+
+  @Override
+  public abstract void beforeGenerating(CompilationUnitDeclaration unit);
+
+  @Override
+  public abstract void beforeProcessing(CompilationUnitDeclaration unit);
+
+  @Override
+  public abstract void beforeResolving(CompilationUnitDeclaration unit);
 
 }

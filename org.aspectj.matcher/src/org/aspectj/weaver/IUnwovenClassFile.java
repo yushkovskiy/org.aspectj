@@ -11,17 +11,17 @@ package org.aspectj.weaver;
 
 /**
  * History: 246125
- * 
+ *
  * @author Andy Clement
  */
 public interface IUnwovenClassFile {
 
-	String getFilename();
+  String getFilename();
 
-	String getClassName();
+  String getClassName();
 
-	byte[] getBytes();
+  byte[] getBytes();
 
-	char[] getClassNameAsChars();
+  char[] getClassNameAsChars();
 
 }

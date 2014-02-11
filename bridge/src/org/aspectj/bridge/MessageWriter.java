@@ -13,6 +13,8 @@
 
 package org.aspectj.bridge;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.PrintWriter;
 
 /**
@@ -22,63 +24,73 @@ import java.io.PrintWriter;
  * are rendered by overriding render(IMessage).
  */
 public class MessageWriter implements IMessageHandler {
-    
-    protected PrintWriter writer;
-    protected boolean abortOnFailure;
-    public MessageWriter(PrintWriter writer, boolean abortOnFailure) {
-        this.writer = (null != writer ? writer : new PrintWriter(System.out));
-        this.abortOnFailure = abortOnFailure;
-    }
-    
-    /**
-     * Handle message by printing and
-     * (if abortOnFailure) throwing an AbortException if 
-     * the messages is a failure or an abort (but not for errors).
-	 * @see org.aspectj.bridge.IMessageHandler#handleMessage(IMessage)
-	 */
-	public boolean handleMessage(IMessage message) throws AbortException {
-        if ((null != message) && !isIgnoring(message.getKind())) {
-            String result = render(message);
-            if (null != result) {
-                writer.println(result);
-                writer.flush();
-                if (abortOnFailure
-                    && (message.isFailed() || message.isAbort())) {
-                    throw new AbortException(message);
-                }
-            }
+
+  protected PrintWriter writer;
+  protected boolean abortOnFailure;
+
+  public MessageWriter(PrintWriter writer, boolean abortOnFailure) {
+    this.writer = (null != writer ? writer : new PrintWriter(System.out));
+    this.abortOnFailure = abortOnFailure;
+  }
+
+  /**
+   * Handle message by printing and
+   * (if abortOnFailure) throwing an AbortException if
+   * the messages is a failure or an abort (but not for errors).
+   *
+   * @see org.aspectj.bridge.IMessageHandler#handleMessage(IMessage)
+   */
+  @Override
+  public boolean handleMessage(@NotNull IMessage message) throws AbortException {
+    if ((null != message) && !isIgnoring(message.getKind())) {
+      String result = render(message);
+      if (null != result) {
+        writer.println(result);
+        writer.flush();
+        if (abortOnFailure
+            && (message.isFailed() || message.isAbort())) {
+          throw new AbortException(message);
         }
-		return true;
-	}
-    
-    /**
-	 * @see org.aspectj.bridge.IMessageHandler#isIgnoring(org.aspectj.bridge.IMessage.Kind)
-	 */
-	public boolean isIgnoring(IMessage.Kind kind) { 
-        // XXX share MessageHandler implementation in superclass
-		return false;
-	}
-
-    /**
-     * No-op
-     * @see org.aspectj.bridge.IMessageHandler#isIgnoring(org.aspectj.bridge.IMessage.Kind)
-     * @param kind
-     */
-    public void dontIgnore(IMessage.Kind kind) {
-        
+      }
     }
+    return true;
+  }
 
-    /**
-     * No-op
-     * @see org.aspectj.bridge.IMessageHandler#ignore(org.aspectj.bridge.IMessage.Kind)
-     * @param kind
-     */
-	public void ignore(IMessage.Kind kind) {
-	}
+  /**
+   * @see org.aspectj.bridge.IMessageHandler#isIgnoring(org.aspectj.bridge.IMessage.Kind)
+   */
+  @Override
+  public boolean isIgnoring(IMessage.Kind kind) {
+    // XXX share MessageHandler implementation in superclass
+    return false;
+  }
 
-    /** @return null to not print, or message rendering (including newlines) */
-    protected String render(IMessage message) {
-        return message.toString();    
-    }
+  /**
+   * No-op
+   *
+   * @param kind
+   * @see org.aspectj.bridge.IMessageHandler#isIgnoring(org.aspectj.bridge.IMessage.Kind)
+   */
+  @Override
+  public void dontIgnore(IMessage.Kind kind) {
+
+  }
+
+  /**
+   * No-op
+   *
+   * @param kind
+   * @see org.aspectj.bridge.IMessageHandler#ignore(org.aspectj.bridge.IMessage.Kind)
+   */
+  @Override
+  public void ignore(IMessage.Kind kind) {
+  }
+
+  /**
+   * @return null to not print, or message rendering (including newlines)
+   */
+  protected String render(IMessage message) {
+    return message.toString();
+  }
 
 }

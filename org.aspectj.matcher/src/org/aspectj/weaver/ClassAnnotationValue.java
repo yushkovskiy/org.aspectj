@@ -13,19 +13,20 @@ package org.aspectj.weaver;
 
 public class ClassAnnotationValue extends AnnotationValue {
 
-	private String signature;
+  private final String signature;
 
-	public ClassAnnotationValue(String sig) {
-		super(AnnotationValue.CLASS);
-		this.signature = sig;
-	}
+  public ClassAnnotationValue(String sig) {
+    super(AnnotationValue.CLASS);
+    this.signature = sig;
+  }
 
-	public String stringify() {
-		return signature;
-	}
+  @Override
+  public String stringify() {
+    return signature;
+  }
 
-	public String toString() {
-		return signature;
-	}
+  public String toString() {
+    return signature;
+  }
 
 }

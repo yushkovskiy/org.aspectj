@@ -53,81 +53,78 @@ package org.aspectj.apache.bcel.generic;
  * information on the Apache Software Foundation, please see
  * <http://www.apache.org/>.
  */
-import org.aspectj.apache.bcel.classfile.Constant;
-import org.aspectj.apache.bcel.classfile.ConstantCP;
-import org.aspectj.apache.bcel.classfile.ConstantNameAndType;
-import org.aspectj.apache.bcel.classfile.ConstantPool;
-import org.aspectj.apache.bcel.classfile.ConstantUtf8;
+
+import org.aspectj.apache.bcel.classfile.*;
 
 /**
  * Super class for InvokeInstruction and FieldInstruction, since they have some methods in common!
- * 
- * @version $Id: FieldOrMethod.java,v 1.8 2009/10/05 17:35:36 aclement Exp $
+ *
  * @author <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
+ * @version $Id: FieldOrMethod.java,v 1.8 2009/10/05 17:35:36 aclement Exp $
  */
 public abstract class FieldOrMethod extends InstructionCP {
 
-	protected String signature;
-	protected String name;
-	private String classname;
+  protected String signature;
+  protected String name;
+  private String classname;
 
-	protected FieldOrMethod(short opcode, int index) {
-		super(opcode, index);
-	}
+  protected FieldOrMethod(short opcode, int index) {
+    super(opcode, index);
+  }
 
-	/**
-	 * @return signature of referenced method/field.
-	 */
-	public String getSignature(ConstantPool cp) {
-		if (signature == null) {
-			Constant c = cp.getConstant(index);
-			ConstantCP cmr = (ConstantCP) c;
-			ConstantNameAndType cnat = (ConstantNameAndType) cp.getConstant(cmr.getNameAndTypeIndex());
-			signature = ((ConstantUtf8) cp.getConstant(cnat.getSignatureIndex())).getValue();
-		}
-		return signature;
-	}
+  /**
+   * @return signature of referenced method/field.
+   */
+  public String getSignature(ConstantPool cp) {
+    if (signature == null) {
+      final Constant c = cp.getConstant(index);
+      final ConstantCP cmr = (ConstantCP) c;
+      final ConstantNameAndType cnat = (ConstantNameAndType) cp.getConstant(cmr.getNameAndTypeIndex());
+      signature = ((ConstantUtf8) cp.getConstant(cnat.getSignatureIndex())).getValue();
+    }
+    return signature;
+  }
 
-	/**
-	 * @return name of referenced method/field.
-	 */
-	public String getName(ConstantPool cp) {
-		if (name == null) {
-			ConstantCP cmr = (ConstantCP) cp.getConstant(index);
-			ConstantNameAndType cnat = (ConstantNameAndType) cp.getConstant(cmr.getNameAndTypeIndex());
-			name = ((ConstantUtf8) cp.getConstant(cnat.getNameIndex())).getValue();
-		}
-		return name;
-	}
+  /**
+   * @return name of referenced method/field.
+   */
+  public String getName(ConstantPool cp) {
+    if (name == null) {
+      final ConstantCP cmr = (ConstantCP) cp.getConstant(index);
+      final ConstantNameAndType cnat = (ConstantNameAndType) cp.getConstant(cmr.getNameAndTypeIndex());
+      name = ((ConstantUtf8) cp.getConstant(cnat.getNameIndex())).getValue();
+    }
+    return name;
+  }
 
-	/**
-	 * @return name of the referenced class/interface
-	 */
-	public String getClassName(ConstantPool cp) {
-		if (classname == null) {
-			ConstantCP cmr = (ConstantCP) cp.getConstant(index);
-			String str = cp.getConstantString(cmr.getClassIndex(), CONSTANT_Class);
-			if (str.charAt(0) == '[') {
-				classname = str;
-			} else {
-				classname = str.replace('/', '.');
-			}
-		}
-		return classname;
-	}
+  /**
+   * @return name of the referenced class/interface
+   */
+  public String getClassName(ConstantPool cp) {
+    if (classname == null) {
+      final ConstantCP cmr = (ConstantCP) cp.getConstant(index);
+      final String str = cp.getConstantString(cmr.getClassIndex(), CONSTANT_Class);
+      if (str.charAt(0) == '[') {
+        classname = str;
+      } else {
+        classname = str.replace('/', '.');
+      }
+    }
+    return classname;
+  }
 
-	/**
-	 * @return type of the referenced class/interface
-	 */
-	public ObjectType getClassType(ConstantPool cpg) {
-		return new ObjectType(getClassName(cpg));
-	}
+  /**
+   * @return type of the referenced class/interface
+   */
+  public ObjectType getClassType(ConstantPool cpg) {
+    return new ObjectType(getClassName(cpg));
+  }
 
-	/**
-	 * @return type of the referenced class/interface
-	 */
-	@Override
-	public ObjectType getLoadClassType(ConstantPool cpg) {
-		return getClassType(cpg);
-	}
+  /**
+   * @return type of the referenced class/interface
+   */
+  @Override
+  public ObjectType getLoadClassType(ConstantPool cpg) {
+    return getClassType(cpg);
+  }
 }

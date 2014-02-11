@@ -28,87 +28,88 @@ import org.aspectj.weaver.reflect.ReflectionWorld;
 
 public class ModifiersPatternTestCase extends PatternsTestCase {
 
-	public void testMatch() {
-		int[] publicMatches = new int[] { Modifier.PUBLIC, Modifier.PUBLIC | Modifier.STATIC,
-				Modifier.PUBLIC | Modifier.STATIC | Modifier.STRICT | Modifier.FINAL, };
+  public void testMatch() {
+    final int[] publicMatches = new int[]{Modifier.PUBLIC, Modifier.PUBLIC | Modifier.STATIC,
+        Modifier.PUBLIC | Modifier.STATIC | Modifier.STRICT | Modifier.FINAL,};
 
-		int[] publicFailures = new int[] { Modifier.PRIVATE, 0, Modifier.STATIC | Modifier.STRICT | Modifier.FINAL, };
+    final int[] publicFailures = new int[]{Modifier.PRIVATE, 0, Modifier.STATIC | Modifier.STRICT | Modifier.FINAL,};
 
-		int[] publicStaticMatches = new int[] { Modifier.PUBLIC | Modifier.STATIC,
-				Modifier.PUBLIC | Modifier.STATIC | Modifier.FINAL | Modifier.STRICT, };
+    final int[] publicStaticMatches = new int[]{Modifier.PUBLIC | Modifier.STATIC,
+        Modifier.PUBLIC | Modifier.STATIC | Modifier.FINAL | Modifier.STRICT,};
 
-		int[] publicStaticFailures = new int[] { 0, Modifier.PUBLIC, Modifier.STATIC, };
+    final int[] publicStaticFailures = new int[]{0, Modifier.PUBLIC, Modifier.STATIC,};
 
-		int[] trickMatches = new int[] { Modifier.PRIVATE, Modifier.PRIVATE | Modifier.ABSTRACT, Modifier.PRIVATE | Modifier.FINAL, };
+    final int[] trickMatches = new int[]{Modifier.PRIVATE, Modifier.PRIVATE | Modifier.ABSTRACT, Modifier.PRIVATE | Modifier.FINAL,};
 
-		int[] trickFailures = new int[] { Modifier.PUBLIC, Modifier.PRIVATE | Modifier.STATIC, Modifier.PRIVATE | Modifier.STRICT, };
+    final int[] trickFailures = new int[]{Modifier.PUBLIC, Modifier.PRIVATE | Modifier.STATIC, Modifier.PRIVATE | Modifier.STRICT,};
 
-		int[] none = new int[0];
+    final int[] none = new int[0];
 
-		checkMatch("", publicMatches, none);
-		checkMatch("", publicFailures, none);
-		checkMatch("!public", publicFailures, publicMatches);
-		checkMatch("public", publicMatches, publicFailures);
-		checkMatch("public static", none, publicFailures);
-		checkMatch("public static", publicStaticMatches, publicStaticFailures);
+    checkMatch("", publicMatches, none);
+    checkMatch("", publicFailures, none);
+    checkMatch("!public", publicFailures, publicMatches);
+    checkMatch("public", publicMatches, publicFailures);
+    checkMatch("public static", none, publicFailures);
+    checkMatch("public static", publicStaticMatches, publicStaticFailures);
 
-		checkMatch("private !static !strictfp", trickMatches, trickFailures);
-		checkMatch("private !static !strictfp", none, publicMatches);
-		checkMatch("private !static !strictfp", none, publicStaticMatches);
-	}
+    checkMatch("private !static !strictfp", trickMatches, trickFailures);
+    checkMatch("private !static !strictfp", none, publicMatches);
+    checkMatch("private !static !strictfp", none, publicStaticMatches);
+  }
 
-	private ModifiersPattern makeModifiersPattern(String pattern) {
-		return new PatternParser(pattern).parseModifiersPattern();
-	}
+  private ModifiersPattern makeModifiersPattern(String pattern) {
+    return new PatternParser(pattern).parseModifiersPattern();
+  }
 
-	private void checkMatch(String pattern, int[] shouldMatch, int[] shouldFail) {
-		ModifiersPattern p = makeModifiersPattern(pattern);
-		checkMatch(p, shouldMatch, true);
-		checkMatch(p, shouldFail, false);
-	}
+  private void checkMatch(String pattern, int[] shouldMatch, int[] shouldFail) {
+    final ModifiersPattern p = makeModifiersPattern(pattern);
+    checkMatch(p, shouldMatch, true);
+    checkMatch(p, shouldFail, false);
+  }
 
-	private void checkMatch(ModifiersPattern p, int[] matches, boolean shouldMatch) {
-		for (int i = 0; i < matches.length; i++) {
-			boolean result = p.matches(matches[i]);
-			String msg = "matches " + p + " to " + Modifier.toString(matches[i]) + " expected ";
-			if (shouldMatch) {
-				assertTrue(msg + shouldMatch, result);
-			} else {
-				assertTrue(msg + shouldMatch, !result);
-			}
-		}
-	}
+  private void checkMatch(ModifiersPattern p, int[] matches, boolean shouldMatch) {
+    for (int i = 0; i < matches.length; i++) {
+      final boolean result = p.matches(matches[i]);
+      final String msg = "matches " + p + " to " + Modifier.toString(matches[i]) + " expected ";
+      if (shouldMatch) {
+        assertTrue(msg + shouldMatch, result);
+      } else {
+        assertTrue(msg + shouldMatch, !result);
+      }
+    }
+  }
 
-	public void testSerialization() throws IOException {
-		String[] patterns = new String[] { "", "!public", "public", "public static", "private !static !strictfp", };
+  public void testSerialization() throws IOException {
+    final String[] patterns = new String[]{"", "!public", "public", "public static", "private !static !strictfp",};
 
-		for (int i = 0, len = patterns.length; i < len; i++) {
-			checkSerialization(patterns[i]);
-		}
-	}
+    for (int i = 0, len = patterns.length; i < len; i++) {
+      checkSerialization(patterns[i]);
+    }
+  }
 
-	/**
-	 * Method checkSerialization.
-	 * 
-	 * @param string
-	 */
-	private void checkSerialization(String string) throws IOException {
-		ModifiersPattern p = makeModifiersPattern(string);
-		ByteArrayOutputStream bo = new ByteArrayOutputStream();
-		ConstantPoolSimulator cps = new ConstantPoolSimulator();
-		CompressingDataOutputStream out = new CompressingDataOutputStream(bo, cps);
-		p.write(out);
-		out.close();
+  /**
+   * Method checkSerialization.
+   *
+   * @param string
+   */
+  private void checkSerialization(String string) throws IOException {
+    final ModifiersPattern p = makeModifiersPattern(string);
+    final ByteArrayOutputStream bo = new ByteArrayOutputStream();
+    final ConstantPoolSimulator cps = new ConstantPoolSimulator();
+    final CompressingDataOutputStream out = new CompressingDataOutputStream(bo, cps);
+    p.write(out);
+    out.close();
 
-		ByteArrayInputStream bi = new ByteArrayInputStream(bo.toByteArray());
-		VersionedDataInputStream in = new VersionedDataInputStream(bi, cps);
-		ModifiersPattern newP = ModifiersPattern.read(in);
+    final ByteArrayInputStream bi = new ByteArrayInputStream(bo.toByteArray());
+    final VersionedDataInputStream in = new VersionedDataInputStream(bi, cps);
+    final ModifiersPattern newP = ModifiersPattern.read(in);
 
-		assertEquals("write/read", p, newP);
-	}
+    assertEquals("write/read", p, newP);
+  }
 
-	public World getWorld() {
-		return new ReflectionWorld(true, this.getClass().getClassLoader());
-	}
+  @Override
+  public World getWorld() {
+    return new ReflectionWorld(true, this.getClass().getClassLoader());
+  }
 
 }

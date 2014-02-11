@@ -13,74 +13,92 @@
 
 package org.aspectj.bridge;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-/** release-specific version information */
-public class Version {
-    
-    // generated from build/lib/BridgeVersion.java
+/**
+ * release-specific version information
+ */
+public final class Version {
 
-    /** default version value for development version */
-    public static final String DEVELOPMENT = "DEVELOPMENT";
-    // VersionUptodate.java depends on this value
+  // generated from build/lib/BridgeVersion.java
 
-    /** default time value for development version */
-    public static final long NOTIME = 0L;
-    
-    /** set by build script */
-    public static final String text = "DEVELOPMENT";
-    // VersionUptodate.java scans for "static final String text = "
-    
-    /** 
-      * Time text set by build script using SIMPLE_DATE_FORMAT.
-      * (if DEVELOPMENT version, invalid)
-      */
-    public static final String time_text = "";
+  /**
+   * default version value for development version
+   */
+  @NotNull
+  public static final String DEVELOPMENT = "DEVELOPMENT";
+  // VersionUptodate.java depends on this value
 
-    /** 
-      * time in seconds-since-... format, used by programmatic clients.
-      * (if DEVELOPMENT version, NOTIME)
-      */
-    private static long time = -1; // -1 = uninitialized
-    
-	/** format used by build script to set time_text */
-    public static final String SIMPLE_DATE_FORMAT = "EEEE MMM d, yyyy 'at' HH:mm:ss z";
-    
-    public static long getTime() {
-    	if (time==-1) {
-    		long foundTime = NOTIME;
-    	    // if not DEVELOPMENT version, read time text using format used to set time 
-            try {
-                SimpleDateFormat format = new SimpleDateFormat(SIMPLE_DATE_FORMAT);
-                ParsePosition pos = new ParsePosition(0);
-                Date date = format.parse(time_text, pos);
-                if (date!=null) foundTime = date.getTime();
-            } catch (Throwable t) {            
-            }
-            time = foundTime;
-    	}
-    	return time;
+  /**
+   * default time value for development version
+   */
+  public static final long NOTIME = 0L;
+
+  /**
+   * set by build script
+   */
+  @NotNull
+  public static final String text = "DEVELOPMENT";
+  // VersionUptodate.java scans for "static final String text = "
+
+  /**
+   * Time text set by build script using SIMPLE_DATE_FORMAT.
+   * (if DEVELOPMENT version, invalid)
+   */
+  @NotNull
+  public static final String time_text = "";
+
+  /**
+   * time in seconds-since-... format, used by programmatic clients.
+   * (if DEVELOPMENT version, NOTIME)
+   */
+  private static long time = -1; // -1 = uninitialized
+
+  /**
+   * format used by build script to set time_text
+   */
+  @NotNull
+  public static final String SIMPLE_DATE_FORMAT = "EEEE MMM d, yyyy 'at' HH:mm:ss z";
+
+  public static long getTime() {
+    if (time == -1) {
+      long foundTime = NOTIME;
+      // if not DEVELOPMENT version, read time text using format used to set time 
+      try {
+        final SimpleDateFormat format = new SimpleDateFormat(SIMPLE_DATE_FORMAT);
+        final ParsePosition pos = new ParsePosition(0);
+        final Date date = format.parse(time_text, pos);
+        if (date != null) foundTime = date.getTime();
+      } catch (Throwable t) {
+      }
+      time = foundTime;
     }
+    return time;
+  }
 
-    /**
-     * Test whether the version is as specified by any first argument.
-     * Emit text to System.err on failure
-     * @param args String[] with first argument equal to Version.text
-     * @see Version#text
-     */
-    public static void main(String[] args) {
-        if ((null != args) && (0 < args.length)) {
-            if (!Version.text.equals(args[0])) {
-                System.err.println("version expected: \"" 
-                                + args[0] 
-                                + "\" actual=\"" 
-                                + Version.text 
-                                + "\"");
-            }
-        }
+  /**
+   * Test whether the version is as specified by any first argument.
+   * Emit text to System.err on failure
+   *
+   * @param args String[] with first argument equal to Version.text
+   * @see Version#text
+   */
+  public static void main(@Nullable String[] args) {
+    if ((null != args) && (0 < args.length)) {
+      if (!Version.text.equals(args[0])) {
+        System.err.println("version expected: \""
+            + args[0]
+            + "\" actual=\""
+            + Version.text
+            + "\"");
+      }
     }
+  }
 }
     
 

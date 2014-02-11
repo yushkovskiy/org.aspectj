@@ -54,25 +54,21 @@ package org.aspectj.apache.bcel.classfile;
  * <http://www.apache.org/>.
  */
 
+import org.aspectj.apache.bcel.Constants;
+import org.aspectj.apache.bcel.classfile.annotation.*;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
 
-import org.aspectj.apache.bcel.Constants;
-import org.aspectj.apache.bcel.classfile.annotation.RuntimeInvisAnnos;
-import org.aspectj.apache.bcel.classfile.annotation.RuntimeInvisParamAnnos;
-import org.aspectj.apache.bcel.classfile.annotation.RuntimeVisAnnos;
-import org.aspectj.apache.bcel.classfile.annotation.RuntimeVisParamAnnos;
-import org.aspectj.apache.bcel.classfile.annotation.RuntimeVisTypeAnnos;
-
 /**
  * Abstract super class for <em>Attribute</em> objects. Currently the <em>ConstantValue</em>, <em>SourceFile</em>, <em>Code</em>,
  * <em>Exceptiontable</em>, <em>LineNumberTable</em>, <em>LocalVariableTable</em>, <em>InnerClasses</em> and <em>Synthetic</em>
  * attributes are supported. The <em>Unknown</em> attribute stands for non-standard-attributes.
- * 
- * @version $Id: Attribute.java,v 1.9 2009/12/09 18:01:31 aclement Exp $
+ *
  * @author <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
+ * @version $Id: Attribute.java,v 1.9 2009/12/09 18:01:31 aclement Exp $
  * @see ConstantValue
  * @see SourceFile
  * @see Code
@@ -86,114 +82,114 @@ import org.aspectj.apache.bcel.classfile.annotation.RuntimeVisTypeAnnos;
  * @see Signature
  */
 public abstract class Attribute implements Cloneable, Node, Serializable {
-	public final static Attribute[] NoAttributes = new Attribute[0];
+  public final static Attribute[] NoAttributes = new Attribute[0];
 
-	protected byte tag; // Tag to distinguish subclasses
-	protected int nameIndex;
-	protected int length;
-	protected ConstantPool cpool;
+  protected byte tag; // Tag to distinguish subclasses
+  protected int nameIndex;
+  protected int length;
+  protected ConstantPool cpool;
 
-	protected Attribute(byte tag, int nameIndex, int length, ConstantPool cpool) {
-		this.tag = tag;
-		this.nameIndex = nameIndex;
-		this.length = length;
-		this.cpool = cpool;
-	}
+  protected Attribute(byte tag, int nameIndex, int length, ConstantPool cpool) {
+    this.tag = tag;
+    this.nameIndex = nameIndex;
+    this.length = length;
+    this.cpool = cpool;
+  }
 
-	public void dump(DataOutputStream file) throws IOException {
-		file.writeShort(nameIndex);
-		file.writeInt(length);
-	}
+  public void dump(DataOutputStream file) throws IOException {
+    file.writeShort(nameIndex);
+    file.writeInt(length);
+  }
 
-	// OPTIMIZE how about just reading them in and storing them until we need to decode what they really are?
-	public static final Attribute readAttribute(DataInputStream file, ConstantPool cpool) throws IOException {
-		byte tag = Constants.ATTR_UNKNOWN;
-		int idx = file.readUnsignedShort();
-		String name = cpool.getConstantUtf8(idx).getValue();
-		int len = file.readInt();
+  // OPTIMIZE how about just reading them in and storing them until we need to decode what they really are?
+  public static final Attribute readAttribute(DataInputStream file, ConstantPool cpool) throws IOException {
+    byte tag = Constants.ATTR_UNKNOWN;
+    final int idx = file.readUnsignedShort();
+    final String name = cpool.getConstantUtf8(idx).getValue();
+    final int len = file.readInt();
 
-		// Compare strings to find known attribute
-		for (byte i = 0; i < Constants.KNOWN_ATTRIBUTES; i++) {
-			if (name.equals(Constants.ATTRIBUTE_NAMES[i])) {
-				tag = i;
-				break;
-			}
-		}
-		switch (tag) {
-		case Constants.ATTR_UNKNOWN:
-			return new Unknown(idx, len, file, cpool);
-		case Constants.ATTR_CONSTANT_VALUE:
-			return new ConstantValue(idx, len, file, cpool);
-		case Constants.ATTR_SOURCE_FILE:
-			return new SourceFile(idx, len, file, cpool);
-		case Constants.ATTR_CODE:
-			return new Code(idx, len, file, cpool);
-		case Constants.ATTR_EXCEPTIONS:
-			return new ExceptionTable(idx, len, file, cpool);
-		case Constants.ATTR_LINE_NUMBER_TABLE:
-			return new LineNumberTable(idx, len, file, cpool);
-		case Constants.ATTR_LOCAL_VARIABLE_TABLE:
-			return new LocalVariableTable(idx, len, file, cpool);
-		case Constants.ATTR_INNER_CLASSES:
-			return new InnerClasses(idx, len, file, cpool);
-		case Constants.ATTR_SYNTHETIC:
-			return new Synthetic(idx, len, file, cpool);
-		case Constants.ATTR_DEPRECATED:
-			return new Deprecated(idx, len, file, cpool);
-		case Constants.ATTR_SIGNATURE:
-			return new Signature(idx, len, file, cpool);
-		case Constants.ATTR_STACK_MAP:
-			return new StackMap(idx, len, file, cpool);
-		case Constants.ATTR_RUNTIME_VISIBLE_ANNOTATIONS:
-			return new RuntimeVisAnnos(idx, len, file, cpool);
-		case Constants.ATTR_RUNTIME_INVISIBLE_ANNOTATIONS:
-			return new RuntimeInvisAnnos(idx, len, file, cpool);
-		case Constants.ATTR_RUNTIME_VISIBLE_PARAMETER_ANNOTATIONS:
-			return new RuntimeVisParamAnnos(idx, len, file, cpool);
-		case Constants.ATTR_RUNTIME_INVISIBLE_PARAMETER_ANNOTATIONS:
-			return new RuntimeInvisParamAnnos(idx, len, file, cpool);
-		case Constants.ATTR_ANNOTATION_DEFAULT:
-			return new AnnotationDefault(idx, len, file, cpool);
-		case Constants.ATTR_LOCAL_VARIABLE_TYPE_TABLE:
-			return new LocalVariableTypeTable(idx, len, file, cpool);
-		case Constants.ATTR_ENCLOSING_METHOD:
-			return new EnclosingMethod(idx, len, file, cpool);
-		case Constants.ATTR_BOOTSTRAPMETHODS:
-			return new BootstrapMethods(idx,len,file,cpool);
-		case Constants.ATTR_RUNTIME_VISIBLE_TYPE_ANNOTATIONS:
-			return new RuntimeVisTypeAnnos(idx, len, file, cpool);
-		case Constants.ATTR_METHOD_PARAMETERS:
-			return new MethodParameters(idx, len, file, cpool);
-		default:
-			throw new IllegalStateException();
-		}
-	}
+    // Compare strings to find known attribute
+    for (byte i = 0; i < Constants.KNOWN_ATTRIBUTES; i++) {
+      if (name.equals(Constants.ATTRIBUTE_NAMES[i])) {
+        tag = i;
+        break;
+      }
+    }
+    switch (tag) {
+      case Constants.ATTR_UNKNOWN:
+        return new Unknown(idx, len, file, cpool);
+      case Constants.ATTR_CONSTANT_VALUE:
+        return new ConstantValue(idx, len, file, cpool);
+      case Constants.ATTR_SOURCE_FILE:
+        return new SourceFile(idx, len, file, cpool);
+      case Constants.ATTR_CODE:
+        return new Code(idx, len, file, cpool);
+      case Constants.ATTR_EXCEPTIONS:
+        return new ExceptionTable(idx, len, file, cpool);
+      case Constants.ATTR_LINE_NUMBER_TABLE:
+        return new LineNumberTable(idx, len, file, cpool);
+      case Constants.ATTR_LOCAL_VARIABLE_TABLE:
+        return new LocalVariableTable(idx, len, file, cpool);
+      case Constants.ATTR_INNER_CLASSES:
+        return new InnerClasses(idx, len, file, cpool);
+      case Constants.ATTR_SYNTHETIC:
+        return new Synthetic(idx, len, file, cpool);
+      case Constants.ATTR_DEPRECATED:
+        return new Deprecated(idx, len, file, cpool);
+      case Constants.ATTR_SIGNATURE:
+        return new Signature(idx, len, file, cpool);
+      case Constants.ATTR_STACK_MAP:
+        return new StackMap(idx, len, file, cpool);
+      case Constants.ATTR_RUNTIME_VISIBLE_ANNOTATIONS:
+        return new RuntimeVisAnnos(idx, len, file, cpool);
+      case Constants.ATTR_RUNTIME_INVISIBLE_ANNOTATIONS:
+        return new RuntimeInvisAnnos(idx, len, file, cpool);
+      case Constants.ATTR_RUNTIME_VISIBLE_PARAMETER_ANNOTATIONS:
+        return new RuntimeVisParamAnnos(idx, len, file, cpool);
+      case Constants.ATTR_RUNTIME_INVISIBLE_PARAMETER_ANNOTATIONS:
+        return new RuntimeInvisParamAnnos(idx, len, file, cpool);
+      case Constants.ATTR_ANNOTATION_DEFAULT:
+        return new AnnotationDefault(idx, len, file, cpool);
+      case Constants.ATTR_LOCAL_VARIABLE_TYPE_TABLE:
+        return new LocalVariableTypeTable(idx, len, file, cpool);
+      case Constants.ATTR_ENCLOSING_METHOD:
+        return new EnclosingMethod(idx, len, file, cpool);
+      case Constants.ATTR_BOOTSTRAPMETHODS:
+        return new BootstrapMethods(idx, len, file, cpool);
+      case Constants.ATTR_RUNTIME_VISIBLE_TYPE_ANNOTATIONS:
+        return new RuntimeVisTypeAnnos(idx, len, file, cpool);
+      case Constants.ATTR_METHOD_PARAMETERS:
+        return new MethodParameters(idx, len, file, cpool);
+      default:
+        throw new IllegalStateException();
+    }
+  }
 
-	public String getName() {
-		return cpool.getConstantUtf8(nameIndex).getValue();
-	}
+  public String getName() {
+    return cpool.getConstantUtf8(nameIndex).getValue();
+  }
 
-	public final int getLength() {
-		return length;
-	}
+  public final int getLength() {
+    return length;
+  }
 
-	public final int getNameIndex() {
-		return nameIndex;
-	}
+  public final int getNameIndex() {
+    return nameIndex;
+  }
 
-	public final byte getTag() {
-		return tag;
-	}
+  public final byte getTag() {
+    return tag;
+  }
 
-	public final ConstantPool getConstantPool() {
-		return cpool;
-	}
+  public final ConstantPool getConstantPool() {
+    return cpool;
+  }
 
-	@Override
-	public String toString() {
-		return Constants.ATTRIBUTE_NAMES[tag];
-	}
+  @Override
+  public String toString() {
+    return Constants.ATTRIBUTE_NAMES[tag];
+  }
 
-	public abstract void accept(ClassVisitor v);
+  public abstract void accept(ClassVisitor v);
 
 }

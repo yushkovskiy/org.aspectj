@@ -15,36 +15,37 @@ import org.aspectj.weaver.UnresolvedType;
 
 /**
  * @author colyer
- *
  */
 public class HasThisTypePatternTriedToSneakInSomeGenericOrParameterizedTypePatternMatchingStuffAnywhereVisitor
-		extends AbstractPatternNodeVisitor {
+    extends AbstractPatternNodeVisitor {
 
-	boolean ohYesItHas = false;
-	
-	/**
-	 * Is the Exact type parameterized?
-	 * Generic is ok as that just means we resolved a simple type pattern to a generic type
-	 */
-	public Object visit(ExactTypePattern node, Object data) {
-		UnresolvedType theExactType = node.getExactType();
-		if (theExactType.isParameterizedType()) ohYesItHas = true;
-		//if (theExactType.isGenericType()) ohYesItHas = true;
-		return data;
-	}
+  boolean ohYesItHas = false;
 
-	/**
-	 * Any type bounds are bad.
-	 * Type parameters are right out.
-	 */
-	public Object visit(WildTypePattern node, Object data) {
-		if (node.getUpperBound() != null) ohYesItHas = true;
-		if (node.getLowerBound() != null) ohYesItHas = true;
-		if (node.getTypeParameters().size() != 0) ohYesItHas = true;
-		return data;
-	}
-	
-	public boolean wellHasItThen/*?*/() {
-		return ohYesItHas;
-	}
+  /**
+   * Is the Exact type parameterized?
+   * Generic is ok as that just means we resolved a simple type pattern to a generic type
+   */
+  @Override
+  public Object visit(ExactTypePattern node, Object data) {
+    final UnresolvedType theExactType = node.getExactType();
+    if (theExactType.isParameterizedType()) ohYesItHas = true;
+    //if (theExactType.isGenericType()) ohYesItHas = true;
+    return data;
+  }
+
+  /**
+   * Any type bounds are bad.
+   * Type parameters are right out.
+   */
+  @Override
+  public Object visit(WildTypePattern node, Object data) {
+    if (node.getUpperBound() != null) ohYesItHas = true;
+    if (node.getLowerBound() != null) ohYesItHas = true;
+    if (node.getTypeParameters().size() != 0) ohYesItHas = true;
+    return data;
+  }
+
+  public boolean wellHasItThen/*?*/() {
+    return ohYesItHas;
+  }
 }

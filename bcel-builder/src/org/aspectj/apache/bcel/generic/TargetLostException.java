@@ -59,35 +59,35 @@ package org.aspectj.apache.bcel.generic;
  * are still being referenced by a InstructionTargeter object. I.e. the
  * InstructionTargeter has to be notified that (one of) the InstructionHandle it
  * is referencing is being removed from the InstructionList and thus not valid anymore.
- *
+ * <p/>
  * Making this an exception instead of a return value forces the user to handle
  * these case explicitely in a try { ... } catch. The following code illustrates
  * how this may be done:
- *
+ * <p/>
  * <PRE>
- *     ...
- *     try {
- *	il.delete(start_ih, end_ih);
- *     } catch(TargetLostException e) {
- *       InstructionHandle[] targets = e.getTargets();
- *	 for(int i=0; i < targets.length; i++) {
- *	   InstructionTargeter[] targeters = targets[i].getTargeters();
- *     
- *	   for(int j=0; j < targeters.length; j++)
- *	     targeters[j].updateTarget(targets[i], new_target);
- *       }
- *     }
+ * ...
+ * try {
+ * il.delete(start_ih, end_ih);
+ * } catch(TargetLostException e) {
+ * InstructionHandle[] targets = e.getTargets();
+ * for(int i=0; i < targets.length; i++) {
+ * InstructionTargeter[] targeters = targets[i].getTargeters();
+ * <p/>
+ * for(int j=0; j < targeters.length; j++)
+ * targeters[j].updateTarget(targets[i], new_target);
+ * }
+ * }
  * </PRE>
  *
+ * @author <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
+ * @version $Id: TargetLostException.java,v 1.3 2008/05/28 23:52:55 aclement Exp $
  * @see InstructionHandle
  * @see InstructionList
  * @see InstructionTargeter
- * @version $Id: TargetLostException.java,v 1.3 2008/05/28 23:52:55 aclement Exp $
- * @author  <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
  */
 // OPTIMIZE make unchecked, or get rid of it!
 public final class TargetLostException extends Exception {
-  private InstructionHandle[] targets;
+  private final InstructionHandle[] targets;
 
   TargetLostException(InstructionHandle[] t, String mesg) {
     super(mesg);
@@ -97,5 +97,7 @@ public final class TargetLostException extends Exception {
   /**
    * @return list of instructions still being targeted.
    */
-  public InstructionHandle[] getTargets() { return targets; }
+  public InstructionHandle[] getTargets() {
+    return targets;
+  }
 }

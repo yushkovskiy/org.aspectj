@@ -21,30 +21,30 @@ import org.aspectj.apache.bcel.classfile.Signature;
  * the signature attribute.
  */
 public class GenericsErasureTesting extends BcelTestCase {
-	
-	
-	public void testLoadingGenerics() throws ClassNotFoundException {
-		JavaClass clazz = getClassFromJar("ErasureTestData");
-		Method m = getMethod(clazz,"getData");
-		String sig = m.getDeclaredSignature();
-		System.err.println(getSignatureAttribute(clazz,"getData"));
-		System.err.println(sig);
-		assertTrue("Incorrect: "+sig,sig.equals("()Ljava/util/Vector<Ljava/lang/String;>;"));
-	}
-	
-	
-	// helper methods below
-	
-	public Signature getSignatureAttribute(JavaClass clazz,String name) {
-		Method m = getMethod(clazz,name);
-		Attribute[] as = m.getAttributes();
-		for (int i = 0; i < as.length; i++) {
-			Attribute attribute = as[i];
-			if (attribute.getName().equals("Signature")) {
-				return (Signature)attribute;
-			}
-		}
-		return null;
-	}
-	
+
+
+  public void testLoadingGenerics() throws ClassNotFoundException {
+    final JavaClass clazz = getClassFromJar("ErasureTestData");
+    final Method m = getMethod(clazz, "getData");
+    final String sig = m.getDeclaredSignature();
+    System.err.println(getSignatureAttribute(clazz, "getData"));
+    System.err.println(sig);
+    assertTrue("Incorrect: " + sig, sig.equals("()Ljava/util/Vector<Ljava/lang/String;>;"));
+  }
+
+
+  // helper methods below
+
+  public Signature getSignatureAttribute(JavaClass clazz, String name) {
+    final Method m = getMethod(clazz, name);
+    final Attribute[] as = m.getAttributes();
+    for (int i = 0; i < as.length; i++) {
+      final Attribute attribute = as[i];
+      if (attribute.getName().equals("Signature")) {
+        return (Signature) attribute;
+      }
+    }
+    return null;
+  }
+
 }

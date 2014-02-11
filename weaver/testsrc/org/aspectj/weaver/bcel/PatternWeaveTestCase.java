@@ -28,95 +28,95 @@ import org.aspectj.weaver.patterns.Pointcut;
 import org.aspectj.weaver.patterns.SimpleScope;
 
 public class PatternWeaveTestCase extends WeaveTestCase {
-	{
-		regenerate = false;
-	}
+  {
+    regenerate = false;
+  }
 
-	public PatternWeaveTestCase(String name) {
-		super(name);
-	}
+  public PatternWeaveTestCase(String name) {
+    super(name);
+  }
 
-	String[] none = new String[0];
+  String[] none = new String[0];
 
-	// XXX this test is incompatible with optimizations made to weaver
+  // XXX this test is incompatible with optimizations made to weaver
 
-	public void testPublic() throws IOException {
-		String[] publicHello = new String[] { "method-execution(void HelloWorld.main(java.lang.String[]))", };
-		String[] publicFancyHello = new String[] { "method-execution(void FancyHelloWorld.main(java.lang.String[]))",
-				"method-execution(java.lang.String FancyHelloWorld.getName())", };
-		checkPointcut("execution(public * *(..))", publicHello, publicFancyHello);
-	}
+  public void testPublic() throws IOException {
+    final String[] publicHello = new String[]{"method-execution(void HelloWorld.main(java.lang.String[]))",};
+    final String[] publicFancyHello = new String[]{"method-execution(void FancyHelloWorld.main(java.lang.String[]))",
+        "method-execution(java.lang.String FancyHelloWorld.getName())",};
+    checkPointcut("execution(public * *(..))", publicHello, publicFancyHello);
+  }
 
-	//	
-	// public void testPrintln() throws IOException {
-	// String[] callPrintlnHello = new String[] {
-	// "method-call(void java.io.PrintStream.println(java.lang.String))",
-	// };
-	// String[] callPrintlnFancyHello = new String[] {
-	// "method-call(void java.io.PrintStream.println(java.lang.String))",
-	// "method-call(void java.io.PrintStream.println(java.lang.String))",
-	// "method-call(void java.io.PrintStream.println(java.lang.Object))",
-	// };
-	// checkPointcut("call(* println(*))", callPrintlnHello, callPrintlnFancyHello);
-	// }
-	//	
-	// public void testMumble() throws IOException {
-	// checkPointcut("call(* mumble(*))", none, none);
-	// }
-	//	
-	// public void testFooBar() throws IOException {
-	// checkPointcut("call(FooBar *(..))", none, none);
-	// }
-	//	
-	// public void testGetOut() throws IOException {
-	// String[] getOutHello = new String[] {
-	// "field-get(java.io.PrintStream java.lang.System.out)",
-	// };
-	//		
-	// checkPointcut("get(* java.lang.System.out)", getOutHello, getOutHello);
-	// }
-	//	
-	// // private Pointcut makePointcut(String s) {
-	// // return new PatternParser(s).parsePointcut();
-	// // }
-	//		
-	private void checkPointcut(String pointcutSource, String[] expectedHelloShadows, String[] expectedFancyShadows)
-			throws IOException {
-		Pointcut sp = Pointcut.fromString(pointcutSource);
-		Pointcut rp = sp.resolve(new SimpleScope(world, FormalBinding.NONE));
-		Pointcut cp = rp.concretize(ResolvedType.MISSING, ResolvedType.MISSING, 0);
+  //
+  // public void testPrintln() throws IOException {
+  // String[] callPrintlnHello = new String[] {
+  // "method-call(void java.io.PrintStream.println(java.lang.String))",
+  // };
+  // String[] callPrintlnFancyHello = new String[] {
+  // "method-call(void java.io.PrintStream.println(java.lang.String))",
+  // "method-call(void java.io.PrintStream.println(java.lang.String))",
+  // "method-call(void java.io.PrintStream.println(java.lang.Object))",
+  // };
+  // checkPointcut("call(* println(*))", callPrintlnHello, callPrintlnFancyHello);
+  // }
+  //
+  // public void testMumble() throws IOException {
+  // checkPointcut("call(* mumble(*))", none, none);
+  // }
+  //
+  // public void testFooBar() throws IOException {
+  // checkPointcut("call(FooBar *(..))", none, none);
+  // }
+  //
+  // public void testGetOut() throws IOException {
+  // String[] getOutHello = new String[] {
+  // "field-get(java.io.PrintStream java.lang.System.out)",
+  // };
+  //
+  // checkPointcut("get(* java.lang.System.out)", getOutHello, getOutHello);
+  // }
+  //
+  // // private Pointcut makePointcut(String s) {
+  // // return new PatternParser(s).parsePointcut();
+  // // }
+  //
+  private void checkPointcut(String pointcutSource, String[] expectedHelloShadows, String[] expectedFancyShadows)
+      throws IOException {
+    final Pointcut sp = Pointcut.fromString(pointcutSource);
+    final Pointcut rp = sp.resolve(new SimpleScope(world, FormalBinding.NONE));
+    final Pointcut cp = rp.concretize(ResolvedType.MISSING, ResolvedType.MISSING, 0);
 
-		final List l = new ArrayList();
-		BcelAdvice p = new BcelAdvice(null, cp, null, 0, -1, -1, null, null) {
-			public boolean implementOn(Shadow shadow) {
-				l.add(shadow);
-				return true;
-			}
-		};
-		weaveTest(new String[] { "HelloWorld" }, "PatternWeave", p);
+    final List l = new ArrayList();
+    final BcelAdvice p = new BcelAdvice(null, cp, null, 0, -1, -1, null, null) {
+      public boolean implementOn(Shadow shadow) {
+        l.add(shadow);
+        return true;
+      }
+    };
+    weaveTest(new String[]{"HelloWorld"}, "PatternWeave", p);
 
-		checkShadowSet(l, expectedHelloShadows);
+    checkShadowSet(l, expectedHelloShadows);
 
-		l.clear();
-		weaveTest(new String[] { "FancyHelloWorld" }, "PatternWeave", p);
+    l.clear();
+    weaveTest(new String[]{"FancyHelloWorld"}, "PatternWeave", p);
 
-		checkShadowSet(l, expectedFancyShadows);
+    checkShadowSet(l, expectedFancyShadows);
 
-		checkSerialize(rp);
-	}
+    checkSerialize(rp);
+  }
 
-	public void checkSerialize(Pointcut p) throws IOException {
-		ByteArrayOutputStream bo = new ByteArrayOutputStream();
-		ConstantPoolSimulator cps = new ConstantPoolSimulator();
-		CompressingDataOutputStream out = new CompressingDataOutputStream(bo, cps);
-		p.write(out);
-		out.close();
+  public void checkSerialize(Pointcut p) throws IOException {
+    final ByteArrayOutputStream bo = new ByteArrayOutputStream();
+    final ConstantPoolSimulator cps = new ConstantPoolSimulator();
+    final CompressingDataOutputStream out = new CompressingDataOutputStream(bo, cps);
+    p.write(out);
+    out.close();
 
-		ByteArrayInputStream bi = new ByteArrayInputStream(bo.toByteArray());
-		VersionedDataInputStream in = new VersionedDataInputStream(bi, cps);
-		Pointcut newP = Pointcut.read(in, null);
+    final ByteArrayInputStream bi = new ByteArrayInputStream(bo.toByteArray());
+    final VersionedDataInputStream in = new VersionedDataInputStream(bi, cps);
+    final Pointcut newP = Pointcut.read(in, null);
 
-		assertEquals("write/read", p, newP);
-	}
+    assertEquals("write/read", p, newP);
+  }
 
 }

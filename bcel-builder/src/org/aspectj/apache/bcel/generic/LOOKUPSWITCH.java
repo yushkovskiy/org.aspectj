@@ -53,60 +53,61 @@ package org.aspectj.apache.bcel.generic;
  * information on the Apache Software Foundation, please see
  * <http://www.apache.org/>.
  */
-import java.io.DataOutputStream;
-import java.io.IOException;
 
 import org.aspectj.apache.bcel.Constants;
 import org.aspectj.apache.bcel.util.ByteSequence;
 
+import java.io.DataOutputStream;
+import java.io.IOException;
+
 /**
  * LOOKUPSWITCH - Switch with unordered set of values
- * 
- * @version $Id: LOOKUPSWITCH.java,v 1.5 2011/04/05 15:15:33 aclement Exp $
+ *
  * @author <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
+ * @version $Id: LOOKUPSWITCH.java,v 1.5 2011/04/05 15:15:33 aclement Exp $
  */
 public class LOOKUPSWITCH extends InstructionSelect {
 
-	public LOOKUPSWITCH(int[] match, InstructionHandle[] targets, InstructionHandle target) {
-		super(LOOKUPSWITCH, match, targets, target);
-		// Alignment remainer assumed 0 here, until dump time
-		length = (short) (9 + matchLength * 8);
-		fixedLength = length;
-	}
+  public LOOKUPSWITCH(int[] match, InstructionHandle[] targets, InstructionHandle target) {
+    super(LOOKUPSWITCH, match, targets, target);
+    // Alignment remainer assumed 0 here, until dump time
+    length = (short) (9 + matchLength * 8);
+    fixedLength = length;
+  }
 
-	/**
-	 * Dump instruction as byte code to stream out.
-	 * 
-	 * @param out Output stream
-	 */
-	public void dump(DataOutputStream out) throws IOException {
-		super.dump(out);
-		out.writeInt(matchLength); // npairs
+  /**
+   * Dump instruction as byte code to stream out.
+   *
+   * @param out Output stream
+   */
+  public void dump(DataOutputStream out) throws IOException {
+    super.dump(out);
+    out.writeInt(matchLength); // npairs
 
-		for (int i = 0; i < matchLength; i++) {
-			out.writeInt(match[i]); // match-offset pairs
-			out.writeInt(indices[i] = getTargetOffset(targets[i]));
-		}
-	}
+    for (int i = 0; i < matchLength; i++) {
+      out.writeInt(match[i]); // match-offset pairs
+      out.writeInt(indices[i] = getTargetOffset(targets[i]));
+    }
+  }
 
-	/**
-	 * Read needed data (e.g. index) from file.
-	 */
-	public LOOKUPSWITCH(ByteSequence bytes) throws IOException {
-		super(Constants.LOOKUPSWITCH, bytes); // reads padding
+  /**
+   * Read needed data (e.g. index) from file.
+   */
+  public LOOKUPSWITCH(ByteSequence bytes) throws IOException {
+    super(Constants.LOOKUPSWITCH, bytes); // reads padding
 
-		matchLength = bytes.readInt();
-		fixedLength = (short) (9 + matchLength * 8);
-		length = (short) (fixedLength + padding);
+    matchLength = bytes.readInt();
+    fixedLength = (short) (9 + matchLength * 8);
+    length = (short) (fixedLength + padding);
 
-		match = new int[matchLength];
-		indices = new int[matchLength];
-		targets = new InstructionHandle[matchLength];
+    match = new int[matchLength];
+    indices = new int[matchLength];
+    targets = new InstructionHandle[matchLength];
 
-		for (int i = 0; i < matchLength; i++) {
-			match[i] = bytes.readInt();
-			indices[i] = bytes.readInt();
-		}
-	}
+    for (int i = 0; i < matchLength; i++) {
+      match[i] = bytes.readInt();
+      indices[i] = bytes.readInt();
+    }
+  }
 
 }

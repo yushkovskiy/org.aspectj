@@ -13,11 +13,11 @@ package org.aspectj.weaver;
 
 /**
  * Used during attribute writing to encode common strings/etc as constant pool references.
- * 
+ *
  * @author Andy Clement
  */
 public interface ConstantPoolWriter {
 
-	int writeUtf8(String string);
+  int writeUtf8(String string);
 
 }

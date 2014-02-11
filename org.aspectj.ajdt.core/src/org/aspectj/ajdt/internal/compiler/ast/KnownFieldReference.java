@@ -23,29 +23,30 @@ import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 
 public class KnownFieldReference extends QualifiedNameReference {
 
-	public KnownFieldReference(FieldBinding binding, int startPos,int endPos) {
-		super(new char[][] {binding.name},new long[1], startPos, endPos);
-		this.binding = /*this.codegenBinding = */binding;
-		this.constant = Constant.NotAConstant;
-		this.actualReceiverType = binding.declaringClass;
-		
-		this.bits = Binding.FIELD;
-		//this.receiver = AstUtil.makeTypeReference(binding.declaringClass);
-	}
-	
-	//XXX handle source locations
-	public KnownFieldReference(FieldBinding binding, long pos) {
-		super(new char[][] {binding.name},new long[1],  0, 0);
-		this.binding = /*this.codegenBinding = */binding;
-		this.constant = Constant.NotAConstant;
-		this.actualReceiverType = binding.declaringClass;
-		
-		this.bits = Binding.FIELD;
-		//this.receiver = AstUtil.makeTypeReference(binding.declaringClass);
-	}
+  public KnownFieldReference(FieldBinding binding, int startPos, int endPos) {
+    super(new char[][]{binding.name}, new long[1], startPos, endPos);
+    this.binding = /*this.codegenBinding = */binding;
+    this.constant = Constant.NotAConstant;
+    this.actualReceiverType = binding.declaringClass;
 
-	public TypeBinding resolveType(BlockScope scope) {
-		return fieldBinding().type;
-	}
+    this.bits = Binding.FIELD;
+    //this.receiver = AstUtil.makeTypeReference(binding.declaringClass);
+  }
+
+  //XXX handle source locations
+  public KnownFieldReference(FieldBinding binding, long pos) {
+    super(new char[][]{binding.name}, new long[1], 0, 0);
+    this.binding = /*this.codegenBinding = */binding;
+    this.constant = Constant.NotAConstant;
+    this.actualReceiverType = binding.declaringClass;
+
+    this.bits = Binding.FIELD;
+    //this.receiver = AstUtil.makeTypeReference(binding.declaringClass);
+  }
+
+  @Override
+  public TypeBinding resolveType(BlockScope scope) {
+    return fieldBinding().type;
+  }
 
 }

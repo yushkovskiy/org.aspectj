@@ -4,25 +4,27 @@ import java.io.IOException;
 
 public class Derived extends Base {
 
-	public static void onlyDerived() throws IOException, CloneNotSupportedException {
-	}
+  public static void onlyDerived() throws IOException, CloneNotSupportedException {
+  }
 
-	public static void both() {
-	}
+  public static void both() {
+  }
 
-	public void onlyDerivedNonStatic() {
-	}
+  public void onlyDerivedNonStatic() {
+  }
 
-	public void bothNonStatic() {
-	}
+  @Override
+  public void bothNonStatic() {
+  }
 
-	public int onlyDerived;
-	public int both;
+  public int onlyDerived;
+  public int both;
 
-	public Derived() {
-	}
+  public Derived() {
+  }
 
-	public void m() {
-	}
+  @Override
+  public void m() {
+  }
 
 }

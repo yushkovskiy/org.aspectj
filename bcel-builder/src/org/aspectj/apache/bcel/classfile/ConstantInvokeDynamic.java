@@ -54,41 +54,42 @@
 package org.aspectj.apache.bcel.classfile;
 
 
+import org.aspectj.apache.bcel.Constants;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import org.aspectj.apache.bcel.Constants;
-
 /**
  * This class is derived from the abstract <A HREF="org.aspectj.apache.bcel.classfile.Constant.html">Constant</A> class and
  * represents a reference to the name and signature of a field or method.
- * 
+ * <p/>
  * http://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html#jvms-4.4.10
- * 
+ *
  * @author Andy Clement
  * @see Constant
  */
 public final class ConstantInvokeDynamic extends Constant {
-	private final int bootstrapMethodAttrIndex;
-	private final int nameAndTypeIndex; 
+  private final int bootstrapMethodAttrIndex;
+  private final int nameAndTypeIndex;
 
-	ConstantInvokeDynamic(DataInputStream file) throws IOException {
-		this(file.readUnsignedShort(), file.readUnsignedShort());
-	}
+  ConstantInvokeDynamic(DataInputStream file) throws IOException {
+    this(file.readUnsignedShort(), file.readUnsignedShort());
+  }
 
-	public ConstantInvokeDynamic(int readUnsignedShort, int nameAndTypeIndex) {
-		super(Constants.CONSTANT_InvokeDynamic);
-		this.bootstrapMethodAttrIndex = readUnsignedShort;
-		this.nameAndTypeIndex = nameAndTypeIndex;
-	}
+  public ConstantInvokeDynamic(int readUnsignedShort, int nameAndTypeIndex) {
+    super(Constants.CONSTANT_InvokeDynamic);
+    this.bootstrapMethodAttrIndex = readUnsignedShort;
+    this.nameAndTypeIndex = nameAndTypeIndex;
+  }
 
-	@Override
-	public final void dump(DataOutputStream file) throws IOException {
-		file.writeByte(tag);
-		file.writeShort(bootstrapMethodAttrIndex);
-		file.writeShort(nameAndTypeIndex);
-	}
+  @Override
+  public final void dump(@NotNull DataOutputStream file) throws IOException {
+    file.writeByte(tag);
+    file.writeShort(bootstrapMethodAttrIndex);
+    file.writeShort(nameAndTypeIndex);
+  }
 //
 //	public final byte getReferenceKind() {
 //		return bootstrapMethodAttrIndex;
@@ -105,24 +106,24 @@ public final class ConstantInvokeDynamic extends Constant {
 //	public final String getSignature(ConstantPool cp) {
 //		return cp.constantToString(getSignatureIndex(), Constants.CONSTANT_Utf8);
 //	}
-	
-	public final int getNameAndTypeIndex() {
-		return nameAndTypeIndex;
-	}
 
-	@Override
-	public final String toString() {
-		return super.toString() + "(bootstrapMethodAttrIndex=" + bootstrapMethodAttrIndex + ",nameAndTypeIndex=" + nameAndTypeIndex + ")";
-	}
+  public final int getNameAndTypeIndex() {
+    return nameAndTypeIndex;
+  }
 
-	@Override
-	public String getValue() {
-		return toString();
-	}
+  @Override
+  public final String toString() {
+    return super.toString() + "(bootstrapMethodAttrIndex=" + bootstrapMethodAttrIndex + ",nameAndTypeIndex=" + nameAndTypeIndex + ")";
+  }
 
-	@Override
-	public void accept(ClassVisitor v) {
-		v.visitConstantInvokeDynamic(this);
-	}
+  @Override
+  public String getValue() {
+    return toString();
+  }
+
+  @Override
+  public void accept(@NotNull ClassVisitor v) {
+    v.visitConstantInvokeDynamic(this);
+  }
 
 }

@@ -17,7 +17,7 @@ import java.lang.ref.WeakReference;
  * Wraps a reference to a classloader inside a WeakReference. This should be used where we do not want the existence of a
  * classloader reference to prevent garbage collection of that classloader (and possibly an associated weaver instance in the case
  * of load time weaving).
- * <p>
+ * <p/>
  * In more detail:<br>
  * When load time weaving, the class Aj maintains a WeakHashMap from the classloader instance to a weaver instance. The aim is that
  * the weaver is around as long as the classloader is and should the classloader be dereferenced then the weaver can also be garbage
@@ -28,42 +28,41 @@ import java.lang.ref.WeakReference;
  * WeakClassLoaderReference instances will not 'lose' their ClassLoader references until the top level ClassLoader reference is
  * null'd. This means there is no need to check for the null case on get() in this WeakReference logic below, because we shouldn't
  * be using this weaver if its associated ClassLoader has been collected. See https://bugs.eclipse.org/bugs/show_bug.cgi?id=210470
- * 
- * 
+ *
  * @author Andy Clement, Abraham Nevado
  */
-public class WeakClassLoaderReference{
+public class WeakClassLoaderReference {
 
-	protected final int hashcode;
+  protected final int hashcode;
 
-	private final WeakReference loaderRef;
+  private final WeakReference loaderRef;
 
-	public WeakClassLoaderReference(ClassLoader loader) {
-		loaderRef = new WeakReference(loader);
-		if(loader == null){
-			// Bug: 363962 
-			// Check that ClassLoader is not null, for instance when loaded from BootStrapClassLoader
-			hashcode = System.identityHashCode(this);
-		}else{
-			hashcode = loader.hashCode() * 37;
-		}
-	}
+  public WeakClassLoaderReference(ClassLoader loader) {
+    loaderRef = new WeakReference(loader);
+    if (loader == null) {
+      // Bug: 363962
+      // Check that ClassLoader is not null, for instance when loaded from BootStrapClassLoader
+      hashcode = System.identityHashCode(this);
+    } else {
+      hashcode = loader.hashCode() * 37;
+    }
+  }
 
-	public ClassLoader getClassLoader() {
-		ClassLoader instance = (ClassLoader) loaderRef.get();
-		// Assert instance!=null
-		return instance;
-	}
+  public ClassLoader getClassLoader() {
+    final ClassLoader instance = (ClassLoader) loaderRef.get();
+    // Assert instance!=null
+    return instance;
+  }
 
-	public boolean equals(Object obj) {
-		if (!(obj instanceof WeakClassLoaderReference))
-			return false;
-		WeakClassLoaderReference other = (WeakClassLoaderReference) obj;
-		return (other.hashcode == hashcode);
-	}
+  public boolean equals(Object obj) {
+    if (!(obj instanceof WeakClassLoaderReference))
+      return false;
+    final WeakClassLoaderReference other = (WeakClassLoaderReference) obj;
+    return (other.hashcode == hashcode);
+  }
 
-	public int hashCode() {
-		return hashcode;
-	}
+  public int hashCode() {
+    return hashcode;
+  }
 
 }

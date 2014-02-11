@@ -12,130 +12,134 @@
 
 package org.aspectj.weaver.patterns;
 
-import java.io.IOException;
-import java.util.Map;
-
 import org.aspectj.bridge.MessageUtil;
 import org.aspectj.util.FuzzyBoolean;
-import org.aspectj.weaver.CompressingDataOutputStream;
-import org.aspectj.weaver.ISourceContext;
-import org.aspectj.weaver.IntMap;
-import org.aspectj.weaver.ResolvedType;
-import org.aspectj.weaver.Shadow;
-import org.aspectj.weaver.VersionedDataInputStream;
-import org.aspectj.weaver.WeaverMessages;
-import org.aspectj.weaver.World;
+import org.aspectj.weaver.*;
 import org.aspectj.weaver.ast.Literal;
 import org.aspectj.weaver.ast.Test;
 
+import java.io.IOException;
+import java.util.Map;
+
 public class WithincodePointcut extends Pointcut {
-	private SignaturePattern signature;
-	private static final int matchedShadowKinds;
-	static {
-		int flags = Shadow.ALL_SHADOW_KINDS_BITS;
-		for (int i = 0; i < Shadow.SHADOW_KINDS.length; i++) {
-			if (Shadow.SHADOW_KINDS[i].isEnclosingKind()) {
-				flags -= Shadow.SHADOW_KINDS[i].bit;
-			}
-		}
-		// these next two are needed for inlining of field initializers
-		flags |= Shadow.ConstructorExecution.bit;
-		flags |= Shadow.Initialization.bit;
-		matchedShadowKinds = flags;
-	}
+  private SignaturePattern signature;
+  private static final int matchedShadowKinds;
 
-	public WithincodePointcut(SignaturePattern signature) {
-		this.signature = signature;
-		this.pointcutKind = WITHINCODE;
-	}
+  static {
+    int flags = Shadow.ALL_SHADOW_KINDS_BITS;
+    for (int i = 0; i < Shadow.SHADOW_KINDS.length; i++) {
+      if (Shadow.SHADOW_KINDS[i].isEnclosingKind()) {
+        flags -= Shadow.SHADOW_KINDS[i].bit;
+      }
+    }
+    // these next two are needed for inlining of field initializers
+    flags |= Shadow.ConstructorExecution.bit;
+    flags |= Shadow.Initialization.bit;
+    matchedShadowKinds = flags;
+  }
 
-	public SignaturePattern getSignature() {
-		return signature;
-	}
+  public WithincodePointcut(SignaturePattern signature) {
+    this.signature = signature;
+    this.pointcutKind = WITHINCODE;
+  }
 
-	public int couldMatchKinds() {
-		return matchedShadowKinds;
-	}
+  public SignaturePattern getSignature() {
+    return signature;
+  }
 
-	public Pointcut parameterizeWith(Map typeVariableMap, World w) {
-		WithincodePointcut ret = new WithincodePointcut(signature.parameterizeWith(typeVariableMap, w));
-		ret.copyLocationFrom(this);
-		return ret;
-	}
+  @Override
+  public int couldMatchKinds() {
+    return matchedShadowKinds;
+  }
 
-	public FuzzyBoolean fastMatch(FastMatchInfo type) {
-		return FuzzyBoolean.MAYBE;
-	}
+  @Override
+  public Pointcut parameterizeWith(Map typeVariableMap, World w) {
+    final WithincodePointcut ret = new WithincodePointcut(signature.parameterizeWith(typeVariableMap, w));
+    ret.copyLocationFrom(this);
+    return ret;
+  }
 
-	protected FuzzyBoolean matchInternal(Shadow shadow) {
-		// This will not match code in local or anonymous classes as if
-		// they were withincode of the outer signature
-		return FuzzyBoolean.fromBoolean(signature.matches(shadow.getEnclosingCodeSignature(), shadow.getIWorld(), false));
-	}
+  @Override
+  public FuzzyBoolean fastMatch(FastMatchInfo type) {
+    return FuzzyBoolean.MAYBE;
+  }
 
-	public void write(CompressingDataOutputStream s) throws IOException {
-		s.writeByte(Pointcut.WITHINCODE);
-		signature.write(s);
-		writeLocation(s);
-	}
+  @Override
+  protected FuzzyBoolean matchInternal(Shadow shadow) {
+    // This will not match code in local or anonymous classes as if
+    // they were withincode of the outer signature
+    return FuzzyBoolean.fromBoolean(signature.matches(shadow.getEnclosingCodeSignature(), shadow.getIWorld(), false));
+  }
 
-	public static Pointcut read(VersionedDataInputStream s, ISourceContext context) throws IOException {
-		WithincodePointcut ret = new WithincodePointcut(SignaturePattern.read(s, context));
-		ret.readLocation(context, s);
-		return ret;
-	}
+  @Override
+  public void write(CompressingDataOutputStream s) throws IOException {
+    s.writeByte(Pointcut.WITHINCODE);
+    signature.write(s);
+    writeLocation(s);
+  }
 
-	public void resolveBindings(IScope scope, Bindings bindings) {
-		signature = signature.resolveBindings(scope, bindings);
+  public static Pointcut read(VersionedDataInputStream s, ISourceContext context) throws IOException {
+    final WithincodePointcut ret = new WithincodePointcut(SignaturePattern.read(s, context));
+    ret.readLocation(context, s);
+    return ret;
+  }
 
-		// look for inappropriate use of parameterized types and tell user...
-		HasThisTypePatternTriedToSneakInSomeGenericOrParameterizedTypePatternMatchingStuffAnywhereVisitor visitor = new HasThisTypePatternTriedToSneakInSomeGenericOrParameterizedTypePatternMatchingStuffAnywhereVisitor();
-		signature.getDeclaringType().traverse(visitor, null);
-		if (visitor.wellHasItThen/* ? */()) {
-			scope.message(MessageUtil.error(WeaverMessages
-					.format(WeaverMessages.WITHINCODE_DOESNT_SUPPORT_PARAMETERIZED_DECLARING_TYPES), getSourceLocation()));
-		}
+  @Override
+  public void resolveBindings(IScope scope, Bindings bindings) {
+    signature = signature.resolveBindings(scope, bindings);
 
-		visitor = new HasThisTypePatternTriedToSneakInSomeGenericOrParameterizedTypePatternMatchingStuffAnywhereVisitor();
-		signature.getThrowsPattern().traverse(visitor, null);
-		if (visitor.wellHasItThen/* ? */()) {
-			scope.message(MessageUtil.error(WeaverMessages.format(WeaverMessages.NO_GENERIC_THROWABLES), getSourceLocation()));
-		}
-	}
+    // look for inappropriate use of parameterized types and tell user...
+    HasThisTypePatternTriedToSneakInSomeGenericOrParameterizedTypePatternMatchingStuffAnywhereVisitor visitor = new HasThisTypePatternTriedToSneakInSomeGenericOrParameterizedTypePatternMatchingStuffAnywhereVisitor();
+    signature.getDeclaringType().traverse(visitor, null);
+    if (visitor.wellHasItThen/* ? */()) {
+      scope.message(MessageUtil.error(WeaverMessages
+          .format(WeaverMessages.WITHINCODE_DOESNT_SUPPORT_PARAMETERIZED_DECLARING_TYPES), getSourceLocation()));
+    }
 
-	public void postRead(ResolvedType enclosingType) {
-		signature.postRead(enclosingType);
-	}
+    visitor = new HasThisTypePatternTriedToSneakInSomeGenericOrParameterizedTypePatternMatchingStuffAnywhereVisitor();
+    signature.getThrowsPattern().traverse(visitor, null);
+    if (visitor.wellHasItThen/* ? */()) {
+      scope.message(MessageUtil.error(WeaverMessages.format(WeaverMessages.NO_GENERIC_THROWABLES), getSourceLocation()));
+    }
+  }
 
-	public boolean equals(Object other) {
-		if (!(other instanceof WithincodePointcut)) {
-			return false;
-		}
-		WithincodePointcut o = (WithincodePointcut) other;
-		return o.signature.equals(this.signature);
-	}
+  @Override
+  public void postRead(ResolvedType enclosingType) {
+    signature.postRead(enclosingType);
+  }
 
-	public int hashCode() {
-		int result = 43;
-		result = 37 * result + signature.hashCode();
-		return result;
-	}
+  public boolean equals(Object other) {
+    if (!(other instanceof WithincodePointcut)) {
+      return false;
+    }
+    final WithincodePointcut o = (WithincodePointcut) other;
+    return o.signature.equals(this.signature);
+  }
 
-	public String toString() {
-		return "withincode(" + signature + ")";
-	}
+  public int hashCode() {
+    int result = 43;
+    result = 37 * result + signature.hashCode();
+    return result;
+  }
 
-	protected Test findResidueInternal(Shadow shadow, ExposedState state) {
-		return match(shadow).alwaysTrue() ? Literal.TRUE : Literal.FALSE;
-	}
+  public String toString() {
+    return "withincode(" + signature + ")";
+  }
 
-	public Pointcut concretize1(ResolvedType inAspect, ResolvedType declaringType, IntMap bindings) {
-		Pointcut ret = new WithincodePointcut(signature);
-		ret.copyLocationFrom(this);
-		return ret;
-	}
+  @Override
+  protected Test findResidueInternal(Shadow shadow, ExposedState state) {
+    return match(shadow).alwaysTrue() ? Literal.TRUE : Literal.FALSE;
+  }
 
-	public Object accept(PatternNodeVisitor visitor, Object data) {
-		return visitor.visit(this, data);
-	}
+  @Override
+  public Pointcut concretize1(ResolvedType inAspect, ResolvedType declaringType, IntMap bindings) {
+    final Pointcut ret = new WithincodePointcut(signature);
+    ret.copyLocationFrom(this);
+    return ret;
+  }
+
+  @Override
+  public Object accept(PatternNodeVisitor visitor, Object data) {
+    return visitor.visit(this, data);
+  }
 }

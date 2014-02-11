@@ -14,10 +14,10 @@ package org.aspectj.weaver.ast;
 
 public interface IExprVisitor {
 
-	void visit(Var i);
+  void visit(Var i);
 
-	void visit(FieldGet fieldGet);
+  void visit(FieldGet fieldGet);
 
-	void visit(CallExpr callExpr);
+  void visit(CallExpr callExpr);
 
 }

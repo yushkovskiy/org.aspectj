@@ -15,37 +15,38 @@ package org.aspectj.weaver.ast;
 
 
 public class And extends Test {
-	Test left, right;
+  Test left, right;
 
-	public And(Test left, Test right) {
-		super();
-		this.left = left;
-		this.right = right;
-	}
+  public And(Test left, Test right) {
+    super();
+    this.left = left;
+    this.right = right;
+  }
 
-	public void accept(ITestVisitor v) {
-		v.visit(this);
-	}
-	
-	public String toString() {
-		return "(" + left + " && " + right + ")";
-	}
+  @Override
+  public void accept(ITestVisitor v) {
+    v.visit(this);
+  }
 
-	public boolean equals(Object other) {
-		if (other instanceof And) {
-			And o = (And) other;
-			return o.left.equals(left) && o.right.equals(right);
-		} else {
-			return false;
-		}
-	}
+  public String toString() {
+    return "(" + left + " && " + right + ")";
+  }
 
-    public Test getLeft() {
-        return left;
+  public boolean equals(Object other) {
+    if (other instanceof And) {
+      final And o = (And) other;
+      return o.left.equals(left) && o.right.equals(right);
+    } else {
+      return false;
     }
+  }
 
-    public Test getRight() {
-        return right;
-    }
+  public Test getLeft() {
+    return left;
+  }
+
+  public Test getRight() {
+    return right;
+  }
 
 }

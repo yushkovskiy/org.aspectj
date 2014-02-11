@@ -33,246 +33,246 @@ import org.aspectj.weaver.tools.TraceFactory;
  */
 public class BcelGenericSignatureToTypeXConverter {
 
-	private static Trace trace = TraceFactory.getTraceFactory().getTrace(BcelGenericSignatureToTypeXConverter.class);
+  private static Trace trace = TraceFactory.getTraceFactory().getTrace(BcelGenericSignatureToTypeXConverter.class);
 
-	public static ResolvedType classTypeSignature2TypeX(GenericSignature.ClassTypeSignature aClassTypeSignature,
-			GenericSignature.FormalTypeParameter[] typeParams, World world) throws GenericSignatureFormatException {
-		Map<GenericSignature.FormalTypeParameter, ReferenceType> typeMap = new HashMap<GenericSignature.FormalTypeParameter, ReferenceType>();
-		ResolvedType ret = classTypeSignature2TypeX(aClassTypeSignature, typeParams, world, typeMap);
-		fixUpCircularDependencies(ret, typeMap);
-		return ret;
-	}
+  public static ResolvedType classTypeSignature2TypeX(GenericSignature.ClassTypeSignature aClassTypeSignature,
+                                                      GenericSignature.FormalTypeParameter[] typeParams, World world) throws GenericSignatureFormatException {
+    final Map<GenericSignature.FormalTypeParameter, ReferenceType> typeMap = new HashMap<GenericSignature.FormalTypeParameter, ReferenceType>();
+    final ResolvedType ret = classTypeSignature2TypeX(aClassTypeSignature, typeParams, world, typeMap);
+    fixUpCircularDependencies(ret, typeMap);
+    return ret;
+  }
 
-	private static ResolvedType classTypeSignature2TypeX(GenericSignature.ClassTypeSignature aClassTypeSignature,
-			GenericSignature.FormalTypeParameter[] typeParams, World world,
-			Map<GenericSignature.FormalTypeParameter, ReferenceType> inProgressTypeVariableResolutions)
-			throws GenericSignatureFormatException {
-		// class type sig consists of an outer type, and zero or more nested types
-		// the fully qualified name is outer-type.nested-type1.nested-type2....
-		// each type in the hierarchy may have type arguments
+  private static ResolvedType classTypeSignature2TypeX(GenericSignature.ClassTypeSignature aClassTypeSignature,
+                                                       GenericSignature.FormalTypeParameter[] typeParams, World world,
+                                                       Map<GenericSignature.FormalTypeParameter, ReferenceType> inProgressTypeVariableResolutions)
+      throws GenericSignatureFormatException {
+    // class type sig consists of an outer type, and zero or more nested types
+    // the fully qualified name is outer-type.nested-type1.nested-type2....
+    // each type in the hierarchy may have type arguments
 
-		// first build the 'raw type' signature
-		StringBuffer sig = new StringBuffer();
-		sig.append(aClassTypeSignature.outerType.identifier.replace(';', ' ').trim());
-		for (int i = 0; i < aClassTypeSignature.nestedTypes.length; i++) {
-			sig.append("$");
-			sig.append(aClassTypeSignature.nestedTypes[i].identifier.replace(';', ' ').trim());
-		}
-		sig.append(";");
+    // first build the 'raw type' signature
+    final StringBuilder sig = new StringBuilder();
+    sig.append(aClassTypeSignature.outerType.identifier.replace(';', ' ').trim());
+    for (int i = 0; i < aClassTypeSignature.nestedTypes.length; i++) {
+      sig.append("$");
+      sig.append(aClassTypeSignature.nestedTypes[i].identifier.replace(';', ' ').trim());
+    }
+    sig.append(";");
 
-		// now look for any type parameters.
-		// I *think* we only need to worry about the 'right-most' type...
-		SimpleClassTypeSignature innerType = aClassTypeSignature.outerType;
-		if (aClassTypeSignature.nestedTypes.length > 0) {
-			innerType = aClassTypeSignature.nestedTypes[aClassTypeSignature.nestedTypes.length - 1];
-		}
-		if (innerType.typeArguments.length > 0) {
-			// we have to create a parameterized type
-			// type arguments may be array types, class types, or typevariable types
-			ResolvedType theBaseType = UnresolvedType.forSignature(sig.toString()).resolve(world);
+    // now look for any type parameters.
+    // I *think* we only need to worry about the 'right-most' type...
+    SimpleClassTypeSignature innerType = aClassTypeSignature.outerType;
+    if (aClassTypeSignature.nestedTypes.length > 0) {
+      innerType = aClassTypeSignature.nestedTypes[aClassTypeSignature.nestedTypes.length - 1];
+    }
+    if (innerType.typeArguments.length > 0) {
+      // we have to create a parameterized type
+      // type arguments may be array types, class types, or typevariable types
+      final ResolvedType theBaseType = UnresolvedType.forSignature(sig.toString()).resolve(world);
 
-			// Sometimes we may find that when the code is being load-time woven that the types have changed.
-			// Perhaps an old form of a library jar is being used - this can mean we discover right here
-			// that a type is not parameterizable (is that a word?). I think in these cases it is ok to
-			// just return with what we know (the base type). (see pr152848)
-			if (!(theBaseType.isGenericType() || theBaseType.isRawType())) {
-				if (trace.isTraceEnabled()) {
-					trace.event("classTypeSignature2TypeX: this type is not a generic type:", null, new Object[] { theBaseType });
-				}
-				return theBaseType;
-			}
+      // Sometimes we may find that when the code is being load-time woven that the types have changed.
+      // Perhaps an old form of a library jar is being used - this can mean we discover right here
+      // that a type is not parameterizable (is that a word?). I think in these cases it is ok to
+      // just return with what we know (the base type). (see pr152848)
+      if (!(theBaseType.isGenericType() || theBaseType.isRawType())) {
+        if (trace.isTraceEnabled()) {
+          trace.event("classTypeSignature2TypeX: this type is not a generic type:", null, new Object[]{theBaseType});
+        }
+        return theBaseType;
+      }
 
-			ResolvedType[] typeArgumentTypes = new ResolvedType[innerType.typeArguments.length];
-			for (int i = 0; i < typeArgumentTypes.length; i++) {
-				typeArgumentTypes[i] = typeArgument2TypeX(innerType.typeArguments[i], typeParams, world,
-						inProgressTypeVariableResolutions);
-			}
-			return TypeFactory.createParameterizedType(theBaseType, typeArgumentTypes, world);
+      final ResolvedType[] typeArgumentTypes = new ResolvedType[innerType.typeArguments.length];
+      for (int i = 0; i < typeArgumentTypes.length; i++) {
+        typeArgumentTypes[i] = typeArgument2TypeX(innerType.typeArguments[i], typeParams, world,
+            inProgressTypeVariableResolutions);
+      }
+      return TypeFactory.createParameterizedType(theBaseType, typeArgumentTypes, world);
 
-			// world.resolve(UnresolvedType.forParameterizedTypes(
-			// UnresolvedType.forSignature(sig.toString()).resolve(world),
-			// typeArgumentTypes));
-		} else {
-			// we have a non-parameterized type
-			return world.resolve(UnresolvedType.forSignature(sig.toString()));
-		}
-	}
+      // world.resolve(UnresolvedType.forParameterizedTypes(
+      // UnresolvedType.forSignature(sig.toString()).resolve(world),
+      // typeArgumentTypes));
+    } else {
+      // we have a non-parameterized type
+      return world.resolve(UnresolvedType.forSignature(sig.toString()));
+    }
+  }
 
-	public static ResolvedType fieldTypeSignature2TypeX(GenericSignature.FieldTypeSignature aFieldTypeSignature,
-			GenericSignature.FormalTypeParameter[] typeParams, World world) throws GenericSignatureFormatException {
-		Map<GenericSignature.FormalTypeParameter, ReferenceType> typeMap = new HashMap<GenericSignature.FormalTypeParameter, ReferenceType>();
-		ResolvedType ret = fieldTypeSignature2TypeX(aFieldTypeSignature, typeParams, world, typeMap);
-		fixUpCircularDependencies(ret, typeMap);
-		return ret;
-	}
+  public static ResolvedType fieldTypeSignature2TypeX(GenericSignature.FieldTypeSignature aFieldTypeSignature,
+                                                      GenericSignature.FormalTypeParameter[] typeParams, World world) throws GenericSignatureFormatException {
+    final Map<GenericSignature.FormalTypeParameter, ReferenceType> typeMap = new HashMap<GenericSignature.FormalTypeParameter, ReferenceType>();
+    final ResolvedType ret = fieldTypeSignature2TypeX(aFieldTypeSignature, typeParams, world, typeMap);
+    fixUpCircularDependencies(ret, typeMap);
+    return ret;
+  }
 
-	private static ResolvedType fieldTypeSignature2TypeX(GenericSignature.FieldTypeSignature aFieldTypeSignature,
-			GenericSignature.FormalTypeParameter[] typeParams, World world,
-			Map<GenericSignature.FormalTypeParameter, ReferenceType> inProgressTypeVariableResolutions)
-			throws GenericSignatureFormatException {
-		if (aFieldTypeSignature.isClassTypeSignature()) {
-			return classTypeSignature2TypeX((GenericSignature.ClassTypeSignature) aFieldTypeSignature, typeParams, world,
-					inProgressTypeVariableResolutions);
-		} else if (aFieldTypeSignature.isArrayTypeSignature()) {
-			int dims = 0;
-			GenericSignature.TypeSignature ats = aFieldTypeSignature;
-			while (ats instanceof GenericSignature.ArrayTypeSignature) {
-				dims++;
-				ats = ((GenericSignature.ArrayTypeSignature) ats).typeSig;
-			}
-			return world.resolve(UnresolvedType.makeArray(
-					typeSignature2TypeX(ats, typeParams, world, inProgressTypeVariableResolutions), dims));
-		} else if (aFieldTypeSignature.isTypeVariableSignature()) {
-			ResolvedType rtx = typeVariableSignature2TypeX((GenericSignature.TypeVariableSignature) aFieldTypeSignature,
-					typeParams, world, inProgressTypeVariableResolutions);
-			return rtx;
-		} else {
-			throw new GenericSignatureFormatException("Cant understand field type signature: " + aFieldTypeSignature);
-		}
-	}
+  private static ResolvedType fieldTypeSignature2TypeX(GenericSignature.FieldTypeSignature aFieldTypeSignature,
+                                                       GenericSignature.FormalTypeParameter[] typeParams, World world,
+                                                       Map<GenericSignature.FormalTypeParameter, ReferenceType> inProgressTypeVariableResolutions)
+      throws GenericSignatureFormatException {
+    if (aFieldTypeSignature.isClassTypeSignature()) {
+      return classTypeSignature2TypeX((GenericSignature.ClassTypeSignature) aFieldTypeSignature, typeParams, world,
+          inProgressTypeVariableResolutions);
+    } else if (aFieldTypeSignature.isArrayTypeSignature()) {
+      int dims = 0;
+      GenericSignature.TypeSignature ats = aFieldTypeSignature;
+      while (ats instanceof GenericSignature.ArrayTypeSignature) {
+        dims++;
+        ats = ((GenericSignature.ArrayTypeSignature) ats).typeSig;
+      }
+      return world.resolve(UnresolvedType.makeArray(
+          typeSignature2TypeX(ats, typeParams, world, inProgressTypeVariableResolutions), dims));
+    } else if (aFieldTypeSignature.isTypeVariableSignature()) {
+      final ResolvedType rtx = typeVariableSignature2TypeX((GenericSignature.TypeVariableSignature) aFieldTypeSignature,
+          typeParams, world, inProgressTypeVariableResolutions);
+      return rtx;
+    } else {
+      throw new GenericSignatureFormatException("Cant understand field type signature: " + aFieldTypeSignature);
+    }
+  }
 
-	public static TypeVariable formalTypeParameter2TypeVariable(GenericSignature.FormalTypeParameter aFormalTypeParameter,
-			GenericSignature.FormalTypeParameter[] typeParams, World world) throws GenericSignatureFormatException {
-		Map<GenericSignature.FormalTypeParameter, ReferenceType> typeMap = new HashMap<GenericSignature.FormalTypeParameter, ReferenceType>();
-		return formalTypeParameter2TypeVariable(aFormalTypeParameter, typeParams, world, typeMap);
-	}
+  public static TypeVariable formalTypeParameter2TypeVariable(GenericSignature.FormalTypeParameter aFormalTypeParameter,
+                                                              GenericSignature.FormalTypeParameter[] typeParams, World world) throws GenericSignatureFormatException {
+    final Map<GenericSignature.FormalTypeParameter, ReferenceType> typeMap = new HashMap<GenericSignature.FormalTypeParameter, ReferenceType>();
+    return formalTypeParameter2TypeVariable(aFormalTypeParameter, typeParams, world, typeMap);
+  }
 
-	private static TypeVariable formalTypeParameter2TypeVariable(GenericSignature.FormalTypeParameter aFormalTypeParameter,
-			GenericSignature.FormalTypeParameter[] typeParams, World world,
-			Map<GenericSignature.FormalTypeParameter, ReferenceType> inProgressTypeVariableResolutions)
-			throws GenericSignatureFormatException {
-		UnresolvedType upperBound = fieldTypeSignature2TypeX(aFormalTypeParameter.classBound, typeParams, world,
-				inProgressTypeVariableResolutions);
-		UnresolvedType[] ifBounds = new UnresolvedType[aFormalTypeParameter.interfaceBounds.length];
-		for (int i = 0; i < ifBounds.length; i++) {
-			ifBounds[i] = fieldTypeSignature2TypeX(aFormalTypeParameter.interfaceBounds[i], typeParams, world,
-					inProgressTypeVariableResolutions);
-		}
-		return new TypeVariable(aFormalTypeParameter.identifier, upperBound, ifBounds);
-	}
+  private static TypeVariable formalTypeParameter2TypeVariable(GenericSignature.FormalTypeParameter aFormalTypeParameter,
+                                                               GenericSignature.FormalTypeParameter[] typeParams, World world,
+                                                               Map<GenericSignature.FormalTypeParameter, ReferenceType> inProgressTypeVariableResolutions)
+      throws GenericSignatureFormatException {
+    final UnresolvedType upperBound = fieldTypeSignature2TypeX(aFormalTypeParameter.classBound, typeParams, world,
+        inProgressTypeVariableResolutions);
+    final UnresolvedType[] ifBounds = new UnresolvedType[aFormalTypeParameter.interfaceBounds.length];
+    for (int i = 0; i < ifBounds.length; i++) {
+      ifBounds[i] = fieldTypeSignature2TypeX(aFormalTypeParameter.interfaceBounds[i], typeParams, world,
+          inProgressTypeVariableResolutions);
+    }
+    return new TypeVariable(aFormalTypeParameter.identifier, upperBound, ifBounds);
+  }
 
-	private static ResolvedType typeArgument2TypeX(GenericSignature.TypeArgument aTypeArgument,
-			GenericSignature.FormalTypeParameter[] typeParams, World world,
-			Map<GenericSignature.FormalTypeParameter, ReferenceType> inProgressTypeVariableResolutions)
-			throws GenericSignatureFormatException {
-		if (aTypeArgument.isWildcard) {
-			return UnresolvedType.SOMETHING.resolve(world);
-		}
-		if (aTypeArgument.isMinus) {
-			UnresolvedType bound = fieldTypeSignature2TypeX(aTypeArgument.signature, typeParams, world,
-					inProgressTypeVariableResolutions);
-			ResolvedType resolvedBound = world.resolve(bound);
-			if (resolvedBound.isMissing()) {
-				world.getLint().cantFindType.signal("Unable to find type (for bound): " + resolvedBound.getName(), null);
-				resolvedBound = world.resolve(UnresolvedType.OBJECT);
-			}
-			ReferenceType rBound = (ReferenceType) resolvedBound;
-			return new BoundedReferenceType(rBound, false, world);
-		} else if (aTypeArgument.isPlus) {
-			UnresolvedType bound = fieldTypeSignature2TypeX(aTypeArgument.signature, typeParams, world,
-					inProgressTypeVariableResolutions);
-			ResolvedType resolvedBound = world.resolve(bound);
-			if (resolvedBound.isMissing()) {
-				world.getLint().cantFindType.signal("Unable to find type (for bound): " + resolvedBound.getName(), null);
-				resolvedBound = world.resolve(UnresolvedType.OBJECT);
-			}
-			ReferenceType rBound = (ReferenceType) resolvedBound;
-			return new BoundedReferenceType(rBound, true, world);
-		} else {
-			return fieldTypeSignature2TypeX(aTypeArgument.signature, typeParams, world, inProgressTypeVariableResolutions);
-		}
-	}
+  private static ResolvedType typeArgument2TypeX(GenericSignature.TypeArgument aTypeArgument,
+                                                 GenericSignature.FormalTypeParameter[] typeParams, World world,
+                                                 Map<GenericSignature.FormalTypeParameter, ReferenceType> inProgressTypeVariableResolutions)
+      throws GenericSignatureFormatException {
+    if (aTypeArgument.isWildcard) {
+      return UnresolvedType.SOMETHING.resolve(world);
+    }
+    if (aTypeArgument.isMinus) {
+      final UnresolvedType bound = fieldTypeSignature2TypeX(aTypeArgument.signature, typeParams, world,
+          inProgressTypeVariableResolutions);
+      ResolvedType resolvedBound = world.resolve(bound);
+      if (resolvedBound.isMissing()) {
+        world.getLint().cantFindType.signal("Unable to find type (for bound): " + resolvedBound.getName(), null);
+        resolvedBound = world.resolve(UnresolvedType.OBJECT);
+      }
+      final ReferenceType rBound = (ReferenceType) resolvedBound;
+      return new BoundedReferenceType(rBound, false, world);
+    } else if (aTypeArgument.isPlus) {
+      final UnresolvedType bound = fieldTypeSignature2TypeX(aTypeArgument.signature, typeParams, world,
+          inProgressTypeVariableResolutions);
+      ResolvedType resolvedBound = world.resolve(bound);
+      if (resolvedBound.isMissing()) {
+        world.getLint().cantFindType.signal("Unable to find type (for bound): " + resolvedBound.getName(), null);
+        resolvedBound = world.resolve(UnresolvedType.OBJECT);
+      }
+      final ReferenceType rBound = (ReferenceType) resolvedBound;
+      return new BoundedReferenceType(rBound, true, world);
+    } else {
+      return fieldTypeSignature2TypeX(aTypeArgument.signature, typeParams, world, inProgressTypeVariableResolutions);
+    }
+  }
 
-	public static ResolvedType typeSignature2TypeX(GenericSignature.TypeSignature aTypeSig,
-			GenericSignature.FormalTypeParameter[] typeParams, World world) throws GenericSignatureFormatException {
-		Map<GenericSignature.FormalTypeParameter, ReferenceType> typeMap = new HashMap<GenericSignature.FormalTypeParameter, ReferenceType>();
-		ResolvedType ret = typeSignature2TypeX(aTypeSig, typeParams, world, typeMap);
-		fixUpCircularDependencies(ret, typeMap);
-		return ret;
-	}
+  public static ResolvedType typeSignature2TypeX(GenericSignature.TypeSignature aTypeSig,
+                                                 GenericSignature.FormalTypeParameter[] typeParams, World world) throws GenericSignatureFormatException {
+    final Map<GenericSignature.FormalTypeParameter, ReferenceType> typeMap = new HashMap<GenericSignature.FormalTypeParameter, ReferenceType>();
+    final ResolvedType ret = typeSignature2TypeX(aTypeSig, typeParams, world, typeMap);
+    fixUpCircularDependencies(ret, typeMap);
+    return ret;
+  }
 
-	private static ResolvedType typeSignature2TypeX(GenericSignature.TypeSignature aTypeSig,
-			GenericSignature.FormalTypeParameter[] typeParams, World world,
-			Map<GenericSignature.FormalTypeParameter, ReferenceType> inProgressTypeVariableResolutions)
-			throws GenericSignatureFormatException {
-		if (aTypeSig.isBaseType()) {
-			return world.resolve(UnresolvedType.forSignature(((GenericSignature.BaseTypeSignature) aTypeSig).toString()));
-		} else {
-			return fieldTypeSignature2TypeX((GenericSignature.FieldTypeSignature) aTypeSig, typeParams, world,
-					inProgressTypeVariableResolutions);
-		}
-	}
+  private static ResolvedType typeSignature2TypeX(GenericSignature.TypeSignature aTypeSig,
+                                                  GenericSignature.FormalTypeParameter[] typeParams, World world,
+                                                  Map<GenericSignature.FormalTypeParameter, ReferenceType> inProgressTypeVariableResolutions)
+      throws GenericSignatureFormatException {
+    if (aTypeSig.isBaseType()) {
+      return world.resolve(UnresolvedType.forSignature(((GenericSignature.BaseTypeSignature) aTypeSig).toString()));
+    } else {
+      return fieldTypeSignature2TypeX((GenericSignature.FieldTypeSignature) aTypeSig, typeParams, world,
+          inProgressTypeVariableResolutions);
+    }
+  }
 
-	private static ResolvedType typeVariableSignature2TypeX(GenericSignature.TypeVariableSignature aTypeVarSig,
-			GenericSignature.FormalTypeParameter[] typeParams, World world,
-			Map<GenericSignature.FormalTypeParameter, ReferenceType> inProgressTypeVariableResolutions)
-			throws GenericSignatureFormatException {
-		GenericSignature.FormalTypeParameter typeVarBounds = null;
-		for (int i = 0; i < typeParams.length; i++) {
-			if (typeParams[i].identifier.equals(aTypeVarSig.typeVariableName)) {
-				typeVarBounds = typeParams[i];
-				break;
-			}
-		}
-		if (typeVarBounds == null) {
-			// blowing up here breaks the situation with ITDs where the type variable is mentioned in the
-			// declaring type and used somewhere in the signature. Temporary change to allow it to return just a
-			// 'dumb' typevariablereference.
-			return new TypeVariableReferenceType(new TypeVariable(aTypeVarSig.typeVariableName), world);
-			// throw new GenericSignatureFormatException("Undeclared type variable in signature: " + aTypeVarSig.typeVariableName);
-		}
-		if (inProgressTypeVariableResolutions.containsKey(typeVarBounds)) {
-			return inProgressTypeVariableResolutions.get(typeVarBounds);
-		}
-		inProgressTypeVariableResolutions.put(typeVarBounds, new FTPHolder(typeVarBounds, world));
-		ReferenceType ret = new TypeVariableReferenceType(formalTypeParameter2TypeVariable(typeVarBounds, typeParams, world,
-				inProgressTypeVariableResolutions), world);
-		inProgressTypeVariableResolutions.put(typeVarBounds, ret);
-		return ret;
-	}
+  private static ResolvedType typeVariableSignature2TypeX(GenericSignature.TypeVariableSignature aTypeVarSig,
+                                                          GenericSignature.FormalTypeParameter[] typeParams, World world,
+                                                          Map<GenericSignature.FormalTypeParameter, ReferenceType> inProgressTypeVariableResolutions)
+      throws GenericSignatureFormatException {
+    GenericSignature.FormalTypeParameter typeVarBounds = null;
+    for (int i = 0; i < typeParams.length; i++) {
+      if (typeParams[i].identifier.equals(aTypeVarSig.typeVariableName)) {
+        typeVarBounds = typeParams[i];
+        break;
+      }
+    }
+    if (typeVarBounds == null) {
+      // blowing up here breaks the situation with ITDs where the type variable is mentioned in the
+      // declaring type and used somewhere in the signature. Temporary change to allow it to return just a
+      // 'dumb' typevariablereference.
+      return new TypeVariableReferenceType(new TypeVariable(aTypeVarSig.typeVariableName), world);
+      // throw new GenericSignatureFormatException("Undeclared type variable in signature: " + aTypeVarSig.typeVariableName);
+    }
+    if (inProgressTypeVariableResolutions.containsKey(typeVarBounds)) {
+      return inProgressTypeVariableResolutions.get(typeVarBounds);
+    }
+    inProgressTypeVariableResolutions.put(typeVarBounds, new FTPHolder(typeVarBounds, world));
+    final ReferenceType ret = new TypeVariableReferenceType(formalTypeParameter2TypeVariable(typeVarBounds, typeParams, world,
+        inProgressTypeVariableResolutions), world);
+    inProgressTypeVariableResolutions.put(typeVarBounds, ret);
+    return ret;
+  }
 
-	private static void fixUpCircularDependencies(ResolvedType aTypeX,
-			Map<GenericSignature.FormalTypeParameter, ReferenceType> typeVariableResolutions) {
-		if (!(aTypeX instanceof ReferenceType)) {
-			return;
-		}
+  private static void fixUpCircularDependencies(ResolvedType aTypeX,
+                                                Map<GenericSignature.FormalTypeParameter, ReferenceType> typeVariableResolutions) {
+    if (!(aTypeX instanceof ReferenceType)) {
+      return;
+    }
 
-		ReferenceType rt = (ReferenceType) aTypeX;
-		TypeVariable[] typeVars = rt.getTypeVariables();
-		if (typeVars != null) {
-			for (int i = 0; i < typeVars.length; i++) {
-				if (typeVars[i].getUpperBound() instanceof FTPHolder) {
-					GenericSignature.FormalTypeParameter key = ((FTPHolder) typeVars[i].getUpperBound()).ftpToBeSubstituted;
-					typeVars[i].setUpperBound(typeVariableResolutions.get(key));
-				}
-			}
-		}
-	}
+    final ReferenceType rt = (ReferenceType) aTypeX;
+    final TypeVariable[] typeVars = rt.getTypeVariables();
+    if (typeVars != null) {
+      for (int i = 0; i < typeVars.length; i++) {
+        if (typeVars[i].getUpperBound() instanceof FTPHolder) {
+          final GenericSignature.FormalTypeParameter key = ((FTPHolder) typeVars[i].getUpperBound()).ftpToBeSubstituted;
+          typeVars[i].setUpperBound(typeVariableResolutions.get(key));
+        }
+      }
+    }
+  }
 
-	private static class FTPHolder extends ReferenceType {
-		public GenericSignature.FormalTypeParameter ftpToBeSubstituted;
+  private static class FTPHolder extends ReferenceType {
+    public GenericSignature.FormalTypeParameter ftpToBeSubstituted;
 
-		public FTPHolder(GenericSignature.FormalTypeParameter ftp, World world) {
-			super("Ljava/lang/Object;", world);
-			this.ftpToBeSubstituted = ftp;
-		}
+    public FTPHolder(GenericSignature.FormalTypeParameter ftp, World world) {
+      super("Ljava/lang/Object;", world);
+      this.ftpToBeSubstituted = ftp;
+    }
 
-		public String toString() {
-			return "placeholder for TypeVariable of " + ftpToBeSubstituted.toString();
-		}
+    public String toString() {
+      return "placeholder for TypeVariable of " + ftpToBeSubstituted.toString();
+    }
 
-		public ResolvedType resolve(World world) {
-			return this;
-		}
+    public ResolvedType resolve(World world) {
+      return this;
+    }
 
-		public boolean isCacheable() {
-			return false;
-		}
-	}
+    public boolean isCacheable() {
+      return false;
+    }
+  }
 
-	public static class GenericSignatureFormatException extends Exception {
-		public GenericSignatureFormatException(String explanation) {
-			super(explanation);
-		}
-	}
+  public static class GenericSignatureFormatException extends Exception {
+    public GenericSignatureFormatException(String explanation) {
+      super(explanation);
+    }
+  }
 }

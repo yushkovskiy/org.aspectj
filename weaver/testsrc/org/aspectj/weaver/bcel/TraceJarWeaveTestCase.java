@@ -16,25 +16,25 @@ package org.aspectj.weaver.bcel;
 import java.io.IOException;
 
 public class TraceJarWeaveTestCase extends WeaveTestCase {
-	{
-		regenerate = false;
-	}
+  {
+    regenerate = false;
+  }
 
-	public TraceJarWeaveTestCase(String name) {
-		super(name);
-	}
-	
-	
-	public void testTraceJar() throws IOException {
-		world = new BcelWorld(getTraceJar());
-		BcelWeaver weaver = new BcelWeaver(world);
-		weaver.addLibraryAspect("MyTrace");
-		UnwovenClassFile classFile 
-            = makeUnwovenClassFile(classDir, "DynamicHelloWorld", outDirPath);
-        
-        weaver.addClassFile(classFile,false);
-        weaver.prepareForWeave();
-		
-		weaveTestInner(weaver, classFile, "DynamicHelloWorld", "TraceJarHello");
-	}
+  public TraceJarWeaveTestCase(String name) {
+    super(name);
+  }
+
+
+  public void testTraceJar() throws IOException {
+    world = new BcelWorld(getTraceJar());
+    final BcelWeaver weaver = new BcelWeaver(world);
+    weaver.addLibraryAspect("MyTrace");
+    final UnwovenClassFile classFile
+        = makeUnwovenClassFile(classDir, "DynamicHelloWorld", outDirPath);
+
+    weaver.addClassFile(classFile, false);
+    weaver.prepareForWeave();
+
+    weaveTestInner(weaver, classFile, "DynamicHelloWorld", "TraceJarHello");
+  }
 }

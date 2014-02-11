@@ -11,35 +11,35 @@
  * ******************************************************************/
 package org.aspectj.weaver.reflect;
 
-import java.lang.reflect.Member;
-import java.util.Set;
-
 import org.aspectj.weaver.AnnotationAJ;
 import org.aspectj.weaver.ResolvedType;
 import org.aspectj.weaver.UnresolvedType;
 import org.aspectj.weaver.World;
+
+import java.lang.reflect.Member;
+import java.util.Set;
 
 /**
  * @author colyer Used in 1.4 code to access annotations safely
  */
 public interface AnnotationFinder {
 
-	void setClassLoader(ClassLoader annotationLoader);
+  void setClassLoader(ClassLoader annotationLoader);
 
-	void setWorld(World aWorld);
+  void setWorld(World aWorld);
 
-	Object getAnnotation(ResolvedType annotationType, Object onObject);
+  Object getAnnotation(ResolvedType annotationType, Object onObject);
 
-	Object getAnnotationFromMember(ResolvedType annotationType, Member aMember);
+  Object getAnnotationFromMember(ResolvedType annotationType, Member aMember);
 
-	public AnnotationAJ getAnnotationOfType(UnresolvedType ofType,
-			Member onMember);
+  public AnnotationAJ getAnnotationOfType(UnresolvedType ofType,
+                                          Member onMember);
 
-	public String getAnnotationDefaultValue(Member onMember);
+  public String getAnnotationDefaultValue(Member onMember);
 
-	Object getAnnotationFromClass(ResolvedType annotationType, Class aClass);
+  Object getAnnotationFromClass(ResolvedType annotationType, Class aClass);
 
-	Set/* ResolvedType */getAnnotations(Member onMember);
+  Set/* ResolvedType */getAnnotations(Member onMember);
 
-	ResolvedType[][] getParameterAnnotationTypes(Member onMember);
+  ResolvedType[][] getParameterAnnotationTypes(Member onMember);
 }

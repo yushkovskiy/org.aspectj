@@ -54,35 +54,36 @@ package org.aspectj.apache.bcel.classfile;
  * <http://www.apache.org/>.
  */
 
+import org.aspectj.apache.bcel.Constants;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.DataInputStream;
 import java.io.IOException;
 
-import org.aspectj.apache.bcel.Constants;
-
 /**
  * This class represents a constant pool reference to an interface method.
- * 
- * @version $Id: ConstantInterfaceMethodref.java,v 1.5 2009/09/16 00:43:49 aclement Exp $
+ *
  * @author <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
+ * @version $Id: ConstantInterfaceMethodref.java,v 1.5 2009/09/16 00:43:49 aclement Exp $
  */
 public final class ConstantInterfaceMethodref extends ConstantCP {
 
-	ConstantInterfaceMethodref(DataInputStream file) throws IOException {
-		super(Constants.CONSTANT_InterfaceMethodref, file);
-	}
+  ConstantInterfaceMethodref(DataInputStream file) throws IOException {
+    super(Constants.CONSTANT_InterfaceMethodref, file);
+  }
 
-	public ConstantInterfaceMethodref(int classIndex, int nameAndTypeIndex) {
-		super(Constants.CONSTANT_InterfaceMethodref, classIndex, nameAndTypeIndex);
-	}
+  public ConstantInterfaceMethodref(int classIndex, int nameAndTypeIndex) {
+    super(Constants.CONSTANT_InterfaceMethodref, classIndex, nameAndTypeIndex);
+  }
 
-	@Override
-	public void accept(ClassVisitor v) {
-		v.visitConstantInterfaceMethodref(this);
-	}
+  @Override
+  public void accept(@NotNull ClassVisitor v) {
+    v.visitConstantInterfaceMethodref(this);
+  }
 
-	@Override
-	public String getValue() {
-		return toString();
-	}
+  @Override
+  public String getValue() {
+    return toString();
+  }
 
 }

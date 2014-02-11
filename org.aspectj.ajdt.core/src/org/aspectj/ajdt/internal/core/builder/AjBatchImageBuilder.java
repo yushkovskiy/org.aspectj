@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -16,25 +16,26 @@ import org.aspectj.org.eclipse.jdt.internal.core.builder.SourceFile;
 
 /**
  * @author colyer
- *
- * BatchImageBuilder used by IDEs (AJDT)
+ *         <p/>
+ *         BatchImageBuilder used by IDEs (AJDT)
  */
 public class AjBatchImageBuilder extends BatchImageBuilder {
-	
-	public AjBatchImageBuilder(AspectJBuilder builder) {
-		super(builder,true);
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.jdt.internal.compiler.ICompilerRequestor#acceptResult(org.eclipse.jdt.internal.compiler.CompilationResult)
-	 */
-	public void acceptResult(CompilationResult result) {
-		if ((result.getCompilationUnit() != null) && (result.getCompilationUnit() instanceof SourceFile)) {
-			super.acceptResult(result);
-		} else {
-			// it's a file originating from binary source...
-			// we need to handle it ourselves
-			// TODO handle binary source output
-		}
-	}
+
+  public AjBatchImageBuilder(AspectJBuilder builder) {
+    super(builder, true);
+  }
+
+  /* (non-Javadoc)
+   * @see org.eclipse.jdt.internal.compiler.ICompilerRequestor#acceptResult(org.eclipse.jdt.internal.compiler.CompilationResult)
+   */
+  @Override
+  public void acceptResult(CompilationResult result) {
+    if ((result.getCompilationUnit() != null) && (result.getCompilationUnit() instanceof SourceFile)) {
+      super.acceptResult(result);
+    } else {
+      // it's a file originating from binary source...
+      // we need to handle it ourselves
+      // TODO handle binary source output
+    }
+  }
 }

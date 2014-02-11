@@ -21,26 +21,26 @@ import org.aspectj.weaver.patterns.AnnotationPatternTestCase;
 
 public class BcelPatternsTests extends TestCase {
 
-	public static Test suite() {
-		TestSuite suite = new TestSuite(BcelPatternsTests.class.getName());
-		// $JUnit-BEGIN$
-		suite.addTestSuite(BcelAndOrNotTestCase.class);
-		suite.addTestSuite(BcelBindingTestCase.class);
-		suite.addTestSuite(BcelWithinTestCase.class);
-		suite.addTestSuite(BcelModifiersPatternTestCase.class);
-		suite.addTestSuite(BcelTypePatternListTestCase.class);
-		suite.addTestSuite(BcelParserTestCase.class);
-		suite.addTestSuite(BcelSignaturePatternTestCase.class);
-		suite.addTestSuite(BcelTypePatternTestCase.class);
+  public static Test suite() {
+    final TestSuite suite = new TestSuite(BcelPatternsTests.class.getName());
+    // $JUnit-BEGIN$
+    suite.addTestSuite(BcelAndOrNotTestCase.class);
+    suite.addTestSuite(BcelBindingTestCase.class);
+    suite.addTestSuite(BcelWithinTestCase.class);
+    suite.addTestSuite(BcelModifiersPatternTestCase.class);
+    suite.addTestSuite(BcelTypePatternListTestCase.class);
+    suite.addTestSuite(BcelParserTestCase.class);
+    suite.addTestSuite(BcelSignaturePatternTestCase.class);
+    suite.addTestSuite(BcelTypePatternTestCase.class);
 
-		suite.addTestSuite(AnnotationPatternTestCase.class);
-		suite.addTestSuite(AnnotationPatternMatchingTestCase.class);
-		// $JUnit-END$
-		return suite;
-	}
+    suite.addTestSuite(AnnotationPatternTestCase.class);
+    suite.addTestSuite(AnnotationPatternMatchingTestCase.class);
+    // $JUnit-END$
+    return suite;
+  }
 
-	public BcelPatternsTests(String name) {
-		super(name);
-	}
+  public BcelPatternsTests(String name) {
+    super(name);
+  }
 
 }

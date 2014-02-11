@@ -12,106 +12,118 @@
 
 package org.aspectj.bridge;
 
-public class WeaveMessage extends Message {
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-	// Kinds of weaving message we can produce
+public final class WeaveMessage extends Message {
 
-	public static WeaveMessageKind WEAVEMESSAGE_DECLAREPARENTSIMPLEMENTS = new WeaveMessageKind(1,
-			"Extending interface set for type '%1' (%2) to include '%3' (%4)");
+  // Kinds of weaving message we can produce
+  @NotNull
+  public static final WeaveMessageKind WEAVEMESSAGE_DECLAREPARENTSIMPLEMENTS = new WeaveMessageKind(1,
+      "Extending interface set for type '%1' (%2) to include '%3' (%4)");
+  @NotNull
+  public static final WeaveMessageKind WEAVEMESSAGE_ITD = new WeaveMessageKind(2, "Type '%1' (%2) has intertyped %3 from '%4' (%5)");
 
-	public static WeaveMessageKind WEAVEMESSAGE_ITD = new WeaveMessageKind(2, "Type '%1' (%2) has intertyped %3 from '%4' (%5)");
+  // %7 is information like "[with runtime test]"
+  @NotNull
+  public static final WeaveMessageKind WEAVEMESSAGE_ADVISES = new WeaveMessageKind(3,
+      "Join point '%1' in Type '%2' (%3) advised by %4 advice from '%5' (%6)%7");
+  @NotNull
+  public static final WeaveMessageKind WEAVEMESSAGE_DECLAREPARENTSEXTENDS = new WeaveMessageKind(4,
+      "Setting superclass of type '%1' (%2) to '%3' (%4)");
+  @NotNull
+  public static final WeaveMessageKind WEAVEMESSAGE_SOFTENS = new WeaveMessageKind(5,
+      "Softening exceptions in type '%1' (%2) as defined by aspect '%3' (%4)");
+  @NotNull
+  public static final WeaveMessageKind WEAVEMESSAGE_ANNOTATES = new WeaveMessageKind(6,
+      "'%1' (%2) is annotated with %3 %4 annotation from '%5' (%6)");
+  @NotNull
+  public static final WeaveMessageKind WEAVEMESSAGE_MIXIN = new WeaveMessageKind(7, "Mixing interface '%1' (%2) into type '%3' (%4)");
+  @NotNull
+  public static final WeaveMessageKind WEAVEMESSAGE_REMOVES_ANNOTATION = new WeaveMessageKind(6,
+      "'%1' (%2) has had %3 %4 annotation removed by '%5' (%6)");
 
-	// %7 is information like "[with runtime test]"
-	public static WeaveMessageKind WEAVEMESSAGE_ADVISES = new WeaveMessageKind(3,
-			"Join point '%1' in Type '%2' (%3) advised by %4 advice from '%5' (%6)%7");
+  @Nullable
+  private final String affectedtypename;
+  @Nullable
+  private final String aspectname;
 
-	public static WeaveMessageKind WEAVEMESSAGE_DECLAREPARENTSEXTENDS = new WeaveMessageKind(4,
-			"Setting superclass of type '%1' (%2) to '%3' (%4)");
+  /**
+   * Static helper method for constructing weaving messages.
+   *
+   * @param kind    what kind of message (e.g. declare parents)
+   * @param inserts inserts for the message (inserts are marked %n in the message)
+   * @return new weaving message
+   */
+  @NotNull
+  public static WeaveMessage constructWeavingMessage(@NotNull WeaveMessageKind kind, @NotNull String[] inserts) {
+    final StringBuffer str = new StringBuffer(kind.getMessage());
+    int pos = -1;
+    while ((pos = new String(str).indexOf("%")) != -1) {
+      final int n = Character.getNumericValue(str.charAt(pos + 1));
+      str.replace(pos, pos + 2, inserts[n - 1]);
+    }
+    return new WeaveMessage(str.toString(), null, null);
+  }
 
-	public static WeaveMessageKind WEAVEMESSAGE_SOFTENS = new WeaveMessageKind(5,
-			"Softening exceptions in type '%1' (%2) as defined by aspect '%3' (%4)");
+  /**
+   * Static helper method for constructing weaving messages.
+   *
+   * @param kind             what kind of message (e.g. declare parents)
+   * @param inserts          inserts for the message (inserts are marked %n in the message)
+   * @param affectedtypename the type which is being advised/declaredUpon
+   * @param aspectname       the aspect that defined the advice or declares
+   * @return new weaving message
+   */
+  @NotNull
+  public static WeaveMessage constructWeavingMessage(@NotNull WeaveMessageKind kind, @NotNull String[] inserts,
+                                                     @NotNull String affectedtypename, @NotNull String aspectname) {
+    final StringBuffer str = new StringBuffer(kind.getMessage());
+    int pos = -1;
+    while ((pos = new String(str).indexOf("%")) != -1) {
+      final int n = Character.getNumericValue(str.charAt(pos + 1));
+      str.replace(pos, pos + 2, inserts[n - 1]);
+    }
+    return new WeaveMessage(str.toString(), affectedtypename, aspectname);
+  }
 
-	public static WeaveMessageKind WEAVEMESSAGE_ANNOTATES = new WeaveMessageKind(6,
-			"'%1' (%2) is annotated with %3 %4 annotation from '%5' (%6)");
+  // private ctor - use the static factory method
+  private WeaveMessage(@NotNull String message, @Nullable String affectedtypename, @Nullable String aspectname) {
+    super(message, IMessage.WEAVEINFO, null, null);
+    this.affectedtypename = affectedtypename;
+    this.aspectname = aspectname;
+  }
 
-	public static WeaveMessageKind WEAVEMESSAGE_MIXIN = new WeaveMessageKind(7, "Mixing interface '%1' (%2) into type '%3' (%4)");
+  /**
+   * @return Returns the aspectname.
+   */
+  @Nullable
+  public String getAspectname() {
+    return aspectname;
+  }
 
-	public static WeaveMessageKind WEAVEMESSAGE_REMOVES_ANNOTATION = new WeaveMessageKind(6,
-			"'%1' (%2) has had %3 %4 annotation removed by '%5' (%6)");
+  /**
+   * @return Returns the affectedtypename.
+   */
+  @Nullable
+  public String getAffectedtypename() {
+    return affectedtypename;
+  }
 
-	private String affectedtypename;
-	private String aspectname;
+  public static class WeaveMessageKind {
 
-	// private ctor - use the static factory method
-	private WeaveMessage(String message, String affectedtypename, String aspectname) {
-		super(message, IMessage.WEAVEINFO, null, null);
-		this.affectedtypename = affectedtypename;
-		this.aspectname = aspectname;
-	}
+    // private int id;
+    @NotNull
+    private String message;
 
-	/**
-	 * Static helper method for constructing weaving messages.
-	 * 
-	 * @param kind what kind of message (e.g. declare parents)
-	 * @param inserts inserts for the message (inserts are marked %n in the message)
-	 * @return new weaving message
-	 */
-	public static WeaveMessage constructWeavingMessage(WeaveMessageKind kind, String[] inserts) {
-		StringBuffer str = new StringBuffer(kind.getMessage());
-		int pos = -1;
-		while ((pos = new String(str).indexOf("%")) != -1) {
-			int n = Character.getNumericValue(str.charAt(pos + 1));
-			str.replace(pos, pos + 2, inserts[n - 1]);
-		}
-		return new WeaveMessage(str.toString(), null, null);
-	}
+    public WeaveMessageKind(int id, @NotNull String message) {
+      // this.id = id;
+      this.message = message;
+    }
 
-	/**
-	 * Static helper method for constructing weaving messages.
-	 * 
-	 * @param kind what kind of message (e.g. declare parents)
-	 * @param inserts inserts for the message (inserts are marked %n in the message)
-	 * @param affectedtypename the type which is being advised/declaredUpon
-	 * @param aspectname the aspect that defined the advice or declares
-	 * @return new weaving message
-	 */
-	public static WeaveMessage constructWeavingMessage(WeaveMessageKind kind, String[] inserts, String affectedtypename,
-			String aspectname) {
-		StringBuffer str = new StringBuffer(kind.getMessage());
-		int pos = -1;
-		while ((pos = new String(str).indexOf("%")) != -1) {
-			int n = Character.getNumericValue(str.charAt(pos + 1));
-			str.replace(pos, pos + 2, inserts[n - 1]);
-		}
-		return new WeaveMessage(str.toString(), affectedtypename, aspectname);
-	}
-
-	/**
-	 * @return Returns the aspectname.
-	 */
-	public String getAspectname() {
-		return aspectname;
-	}
-
-	/**
-	 * @return Returns the affectedtypename.
-	 */
-	public String getAffectedtypename() {
-		return affectedtypename;
-	}
-
-	public static class WeaveMessageKind {
-
-		// private int id;
-		private String message;
-
-		public WeaveMessageKind(int id, String message) {
-			// this.id = id;
-			this.message = message;
-		}
-
-		public String getMessage() {
-			return message;
-		}
-	}
+    @NotNull
+    public String getMessage() {
+      return message;
+    }
+  }
 }

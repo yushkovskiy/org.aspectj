@@ -8,7 +8,7 @@
  * http://www.eclipse.org/legal/epl-v10.html 
  *  
  * ******************************************************************/
- package org.aspectj.weaver;
+package org.aspectj.weaver;
 
 import junit.framework.TestCase;
 
@@ -23,41 +23,41 @@ import org.aspectj.util.GenericSignatureParser;
  */
 public class GenericSignatureParserTest extends TestCase {
 
-	GenericSignatureParser parser;
+  GenericSignatureParser parser;
 
-	protected void setUp() throws Exception {
-		super.setUp();
-		parser = new GenericSignatureParser();
-	}
+  protected void setUp() throws Exception {
+    super.setUp();
+    parser = new GenericSignatureParser();
+  }
 
-	public void testClassSignatureParsingInJDK() throws Exception {
-		SyntheticRepository repository = SyntheticRepository.getInstance();
-		String[] testClasses = new String[] { "java.lang.Comparable", "java.lang.Iterable", "java.lang.Class", "java.lang.Enum",
-				"java.lang.InheritableThreadLocal", "java.lang.ThreadLocal", "java.util.Collection", "java.util.Comparator",
-				"java.util.Enumeration", "java.util.Iterator", "java.util.List", "java.util.ListIterator", "java.util.Map",
-				"java.util.Map$Entry", "java.util.Queue", "java.util.Set", "java.util.SortedMap", "java.util.SortedSet" };
-		for (int i = 0; i < testClasses.length; i++) {
-			JavaClass jc = repository.loadClass(testClasses[i]);
-			String sig = jc.getGenericSignature();
-			parser.parseAsClassSignature(sig);
-		}
-	}
+  public void testClassSignatureParsingInJDK() throws Exception {
+    final SyntheticRepository repository = SyntheticRepository.getInstance();
+    final String[] testClasses = new String[]{"java.lang.Comparable", "java.lang.Iterable", "java.lang.Class", "java.lang.Enum",
+        "java.lang.InheritableThreadLocal", "java.lang.ThreadLocal", "java.util.Collection", "java.util.Comparator",
+        "java.util.Enumeration", "java.util.Iterator", "java.util.List", "java.util.ListIterator", "java.util.Map",
+        "java.util.Map$Entry", "java.util.Queue", "java.util.Set", "java.util.SortedMap", "java.util.SortedSet"};
+    for (int i = 0; i < testClasses.length; i++) {
+      final JavaClass jc = repository.loadClass(testClasses[i]);
+      final String sig = jc.getGenericSignature();
+      parser.parseAsClassSignature(sig);
+    }
+  }
 
-	public void testMethodSignatureParsingInJDK() throws Exception {
-		SyntheticRepository repository = SyntheticRepository.getInstance();
-		String[] testClasses = new String[] { "java.lang.Comparable", "java.lang.Iterable", "java.lang.Class", "java.lang.Enum",
-				"java.lang.InheritableThreadLocal", "java.lang.ThreadLocal", "java.util.Collection", "java.util.Comparator",
-				"java.util.Enumeration", "java.util.Iterator", "java.util.List", "java.util.ListIterator", "java.util.Map",
-				"java.util.Map$Entry", "java.util.Queue", "java.util.Set", "java.util.SortedMap", "java.util.SortedSet" };
-		for (int i = 0; i < testClasses.length; i++) {
-			JavaClass jc = repository.loadClass(testClasses[i]);
-			Method[] methods = jc.getMethods();
-			for (int j = 0; j < methods.length; j++) {
-				String sig = methods[j].getGenericSignature();
-				if (sig != null)
-					parser.parseAsMethodSignature(sig);
-			}
-		}
-	}
+  public void testMethodSignatureParsingInJDK() throws Exception {
+    final SyntheticRepository repository = SyntheticRepository.getInstance();
+    final String[] testClasses = new String[]{"java.lang.Comparable", "java.lang.Iterable", "java.lang.Class", "java.lang.Enum",
+        "java.lang.InheritableThreadLocal", "java.lang.ThreadLocal", "java.util.Collection", "java.util.Comparator",
+        "java.util.Enumeration", "java.util.Iterator", "java.util.List", "java.util.ListIterator", "java.util.Map",
+        "java.util.Map$Entry", "java.util.Queue", "java.util.Set", "java.util.SortedMap", "java.util.SortedSet"};
+    for (int i = 0; i < testClasses.length; i++) {
+      final JavaClass jc = repository.loadClass(testClasses[i]);
+      final Method[] methods = jc.getMethods();
+      for (int j = 0; j < methods.length; j++) {
+        final String sig = methods[j].getGenericSignature();
+        if (sig != null)
+          parser.parseAsMethodSignature(sig);
+      }
+    }
+  }
 
 }

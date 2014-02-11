@@ -21,38 +21,40 @@ import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 
 public class KnownMessageSend extends MessageSend {
 
-	public KnownMessageSend(MethodBinding binding, Expression receiver, Expression[] arguments) {
-		super();
-		this.binding = binding;
-		this.arguments = arguments;
-		this.receiver = receiver;
-		this.actualReceiverType = binding.declaringClass;
-		this.selector = binding.selector;
-		constant = Constant.NotAConstant;
-	}
+  public KnownMessageSend(MethodBinding binding, Expression receiver, Expression[] arguments) {
+    super();
+    this.binding = binding;
+    this.arguments = arguments;
+    this.receiver = receiver;
+    this.actualReceiverType = binding.declaringClass;
+    this.selector = binding.selector;
+    constant = Constant.NotAConstant;
+  }
 
-	public void manageSyntheticAccessIfNecessary(BlockScope currentScope) {
-		return;
-	}
+  public static void manageSyntheticAccessIfNecessary(BlockScope currentScope) {
+    return;
+  }
 
-	protected void resolveMethodBinding(
-		BlockScope scope,
-		TypeBinding[] argumentTypes) {
-			// we've already resolved this
-		
-	}
-	
-	public String toStringExpression() {
-		return "KnownMessageSend";
-	}
+  @Override
+  protected void resolveMethodBinding(
+      BlockScope scope,
+      TypeBinding[] argumentTypes) {
+    // we've already resolved this
 
-	public void generateCode(
-		BlockScope currentScope,
-		CodeStream codeStream,
-		boolean valueRequired) {
-		//System.out.println("about to generate: "  +this + " args: " + Arrays.asList(arguments));
+  }
+
+  public static String toStringExpression() {
+    return "KnownMessageSend";
+  }
+
+  @Override
+  public void generateCode(
+      BlockScope currentScope,
+      CodeStream codeStream,
+      boolean valueRequired) {
+    //System.out.println("about to generate: "  +this + " args: " + Arrays.asList(arguments));
 //		this.actualReceiverType = this.receiver.resolveType(currentScope);
-		super.generateCode(currentScope, codeStream, valueRequired);
-	}
+    super.generateCode(currentScope, codeStream, valueRequired);
+  }
 
 }

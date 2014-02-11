@@ -28,25 +28,24 @@ import java.util.Collection;
  * weaver and participate the weaving process. For example, the match method of each custom shadow munger will be called against
  * each shadow.
  * </p>
- * 
+ *
  * @author lintonye
- * 
  */
 public interface CustomMungerFactory {
 
-	/**
-	 * @param aspectType
-	 * @return a Collection&lt;ShadowMunger&gt; of custom shadow mungers for the given aspect
-	 */
-	public Collection<ShadowMunger> createCustomShadowMungers(ResolvedType aspectType);
+  /**
+   * @param aspectType
+   * @return a Collection&lt;ShadowMunger&gt; of custom shadow mungers for the given aspect
+   */
+  public Collection<ShadowMunger> createCustomShadowMungers(ResolvedType aspectType);
 
-	/**
-	 * @param aspectType
-	 * @return a Collection&lt;ConcreteTypeMunger&gt; of custom type mungers for the given aspect
-	 */
-	public Collection<ConcreteTypeMunger> createCustomTypeMungers(ResolvedType aspectType);
+  /**
+   * @param aspectType
+   * @return a Collection&lt;ConcreteTypeMunger&gt; of custom type mungers for the given aspect
+   */
+  public Collection<ConcreteTypeMunger> createCustomTypeMungers(ResolvedType aspectType);
 
-	public Collection<ShadowMunger> getAllCreatedCustomShadowMungers();
+  public Collection<ShadowMunger> getAllCreatedCustomShadowMungers();
 
-	public Collection<ConcreteTypeMunger> getAllCreatedCustomTypeMungers();
+  public Collection<ConcreteTypeMunger> getAllCreatedCustomTypeMungers();
 }

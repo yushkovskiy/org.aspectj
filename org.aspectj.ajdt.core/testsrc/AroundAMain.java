@@ -17,29 +17,30 @@ import org.aspectj.util.Reflection;
 
 public class AroundAMain extends TestCase {
 
-	public AroundAMain(String name) {
-		super(name);
-	}
+  public AroundAMain(String name) {
+    super(name);
+  }
 
 
-	public static void main(String[] args) throws ClassNotFoundException {
-		AroundClosure closure = new AroundClosure() {
-			public Object run(Object[] args) throws Throwable {
+  public static void main(String[] args) throws ClassNotFoundException {
+    final AroundClosure closure = new AroundClosure() {
+      @Override
+      public Object run(Object[] args) throws Throwable {
 //				System.out.println("run with: " + Arrays.asList(args));
-				return new Integer(10);
-			}
-		};
-		
-		Object instance = Reflection.getStaticField(Class.forName("AroundA"),
-			"ajc$perSingletonInstance");
+        return new Integer(10);
+      }
+    };
 
-		Reflection.invoke(Class.forName("AroundA"), instance, "ajc$around$AroundA$1$73ebb943", // was $AroundA$46
-					new Integer(10), new Boolean(true), closure);
+    final Object instance = Reflection.getStaticField(Class.forName("AroundA"),
+        "ajc$perSingletonInstance");
 
-		Reflection.invoke(Class.forName("AroundA"), instance, "ajc$around$AroundA$2$a758212d",  // Was $AroundA$c5
-					"hello there", closure);
-		Reflection.invoke(Class.forName("AroundA"), instance, "ajc$around$AroundA$3$a758212d",  // Was $AroundA$150
-					new String[1], closure);
+    Reflection.invoke(Class.forName("AroundA"), instance, "ajc$around$AroundA$1$73ebb943", // was $AroundA$46
+        new Integer(10), new Boolean(true), closure);
 
-	}
+    Reflection.invoke(Class.forName("AroundA"), instance, "ajc$around$AroundA$2$a758212d",  // Was $AroundA$c5
+        "hello there", closure);
+    Reflection.invoke(Class.forName("AroundA"), instance, "ajc$around$AroundA$3$a758212d",  // Was $AroundA$150
+        new String[1], closure);
+
+  }
 }

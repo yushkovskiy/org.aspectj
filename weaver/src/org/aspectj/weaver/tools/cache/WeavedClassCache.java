@@ -67,212 +67,212 @@ import java.util.List;
  * </pre>
  */
 public class WeavedClassCache {
-	public static final String WEAVED_CLASS_CACHE_ENABLED = "aj.weaving.cache.enabled";
-	public static final String CACHE_IMPL = SimpleCacheFactory.CACHE_IMPL;
-	private static CacheFactory DEFAULT_FACTORY = new DefaultCacheFactory();
-	public static final byte[] ZERO_BYTES = new byte[0];
-	private final IMessageHandler messageHandler;
-	private final GeneratedCachedClassHandler cachingClassHandler;
-	private final CacheBacking backing;
-	private final CacheStatistics stats;
-	private final CacheKeyResolver resolver;
-	private final String name;
+  public static final String WEAVED_CLASS_CACHE_ENABLED = "aj.weaving.cache.enabled";
+  public static final String CACHE_IMPL = SimpleCacheFactory.CACHE_IMPL;
+  private static CacheFactory DEFAULT_FACTORY = new DefaultCacheFactory();
+  public static final byte[] ZERO_BYTES = new byte[0];
+  private final IMessageHandler messageHandler;
+  private final GeneratedCachedClassHandler cachingClassHandler;
+  private final CacheBacking backing;
+  private final CacheStatistics stats;
+  private final CacheKeyResolver resolver;
+  private final String name;
 
-	private static final List<WeavedClassCache> cacheRegistry = new LinkedList<WeavedClassCache>();
+  private static final List<WeavedClassCache> cacheRegistry = new LinkedList<WeavedClassCache>();
 
-	protected WeavedClassCache(GeneratedClassHandler existingClassHandler,
-							   IMessageHandler messageHandler,
-							   String name,
-							   CacheBacking backing,
-							   CacheKeyResolver resolver) {
-		this.resolver = resolver;
-		this.name = name;
-		this.backing = backing;
-		this.messageHandler = messageHandler;
-		// wrap the existing class handler with a caching version
-		cachingClassHandler = new GeneratedCachedClassHandler(this, existingClassHandler);
-		this.stats = new CacheStatistics();
-		synchronized (cacheRegistry) {
-			cacheRegistry.add(this);
-		}
-	}
+  protected WeavedClassCache(GeneratedClassHandler existingClassHandler,
+                             IMessageHandler messageHandler,
+                             String name,
+                             CacheBacking backing,
+                             CacheKeyResolver resolver) {
+    this.resolver = resolver;
+    this.name = name;
+    this.backing = backing;
+    this.messageHandler = messageHandler;
+    // wrap the existing class handler with a caching version
+    cachingClassHandler = new GeneratedCachedClassHandler(this, existingClassHandler);
+    this.stats = new CacheStatistics();
+    synchronized (cacheRegistry) {
+      cacheRegistry.add(this);
+    }
+  }
 
-	/**
-	 * Creates a new cache using the resolver and backing returned by the DefaultCacheFactory.
-	 *
-	 * @param loader			   classloader for this cache
-	 * @param aspects			  list of aspects used by the WeavingAdapter
-	 * @param existingClassHandler the existing GeneratedClassHandler used by the weaver
-	 * @param messageHandler	   the existing messageHandler used by the weaver
-	 * @return
-	 */
-	public static WeavedClassCache createCache(ClassLoader loader, List<String> aspects, GeneratedClassHandler existingClassHandler, IMessageHandler messageHandler) {
-		CacheKeyResolver resolver = DEFAULT_FACTORY.createResolver();
-		String name = resolver.createClassLoaderScope(loader, aspects);
-		if (name == null) {
-			return null;
-		}
-		CacheBacking backing = DEFAULT_FACTORY.createBacking(name);
-		if (backing != null) {
-			return new WeavedClassCache(existingClassHandler, messageHandler, name, backing, resolver);
-		}
-		return null;
-	}
+  /**
+   * Creates a new cache using the resolver and backing returned by the DefaultCacheFactory.
+   *
+   * @param loader               classloader for this cache
+   * @param aspects              list of aspects used by the WeavingAdapter
+   * @param existingClassHandler the existing GeneratedClassHandler used by the weaver
+   * @param messageHandler       the existing messageHandler used by the weaver
+   * @return
+   */
+  public static WeavedClassCache createCache(ClassLoader loader, List<String> aspects, GeneratedClassHandler existingClassHandler, IMessageHandler messageHandler) {
+    final CacheKeyResolver resolver = DEFAULT_FACTORY.createResolver();
+    final String name = resolver.createClassLoaderScope(loader, aspects);
+    if (name == null) {
+      return null;
+    }
+    final CacheBacking backing = DEFAULT_FACTORY.createBacking(name);
+    if (backing != null) {
+      return new WeavedClassCache(existingClassHandler, messageHandler, name, backing, resolver);
+    }
+    return null;
+  }
 
-	public String getName() {
-		return name;
-	}
+  public String getName() {
+    return name;
+  }
 
-	/**
-	 * The Cache and be extended in two ways, through a specialized CacheKeyResolver and
-	 * a specialized CacheBacking. The default factory used to create these classes can
-	 * be set with this method. Since each weaver will create a cache, this method must be
-	 * called before the weaver is first initialized.
-	 *
-	 * @param factory
-	 */
-	public static void setDefaultCacheFactory(CacheFactory factory) {
-		DEFAULT_FACTORY = factory;
-	}
+  /**
+   * The Cache and be extended in two ways, through a specialized CacheKeyResolver and
+   * a specialized CacheBacking. The default factory used to create these classes can
+   * be set with this method. Since each weaver will create a cache, this method must be
+   * called before the weaver is first initialized.
+   *
+   * @param factory
+   */
+  public static void setDefaultCacheFactory(CacheFactory factory) {
+    DEFAULT_FACTORY = factory;
+  }
 
-	/**
-	 * Created a key for a generated class
-	 *
-	 * @param className ClassName, e.g. "com.foo.Bar"
-	 * @return the cache key, or null if no caching should be performed
-	 */
-	public CachedClassReference createGeneratedCacheKey(String className) {
-		return resolver.generatedKey(className);
-	}
+  /**
+   * Created a key for a generated class
+   *
+   * @param className ClassName, e.g. "com.foo.Bar"
+   * @return the cache key, or null if no caching should be performed
+   */
+  public CachedClassReference createGeneratedCacheKey(String className) {
+    return resolver.generatedKey(className);
+  }
 
-	/**
-	 * Create a key for a normal weaved class
-	 *
-	 * @param className	 ClassName, e.g. "com.foo.Bar"
-	 * @param originalBytes Original byte array of the class
-	 * @return a cache key, or null if no caching should be performed
-	 */
-	public CachedClassReference createCacheKey(String className, byte[] originalBytes) {
-		return resolver.weavedKey(className, originalBytes);
-	}
+  /**
+   * Create a key for a normal weaved class
+   *
+   * @param className     ClassName, e.g. "com.foo.Bar"
+   * @param originalBytes Original byte array of the class
+   * @return a cache key, or null if no caching should be performed
+   */
+  public CachedClassReference createCacheKey(String className, byte[] originalBytes) {
+    return resolver.weavedKey(className, originalBytes);
+  }
 
-	/**
-	 * Returns a generated class handler which wraps the handler this cache was initialized
-	 * with; this handler should be used to make sure that generated classes are added
-	 * to the cache
-	 */
-	public GeneratedClassHandler getCachingClassHandler() {
-		return cachingClassHandler;
-	}
+  /**
+   * Returns a generated class handler which wraps the handler this cache was initialized
+   * with; this handler should be used to make sure that generated classes are added
+   * to the cache
+   */
+  public GeneratedClassHandler getCachingClassHandler() {
+    return cachingClassHandler;
+  }
 
-	/**
-	 * Has caching been enabled through the System property,
-	 * WEAVED_CLASS_CACHE_ENABLED
-	 *
-	 * @return true if caching is enabled
-	 */
-	public static boolean isEnabled() {
-		String enabled = System.getProperty(WEAVED_CLASS_CACHE_ENABLED);
-		String impl = System.getProperty(CACHE_IMPL);
-		return (enabled != null && (impl == null || !SimpleCache.IMPL_NAME.equalsIgnoreCase(impl) ) );
-	}
+  /**
+   * Has caching been enabled through the System property,
+   * WEAVED_CLASS_CACHE_ENABLED
+   *
+   * @return true if caching is enabled
+   */
+  public static boolean isEnabled() {
+    final String enabled = System.getProperty(WEAVED_CLASS_CACHE_ENABLED);
+    final String impl = System.getProperty(CACHE_IMPL);
+    return (enabled != null && (impl == null || !SimpleCache.IMPL_NAME.equalsIgnoreCase(impl)));
+  }
 
-	/**
-	 * Put a class in the cache
-	 *
-	 * @param ref		 reference to the entry, as created through createCacheKey
-	 * @param classBytes pre-weaving class bytes
-	 * @param weavedBytes bytes to cache
-	 */
-	public void put(CachedClassReference ref, byte[] classBytes, byte[] weavedBytes) {
-		CachedClassEntry.EntryType type = CachedClassEntry.EntryType.WEAVED;
-		if (ref.getKey().matches(resolver.getGeneratedRegex())) {
-			type = CachedClassEntry.EntryType.GENERATED;
-		}
-		backing.put(new CachedClassEntry(ref, weavedBytes, type), classBytes);
-		stats.put();
-	}
+  /**
+   * Put a class in the cache
+   *
+   * @param ref         reference to the entry, as created through createCacheKey
+   * @param classBytes  pre-weaving class bytes
+   * @param weavedBytes bytes to cache
+   */
+  public void put(CachedClassReference ref, byte[] classBytes, byte[] weavedBytes) {
+    CachedClassEntry.EntryType type = CachedClassEntry.EntryType.WEAVED;
+    if (ref.getKey().matches(resolver.getGeneratedRegex())) {
+      type = CachedClassEntry.EntryType.GENERATED;
+    }
+    backing.put(new CachedClassEntry(ref, weavedBytes, type), classBytes);
+    stats.put();
+  }
 
-	/**
-	 * Get a cache value
-	 *
-	 * @param ref reference to the cache entry, created through createCacheKey
-	 * @param classBytes Pre-weaving class bytes - required to ensure that
-	 * cached aspects refer to an unchanged original class
-	 * @return the CacheEntry, or null if no entry exists in the cache
-	 */
-	public CachedClassEntry get(CachedClassReference ref, byte[] classBytes) {
-		CachedClassEntry entry = backing.get(ref, classBytes);
-		if (entry == null) {
-			stats.miss();
-		} else {
-			stats.hit();
-			if (entry.isGenerated()) stats.generated();
-			if (entry.isWeaved()) stats.weaved();
-			if (entry.isIgnored()) stats.ignored();
-		}
-		return entry;
-	}
+  /**
+   * Get a cache value
+   *
+   * @param ref        reference to the cache entry, created through createCacheKey
+   * @param classBytes Pre-weaving class bytes - required to ensure that
+   *                   cached aspects refer to an unchanged original class
+   * @return the CacheEntry, or null if no entry exists in the cache
+   */
+  public CachedClassEntry get(CachedClassReference ref, byte[] classBytes) {
+    final CachedClassEntry entry = backing.get(ref, classBytes);
+    if (entry == null) {
+      stats.miss();
+    } else {
+      stats.hit();
+      if (entry.isGenerated()) stats.generated();
+      if (entry.isWeaved()) stats.weaved();
+      if (entry.isIgnored()) stats.ignored();
+    }
+    return entry;
+  }
 
-	/**
-	 * Put a cache entry to indicate that the class should not be
-	 * weaved; the original bytes of the class should be used.
-	 *
-	 * @param ref The cache reference
-	 * @param classBytes The un-weaved class bytes
-	 */
-	public void ignore(CachedClassReference ref, byte[] classBytes) {
-		stats.putIgnored();
-		backing.put(new CachedClassEntry(ref, ZERO_BYTES, CachedClassEntry.EntryType.IGNORED), classBytes);
-	}
+  /**
+   * Put a cache entry to indicate that the class should not be
+   * weaved; the original bytes of the class should be used.
+   *
+   * @param ref        The cache reference
+   * @param classBytes The un-weaved class bytes
+   */
+  public void ignore(CachedClassReference ref, byte[] classBytes) {
+    stats.putIgnored();
+    backing.put(new CachedClassEntry(ref, ZERO_BYTES, CachedClassEntry.EntryType.IGNORED), classBytes);
+  }
 
-	/**
-	 * Invalidate a cache entry
-	 *
-	 * @param ref
-	 */
-	public void remove(CachedClassReference ref) {
-		backing.remove(ref);
-	}
+  /**
+   * Invalidate a cache entry
+   *
+   * @param ref
+   */
+  public void remove(CachedClassReference ref) {
+    backing.remove(ref);
+  }
 
-	/**
-	 * Clear the entire cache
-	 */
-	public void clear() {
-		backing.clear();
-	}
+  /**
+   * Clear the entire cache
+   */
+  public void clear() {
+    backing.clear();
+  }
 
-	/**
-	 * Get the statistics associated with this cache, or
-	 * null if statistics have not been enabled.
-	 *
-	 * @return
-	 */
-	public CacheStatistics getStats() {
-		return stats;
-	}
+  /**
+   * Get the statistics associated with this cache, or
+   * null if statistics have not been enabled.
+   *
+   * @return
+   */
+  public CacheStatistics getStats() {
+    return stats;
+  }
 
-	/**
-	 * Return a list of all WeavedClassCaches which have been initialized
-	 *
-	 * @return
-	 */
-	public static List<WeavedClassCache> getCaches() {
-		synchronized (cacheRegistry) {
-			return new LinkedList<WeavedClassCache>(cacheRegistry);
-		}
-	}
+  /**
+   * Return a list of all WeavedClassCaches which have been initialized
+   *
+   * @return
+   */
+  public static List<WeavedClassCache> getCaches() {
+    synchronized (cacheRegistry) {
+      return new LinkedList<WeavedClassCache>(cacheRegistry);
+    }
+  }
 
-	protected void error(String message, Throwable th) {
-		messageHandler.handleMessage(new Message(message, IMessage.ERROR, th, null));
-	}
+  protected void error(String message, Throwable th) {
+    messageHandler.handleMessage(new Message(message, IMessage.ERROR, th, null));
+  }
 
-	protected void error(String message) {
-		MessageUtil.error(messageHandler, message);
-	}
+  protected void error(String message) {
+    MessageUtil.error(messageHandler, message);
+  }
 
-	protected void info(String message) {
-		MessageUtil.info(message);
-	}
+  protected void info(String message) {
+    MessageUtil.info(message);
+  }
 
 }

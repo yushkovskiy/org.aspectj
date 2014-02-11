@@ -13,13 +13,13 @@ package org.aspectj.weaver;
 
 /**
  * Common utility methods for members.
- * 
+ *
  * @author Andy Clement
  */
 public class MemberUtils {
 
-	public static boolean isConstructor(ResolvedMember member) {
-		return member.getName().equals("<init>");
-	}
+  public static boolean isConstructor(ResolvedMember member) {
+    return member.getName().equals("<init>");
+  }
 
 }

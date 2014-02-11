@@ -56,20 +56,19 @@ package org.aspectj.apache.bcel.generic;
 
 import org.aspectj.apache.bcel.classfile.LineNumber;
 
-/** 
+/**
  * This class represents a line number within a method, i.e., give an instruction
  * a line number corresponding to the source code line.
  *
+ * @author <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
  * @version $Id: LineNumberGen.java,v 1.5 2008/05/28 23:53:00 aclement Exp $
- * @author  <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
- * @see     LineNumber
- * @see     MethodGen
+ * @see LineNumber
+ * @see MethodGen
  */
 public class LineNumberGen
-  implements InstructionTargeter, Cloneable, java.io.Serializable
-{
+    implements InstructionTargeter, Cloneable, java.io.Serializable {
   private InstructionHandle ih;
-  private int               src_line;
+  private int src_line;
 
   /**
    * Create a line number.
@@ -93,7 +92,7 @@ public class LineNumberGen
    * @param new_ih new target
    */
   public void updateTarget(InstructionHandle old_ih, InstructionHandle new_ih) {
-    if(old_ih != ih)
+    if (old_ih != ih)
       throw new ClassGenException("Not targeting " + old_ih + ", but " + ih + "}");
     else
       setInstruction(new_ih);
@@ -101,7 +100,7 @@ public class LineNumberGen
 
   /**
    * Get LineNumber attribute .
-   *
+   * <p/>
    * This relies on that the instruction list has already been dumped to byte code or
    * or that the `setPositions' methods has been called for the instruction list.
    */
@@ -110,7 +109,7 @@ public class LineNumberGen
   }
 
   public void setInstruction(InstructionHandle ih) {
-	  InstructionBranch.notifyTarget(this.ih, ih, this);
+    InstructionBranch.notifyTarget(this.ih, ih, this);
 
     this.ih = ih;
   }
@@ -118,13 +117,21 @@ public class LineNumberGen
   public Object clone() {
     try {
       return super.clone();
-    } catch(CloneNotSupportedException e) {
+    } catch (CloneNotSupportedException e) {
       System.err.println(e);
       return null;
     }
   }
 
-  public InstructionHandle getInstruction()               { return ih; }
-  public void              setSourceLine(int src_line)    { this.src_line = src_line; }
-  public int               getSourceLine()                { return src_line; }
+  public InstructionHandle getInstruction() {
+    return ih;
+  }
+
+  public void setSourceLine(int src_line) {
+    this.src_line = src_line;
+  }
+
+  public int getSourceLine() {
+    return src_line;
+  }
 }

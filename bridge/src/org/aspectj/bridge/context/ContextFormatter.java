@@ -11,11 +11,14 @@
  * ******************************************************************/
 package org.aspectj.bridge.context;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author colyer
- * Implementors of this interface know how to turn the "Object" data and phase id 
- * associated with a context stack entry into a meaningful string.
+ *         Implementors of this interface know how to turn the "Object" data and phase id
+ *         associated with a context stack entry into a meaningful string.
  */
 public interface ContextFormatter {
-	String formatEntry(int phaseId, Object data);
+  @NotNull
+  String formatEntry(int phaseId, @NotNull Object data);
 }

@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -21,27 +21,27 @@ import junit.framework.TestCase;
  * @author Adrian Colyer
  */
 public class WeaverMessagesTestCase extends TestCase {
-	
-	public void testAllMessagesDefined() {
-		
-		Class<?> wmClass = WeaverMessages.class;
-		Field[] fields = wmClass.getDeclaredFields();
-		List<String> fieldList = new ArrayList<String>();
-		for (int i = 0; i < fields.length; i++) {
-			Field f = fields[i];
-			if (f.getType() == String.class) {
-				try {
-					String key = (String) f.get(null);
+
+  public void testAllMessagesDefined() {
+
+    final Class<?> wmClass = WeaverMessages.class;
+    final Field[] fields = wmClass.getDeclaredFields();
+    final List<String> fieldList = new ArrayList<String>();
+    for (int i = 0; i < fields.length; i++) {
+      final Field f = fields[i];
+      if (f.getType() == String.class) {
+        try {
+          final String key = (String) f.get(null);
 //					String value = WeaverMessages.format(key);
-					assertFalse("Each key should be unique",fieldList.contains(key));
-					fieldList.add(key);
+          assertFalse("Each key should be unique", fieldList.contains(key));
+          fieldList.add(key);
 //					System.out.println(key + "," + value);
-				} catch (IllegalAccessException ex) {					
-				} catch(MissingResourceException mrEx) {
-					fail("Missing resource: " + mrEx);
-				}
-			}
-		}
-	}
+        } catch (IllegalAccessException ex) {
+        } catch (MissingResourceException mrEx) {
+          fail("Missing resource: " + mrEx);
+        }
+      }
+    }
+  }
 
 }

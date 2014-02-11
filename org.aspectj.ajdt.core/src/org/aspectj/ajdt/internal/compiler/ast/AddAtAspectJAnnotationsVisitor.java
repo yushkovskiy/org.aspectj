@@ -18,58 +18,63 @@ import org.aspectj.org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.BlockScope;
 import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.ClassScope;
 import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.CompilationUnitScope;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Adds runtime visible annotations to code-style aspect declarations so that the MAP can provide aspect information at runtime.
- * 
+ * <p/>
  * Done: - AspectDeclaration - AdviceDeclaration - PointcutDeclaration
- * 
+ * <p/>
  * To Do: - DeclareDeclaration - Inter-Type Declaration
  */
-public class AddAtAspectJAnnotationsVisitor extends ASTVisitor {
+public final class AddAtAspectJAnnotationsVisitor extends ASTVisitor {
 
-	private boolean makeReflectable;
-	// private CompilationUnitDeclaration unit;
+  private final boolean makeReflectable;
+  // private CompilationUnitDeclaration unit;
 
-	public AddAtAspectJAnnotationsVisitor(CompilationUnitDeclaration unit, boolean makeReflectable) {
-		// this.unit = unit;
-		this.makeReflectable= makeReflectable;
-	}
+  public AddAtAspectJAnnotationsVisitor(@NotNull CompilationUnitDeclaration unit, boolean makeReflectable) {
+    // this.unit = unit;
+    this.makeReflectable = makeReflectable;
+  }
 
-	public boolean visit(TypeDeclaration localTypeDeclaration, BlockScope scope) {
-		if (localTypeDeclaration instanceof AspectDeclaration) {
-			((AspectDeclaration) localTypeDeclaration).addAtAspectJAnnotations();
-		}
-		return true;
-	}
+  @Override
+  public boolean visit(@NotNull TypeDeclaration localTypeDeclaration, BlockScope scope) {
+    if (localTypeDeclaration instanceof AspectDeclaration) {
+      ((AspectDeclaration) localTypeDeclaration).addAtAspectJAnnotations();
+    }
+    return true;
+  }
 
-	public boolean visit(TypeDeclaration memberTypeDeclaration, ClassScope scope) {
-		if (memberTypeDeclaration instanceof AspectDeclaration) {
-			((AspectDeclaration) memberTypeDeclaration).addAtAspectJAnnotations();
-		}
-		return true;
-	}
+  @Override
+  public boolean visit(@NotNull TypeDeclaration memberTypeDeclaration, ClassScope scope) {
+    if (memberTypeDeclaration instanceof AspectDeclaration) {
+      ((AspectDeclaration) memberTypeDeclaration).addAtAspectJAnnotations();
+    }
+    return true;
+  }
 
-	public boolean visit(TypeDeclaration typeDeclaration, CompilationUnitScope scope) {
-		if (typeDeclaration instanceof AspectDeclaration) {
-			((AspectDeclaration) typeDeclaration).addAtAspectJAnnotations();
-		}
-		return true;
-	}
+  @Override
+  public boolean visit(@NotNull TypeDeclaration typeDeclaration, CompilationUnitScope scope) {
+    if (typeDeclaration instanceof AspectDeclaration) {
+      ((AspectDeclaration) typeDeclaration).addAtAspectJAnnotations();
+    }
+    return true;
+  }
 
-	public boolean visit(MethodDeclaration methodDeclaration, ClassScope scope) {
-		if (methodDeclaration instanceof AdviceDeclaration) {
-			((AdviceDeclaration) methodDeclaration).addAtAspectJAnnotations();
-		} else if (methodDeclaration instanceof PointcutDeclaration) {
-			((PointcutDeclaration) methodDeclaration).addAtAspectJAnnotations();
-		} else if (methodDeclaration instanceof DeclareDeclaration) {
-			((DeclareDeclaration) methodDeclaration).addAtAspectJAnnotations();
-		} else if (methodDeclaration instanceof InterTypeDeclaration) {
-			if (makeReflectable) {
-				((InterTypeDeclaration) methodDeclaration).addAtAspectJAnnotations();
-			}
-		}
-		return false;
-	}
+  @Override
+  public boolean visit(@NotNull MethodDeclaration methodDeclaration, ClassScope scope) {
+    if (methodDeclaration instanceof AdviceDeclaration) {
+      ((AdviceDeclaration) methodDeclaration).addAtAspectJAnnotations();
+    } else if (methodDeclaration instanceof PointcutDeclaration) {
+      ((PointcutDeclaration) methodDeclaration).addAtAspectJAnnotations();
+    } else if (methodDeclaration instanceof DeclareDeclaration) {
+      ((DeclareDeclaration) methodDeclaration).addAtAspectJAnnotations();
+    } else if (methodDeclaration instanceof InterTypeDeclaration) {
+      if (makeReflectable) {
+        ((InterTypeDeclaration) methodDeclaration).addAtAspectJAnnotations();
+      }
+    }
+    return false;
+  }
 
 }

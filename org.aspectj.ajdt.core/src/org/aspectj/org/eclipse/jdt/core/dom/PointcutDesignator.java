@@ -10,24 +10,25 @@
  *******************************************************************************/
 package org.aspectj.org.eclipse.jdt.core.dom;
 
-import org.aspectj.org.eclipse.jdt.core.dom.AST;
-import org.aspectj.org.eclipse.jdt.core.dom.ASTNode;
-
 /**
  * abstract PointcutDesignator DOM AST node.
  * has:
- *   nothing at the moment
- *   
+ * nothing at the moment
+ *
  * @author ajh02
  */
 public abstract class PointcutDesignator extends ASTNode {
-	PointcutDesignator(AST ast) {
-		super(ast);
-	}
-	final int getNodeType0() {
-		return FIELD_DECLARATION; // ajh02: hmmmmmmm.. should make a POINTCUT_DESIGNATOR thing
-	}
-	int memSize() {
-		return 0; // ajh02: stub method
-	}
+  PointcutDesignator(AST ast) {
+    super(ast);
+  }
+
+  @Override
+  final int getNodeType0() {
+    return FIELD_DECLARATION; // ajh02: hmmmmmmm.. should make a POINTCUT_DESIGNATOR thing
+  }
+
+  @Override
+  int memSize() {
+    return 0; // ajh02: stub method
+  }
 }

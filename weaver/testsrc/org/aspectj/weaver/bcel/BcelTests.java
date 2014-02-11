@@ -17,36 +17,38 @@ import junit.framework.*;
 
 public class BcelTests extends TestCase {
 
-    public static Test suite() { 
-        TestSuite suite = new TestSuite(BcelTests.class.getName());
-        // abstract 
-        //suite.addTestSuite(WeaveTestCase.class); 
-        //$JUnit-BEGIN$
-        suite.addTestSuite(AfterReturningWeaveTestCase.class); 
-        suite.addTestSuite(AfterThrowingWeaveTestCase.class); 
-        suite.addTestSuite(AfterWeaveTestCase.class); 
-        suite.addTestSuite(ArgsWeaveTestCase.class); 
-        suite.addTestSuite(AroundArgsWeaveTestCase.class); 
-        suite.addTestSuite(AroundWeaveTestCase.class); 
-        suite.addTestSuite(BeforeWeaveTestCase.class); 
-        suite.addTestSuite(CheckerTestCase.class); 
-        suite.addTestSuite(FieldSetTestCase.class); 
-        suite.addTestSuite(HierarchyDependsTestCase.class); 
-        suite.addTestSuite(IdWeaveTestCase.class); 
-        suite.addTestSuite(MoveInstructionsWeaveTestCase.class); 
-        suite.addTestSuite(NonstaticWeaveTestCase.class); 
-        suite.addTestSuite(PatternWeaveTestCase.class); 
-        suite.addTestSuite(PointcutResidueTestCase.class); 
-        suite.addTestSuite(TraceJarWeaveTestCase.class); 
-        suite.addTestSuite(TjpWeaveTestCase.class); 
-        suite.addTestSuite(UtilityTestCase.class); 
-        suite.addTestSuite(WeaveOrderTestCase.class); 
-        suite.addTestSuite(WorldTestCase.class);  
-        suite.addTestSuite(ZipTestCase.class); 
-        //$JUnit-END$
-        return suite;
-    }
+  public static Test suite() {
+    final TestSuite suite = new TestSuite(BcelTests.class.getName());
+    // abstract
+    //suite.addTestSuite(WeaveTestCase.class);
+    //$JUnit-BEGIN$
+    suite.addTestSuite(AfterReturningWeaveTestCase.class);
+    suite.addTestSuite(AfterThrowingWeaveTestCase.class);
+    suite.addTestSuite(AfterWeaveTestCase.class);
+    suite.addTestSuite(ArgsWeaveTestCase.class);
+    suite.addTestSuite(AroundArgsWeaveTestCase.class);
+    suite.addTestSuite(AroundWeaveTestCase.class);
+    suite.addTestSuite(BeforeWeaveTestCase.class);
+    suite.addTestSuite(CheckerTestCase.class);
+    suite.addTestSuite(FieldSetTestCase.class);
+    suite.addTestSuite(HierarchyDependsTestCase.class);
+    suite.addTestSuite(IdWeaveTestCase.class);
+    suite.addTestSuite(MoveInstructionsWeaveTestCase.class);
+    suite.addTestSuite(NonstaticWeaveTestCase.class);
+    suite.addTestSuite(PatternWeaveTestCase.class);
+    suite.addTestSuite(PointcutResidueTestCase.class);
+    suite.addTestSuite(TraceJarWeaveTestCase.class);
+    suite.addTestSuite(TjpWeaveTestCase.class);
+    suite.addTestSuite(UtilityTestCase.class);
+    suite.addTestSuite(WeaveOrderTestCase.class);
+    suite.addTestSuite(WorldTestCase.class);
+    suite.addTestSuite(ZipTestCase.class);
+    //$JUnit-END$
+    return suite;
+  }
 
-    public BcelTests(String name) { super(name); }
+  public BcelTests(String name) {
+    super(name);
+  }
 
 }  

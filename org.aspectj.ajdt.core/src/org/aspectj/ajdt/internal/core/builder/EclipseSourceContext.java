@@ -13,8 +13,6 @@
 
 package org.aspectj.ajdt.internal.core.builder;
 
-import java.io.File;
-
 import org.aspectj.ajdt.internal.compiler.lookup.EclipseSourceLocation;
 import org.aspectj.bridge.ISourceLocation;
 import org.aspectj.bridge.SourceLocation;
@@ -25,89 +23,96 @@ import org.aspectj.weaver.IEclipseSourceContext;
 import org.aspectj.weaver.IHasPosition;
 import org.aspectj.weaver.Member;
 
+import java.io.File;
 
 
 public class EclipseSourceContext implements IEclipseSourceContext {
-	
-	CompilationResult result;
-	int offset = 0;
 
-	public EclipseSourceContext(CompilationResult result) {
-		this.result = result;
-	}
-	
-	public EclipseSourceContext(CompilationResult result, int offset) {
-		this.result = result;
-		this.offset = offset;
-	}
-	
-	public int getOffset() {
-		return offset;
-	}
-	
-	private File getSourceFile() {
-		return new File(new String(result.fileName));
-	}
+  CompilationResult result;
+  int offset = 0;
 
-	public ISourceLocation makeSourceLocation(IHasPosition position) {
-		return new EclipseSourceLocation(result, position.getStart(), position.getEnd());
-	}
+  public EclipseSourceContext(CompilationResult result) {
+    this.result = result;
+  }
 
-    public ISourceLocation makeSourceLocation(int line, int offset) {
-		SourceLocation sl = new SourceLocation(getSourceFile(), line);
+  public EclipseSourceContext(CompilationResult result, int offset) {
+    this.result = result;
+    this.offset = offset;
+  }
 
-        if (offset > 0) {
-            sl.setOffset(offset);
-        } else {
-            // compute the offset
-            //TODO AV - should we do it lazily?
-            int[] offsets = result.lineSeparatorPositions;
-            int likelyOffset = 0;
-            if (line > 0 && line < offsets.length) {
-                //1st char of given line is next char after previous end of line
-                likelyOffset = offsets[line-1];//FIXME may be need -2
-            }
-            sl.setOffset(likelyOffset);
+  @Override
+  public int getOffset() {
+    return offset;
+  }
+
+  private File getSourceFile() {
+    return new File(new String(result.fileName));
+  }
+
+  @Override
+  public ISourceLocation makeSourceLocation(IHasPosition position) {
+    return new EclipseSourceLocation(result, position.getStart(), position.getEnd());
+  }
+
+  @Override
+  public ISourceLocation makeSourceLocation(int line, int offset) {
+    final SourceLocation sl = new SourceLocation(getSourceFile(), line);
+
+    if (offset > 0) {
+      sl.setOffset(offset);
+    } else {
+      // compute the offset
+      //TODO AV - should we do it lazily?
+      final int[] offsets = result.lineSeparatorPositions;
+      int likelyOffset = 0;
+      if (line > 0 && line < offsets.length) {
+        //1st char of given line is next char after previous end of line
+        likelyOffset = offsets[line - 1];//FIXME may be need -2
+      }
+      sl.setOffset(likelyOffset);
+    }
+    return sl;
+  }
+
+  @Override
+  public void tidy() {
+    result = null;
+  }
+
+  @Override
+  public void removeUnnecessaryProblems(Member member, int problemLineNumber) {
+    if (result == null) return;
+    final IProblem[] probs = result.getProblems();
+    if (probs != null) {
+      for (int i = 0; i < probs.length; i++) {
+        final IProblem problem = probs[i];
+        if (problem == null) continue;
+        if (problem.getID() == IProblem.UnusedMethodDeclaredThrownException
+            || problem.getID() == IProblem.UnusedConstructorDeclaredThrownException) {
+          if (problem.getSourceLineNumber() == problemLineNumber) {
+            final UnusedDeclaredThrownExceptionFilter filter =
+                new UnusedDeclaredThrownExceptionFilter(problem);
+            result.removeProblems(filter);
+          }
         }
-        return sl;
-	}
-    
-    public void tidy() {
-    	  result=null;
+      }
+    }
+  }
+
+  private class UnusedDeclaredThrownExceptionFilter implements ProblemsForRemovalFilter {
+    private IProblem problemToRemove;
+
+    public UnusedDeclaredThrownExceptionFilter(IProblem p) {
+      problemToRemove = p;
     }
 
-	public void removeUnnecessaryProblems(Member member, int problemLineNumber) {
-		if (result == null) return; 
-		IProblem[] probs = result.getProblems();
-		if (probs!=null) {
-			for (int i = 0; i < probs.length; i++) {
-				IProblem problem = probs[i];
-				if (problem == null) continue;
-				if (problem.getID() == IProblem.UnusedMethodDeclaredThrownException 
-						|| problem.getID() == IProblem.UnusedConstructorDeclaredThrownException) {
-					if (problem.getSourceLineNumber() == problemLineNumber) {
-						UnusedDeclaredThrownExceptionFilter filter = 
-							new UnusedDeclaredThrownExceptionFilter(problem);
-						result.removeProblems(filter);	
-					}
-				}
-			}
-		}
-	}
+    @Override
+    public boolean accept(IProblem p) {
+      if (p.equals(problemToRemove)) {
+        return true;
+      }
+      return false;
+    }
 
-	private class UnusedDeclaredThrownExceptionFilter implements ProblemsForRemovalFilter {	
-		private IProblem problemToRemove;
-
-		public UnusedDeclaredThrownExceptionFilter(IProblem p) {
-			problemToRemove = p;
-		}
-
-		public boolean accept(IProblem p) {
-			if (p.equals(problemToRemove)) {
-				return true;
-			}
-			return false;
-		}
-
-	}
+  }
 }

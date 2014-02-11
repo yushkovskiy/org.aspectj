@@ -17,5 +17,5 @@ package org.aspectj.weaver;
  * declaring element
  */
 public interface TypeVariableDeclaringElement {
-	public TypeVariable getTypeVariableNamed(String name);
+  public TypeVariable getTypeVariableNamed(String name);
 }

@@ -19,10 +19,10 @@ package org.aspectj.weaver;
 
 public interface IClassWeaver {
 
-	/**
-	 * perform the weaving.
-	 * 
-	 * @return <code>true</code> if the class is changed by the weaving, <code>false</code> otherwise.
-	 */
-	boolean weave();
+  /**
+   * perform the weaving.
+   *
+   * @return <code>true</code> if the class is changed by the weaving, <code>false</code> otherwise.
+   */
+  boolean weave();
 }

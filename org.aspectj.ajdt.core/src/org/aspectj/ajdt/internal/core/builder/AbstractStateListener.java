@@ -5,7 +5,7 @@
  * under the terms of the Eclipse Public License v1.0 
  * which accompanies this distribution and is available at 
  * http://www.eclipse.org/legal/epl-v10.html 
- *  
+ *
  * Contributors: 
  *     Andy Clement     initial implementation 
  * ******************************************************************/
@@ -16,24 +16,37 @@ import java.util.List;
 
 /**
  * Subtypes can override whatever they want...
- * 
- * @author AndyClement
  *
+ * @author AndyClement
  */
 public abstract class AbstractStateListener implements IStateListener {
 
-	public void detectedClassChangeInThisDir(File f) {	}
+  @Override
+  public void detectedClassChangeInThisDir(File f) {
+  }
 
-	public void aboutToCompareClasspaths(List oldClasspath, List newClasspath) {	}
+  @Override
+  public void aboutToCompareClasspaths(List oldClasspath, List newClasspath) {
+  }
 
-	public void pathChangeDetected() {	}
+  @Override
+  public void pathChangeDetected() {
+  }
 
-	public void detectedAspectDeleted(File f) {	}
+  @Override
+  public void detectedAspectDeleted(File f) {
+  }
 
-	public void buildSuccessful(boolean wasFullBuild) {	}
-	
-	public void recordDecision(String decision) {}
-	
-	public void recordInformation(String info) {}
+  @Override
+  public void buildSuccessful(boolean wasFullBuild) {
+  }
+
+  @Override
+  public void recordDecision(String decision) {
+  }
+
+  @Override
+  public void recordInformation(String info) {
+  }
 
 }

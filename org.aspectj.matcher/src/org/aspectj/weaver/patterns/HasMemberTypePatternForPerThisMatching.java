@@ -11,12 +11,12 @@
  * ******************************************************************/
 package org.aspectj.weaver.patterns;
 
-import java.io.IOException;
-import java.util.List;
-
 import org.aspectj.weaver.CompressingDataOutputStream;
 import org.aspectj.weaver.ConcreteTypeMunger;
 import org.aspectj.weaver.ResolvedType;
+
+import java.io.IOException;
+import java.util.List;
 
 /**
  * pr354470. This is a special subtype of HasMemberTypePattern. In order to optimize this situation: <br>
@@ -24,7 +24,7 @@ import org.aspectj.weaver.ResolvedType;
  * aspect X perthis(transactional()) {<br>
  * pointcut transactional: execution(@Foo * *(..));<br>
  * </pre></code>
- * <p>
+ * <p/>
  * When this occurs we obviously only want an aspect instance when there is a method annotated with @Foo. For a regular execution
  * pointcut we couldn't really do this due to the multiple joinpoint signatures for each joinpoint (and so lots of types get the
  * ajcMightHaveAspect interface). However, for an execution pointcut involving an annotation we can do something clever. Annotations
@@ -36,30 +36,31 @@ import org.aspectj.weaver.ResolvedType;
  * subclass is created to say 'if the supertype thinks it is a match, great, but if it doesnt then if there are ITDs on the target,
  * they might match so just say 'true''. Note that returning true is just confirming whether the 'mightHaveAspect' interface (and
  * friends) are getting added.
- * 
+ *
  * @author Andy Clement
  */
 public class HasMemberTypePatternForPerThisMatching extends HasMemberTypePattern {
 
-	public HasMemberTypePatternForPerThisMatching(SignaturePattern aSignaturePattern) {
-		super(aSignaturePattern);
-	}
+  public HasMemberTypePatternForPerThisMatching(SignaturePattern aSignaturePattern) {
+    super(aSignaturePattern);
+  }
 
-	protected boolean hasMethod(ResolvedType type) {
-		boolean b = super.hasMethod(type);
-		if (b) {
-			return true;
-		}
-		// If there are ITDs, have to be safe and just assume one of them might match
-		List<ConcreteTypeMunger> mungers = type.getInterTypeMungersIncludingSupers();
-		if (mungers.size() != 0) {
-			return true;
-		}
-		return false;
-	}
+  @Override
+  protected boolean hasMethod(ResolvedType type) {
+    final boolean b = super.hasMethod(type);
+    if (b) {
+      return true;
+    }
+    // If there are ITDs, have to be safe and just assume one of them might match
+    final List<ConcreteTypeMunger> mungers = type.getInterTypeMungersIncludingSupers();
+    if (mungers.size() != 0) {
+      return true;
+    }
+    return false;
+  }
 
-	@Override
-	public void write(CompressingDataOutputStream s) throws IOException {
-		throw new IllegalAccessError("Should never be called, these are transient and don't get serialized");
-	}
+  @Override
+  public void write(CompressingDataOutputStream s) throws IOException {
+    throw new IllegalAccessError("Should never be called, these are transient and don't get serialized");
+  }
 }

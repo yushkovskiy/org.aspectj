@@ -15,5 +15,5 @@ import org.aspectj.weaver.IHasPosition;
  * Marker interface for BindingTypePattern and BindingAnnotationTypePattern
  */
 public interface BindingPattern extends IHasPosition {
-	int getFormalIndex();
+  int getFormalIndex();
 }

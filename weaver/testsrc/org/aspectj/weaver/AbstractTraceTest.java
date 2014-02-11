@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Matthew Webster - initial implementation
  *******************************************************************************/
@@ -20,134 +20,134 @@ import org.aspectj.weaver.tools.Traceable;
 
 public abstract class AbstractTraceTest extends TestCase {
 
-	protected AbstractTrace trace;
+  protected AbstractTrace trace;
 
-	public void testIsTraceEnabled() {
-		DefaultTrace trace = new DefaultTrace(getClass());
-		assertFalse(trace.isTraceEnabled());
-	}
+  public void testIsTraceEnabled() {
+    final DefaultTrace trace = new DefaultTrace(getClass());
+    assertFalse(trace.isTraceEnabled());
+  }
 
-	public void testEnterWithThisAndArgs() {
-		trace.enter("testEnterWithThisAndArgs",this,new Object[] { "arg1", "arg2" });
-	}
+  public void testEnterWithThisAndArgs() {
+    trace.enter("testEnterWithThisAndArgs", this, new Object[]{"arg1", "arg2"});
+  }
 
-	public void testEnterWithThisAndArray() {
-		Object arg1 = new String[] { "s1", "s2" };
-		Object arg2 = new char[] { 'a', 'b', 'c' };
-		trace.enter(getName(),this,new Object[] { arg1, arg2 });
-	}
+  public void testEnterWithThisAndArray() {
+    final Object arg1 = new String[]{"s1", "s2"};
+    final Object arg2 = new char[]{'a', 'b', 'c'};
+    trace.enter(getName(), this, new Object[]{arg1, arg2});
+  }
 
-	public void testEnterWithThisAndCollection() {
-		Object arg1 = new ArrayList();
-		trace.enter(getName(),this,new Object[] { arg1 });
-	}
+  public void testEnterWithThisAndCollection() {
+    final Object arg1 = new ArrayList();
+    trace.enter(getName(), this, new Object[]{arg1});
+  }
 
-	public void testEnterWithThisAndTraceable () {
-		Object arg1 = new Traceable() {
+  public void testEnterWithThisAndTraceable() {
+    final Object arg1 = new Traceable() {
 
-			public String toTraceString() {
-				return getClass().getName() + "[Traceable]";
-			}
-			
-		};
-		trace.enter(getName(),this,new Object[] { arg1 });
-	}
+      public String toTraceString() {
+        return getClass().getName() + "[Traceable]";
+      }
 
-	public void testEnterWithThisAndToStringException () {
-		Object arg1 = new Object() {
+    };
+    trace.enter(getName(), this, new Object[]{arg1});
+  }
 
-			public String toString() {
-				throw new RuntimeException("toString() can throw an Exception");
-			}
-			
-		};
-		trace.enter(getName(),this,new Object[] { arg1 });
-	}
+  public void testEnterWithThisAndToStringException() {
+    final Object arg1 = new Object() {
 
-	public void testEnterWithThisAndHashCodeException () {
-		Object arg1 = new Object() {
+      public String toString() {
+        throw new RuntimeException("toString() can throw an Exception");
+      }
 
-			public int hashCode() {
-				throw new RuntimeException("hashCode can throw an Exception");
-			}
-			
-		};
-		trace.enter(getName(),this,new Object[] { arg1 });
-	}
+    };
+    trace.enter(getName(), this, new Object[]{arg1});
+  }
 
-	public void testEnterWithThisAndClassLoader () {
-		Object arg1 = new ClassLoader() {
+  public void testEnterWithThisAndHashCodeException() {
+    final Object arg1 = new Object() {
 
-			public String toString() {
-				throw new Error("Don't call ClassLoader.toString()");
-			}
-			
-		};
-		trace.enter(getName(),this,new Object[] { arg1 });
-	}
+      public int hashCode() {
+        throw new RuntimeException("hashCode can throw an Exception");
+      }
 
-	public void testEnterWithThis() {
-		trace.enter("testEnterWithThis",this);
-	}
+    };
+    trace.enter(getName(), this, new Object[]{arg1});
+  }
 
-	public void testEnter() {
-		trace.enter("testEnter");
-	}
+  public void testEnterWithThisAndClassLoader() {
+    final Object arg1 = new ClassLoader() {
 
-	public void testExitWithReturn() {
-		trace.exit("testExitWithReturn","ret");
-	}
+      public String toString() {
+        throw new Error("Don't call ClassLoader.toString()");
+      }
 
-	public void testExitWithThrowable() {
-		trace.exit("testExitWithThrowable",new RuntimeException());
-	}
+    };
+    trace.enter(getName(), this, new Object[]{arg1});
+  }
 
-	public void testExit() {
-		trace.exit("testExit");
-	}
+  public void testEnterWithThis() {
+    trace.enter("testEnterWithThis", this);
+  }
 
-	public void testEvent() {
-		trace.event("testEvent");
-	}
+  public void testEnter() {
+    trace.enter("testEnter");
+  }
 
-	public void testEventWithThisAndArgs() {
-		trace.event("testEventWithThisAndArgs",this,new Object[] { "arg1", "arg2" });
-	}
+  public void testExitWithReturn() {
+    trace.exit("testExitWithReturn", "ret");
+  }
 
-	public void testEventWithThisAndArg() {
-		trace.event("testEventWithThisAndArg",this,"arg1");
-	}
+  public void testExitWithThrowable() {
+    trace.exit("testExitWithThrowable", new RuntimeException());
+  }
 
-	public void testDebug() {
-		trace.debug("debug");
-	}
+  public void testExit() {
+    trace.exit("testExit");
+  }
 
-	public void testInfo() {
-		trace.info("information");
-	}
+  public void testEvent() {
+    trace.event("testEvent");
+  }
 
-	public void testWarn() {
-		trace.warn("warning");
-	}
+  public void testEventWithThisAndArgs() {
+    trace.event("testEventWithThisAndArgs", this, new Object[]{"arg1", "arg2"});
+  }
 
-	public void testWarnWithException() {
-		trace.warn("warning",new RuntimeException("warning"));
-	}
+  public void testEventWithThisAndArg() {
+    trace.event("testEventWithThisAndArg", this, "arg1");
+  }
 
-	public void testError() {
-		trace.error("error");
-	}
+  public void testDebug() {
+    trace.debug("debug");
+  }
 
-	public void testErrorWithException() {
-		trace.error("error",new RuntimeException("error"));
-	}
+  public void testInfo() {
+    trace.info("information");
+  }
 
-	public void testFatal() {
-		trace.fatal("fatal");
-	}
+  public void testWarn() {
+    trace.warn("warning");
+  }
 
-	public void testFatalWithException() {
-		trace.fatal("fatal",new RuntimeException("fatal"));
-	}
+  public void testWarnWithException() {
+    trace.warn("warning", new RuntimeException("warning"));
+  }
+
+  public void testError() {
+    trace.error("error");
+  }
+
+  public void testErrorWithException() {
+    trace.error("error", new RuntimeException("error"));
+  }
+
+  public void testFatal() {
+    trace.fatal("fatal");
+  }
+
+  public void testFatalWithException() {
+    trace.fatal("fatal", new RuntimeException("fatal"));
+  }
 
 }

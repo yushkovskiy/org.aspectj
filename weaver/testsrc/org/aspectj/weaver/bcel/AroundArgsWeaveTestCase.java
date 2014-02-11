@@ -18,24 +18,23 @@ import java.io.IOException;
 import org.aspectj.weaver.ShadowMunger;
 
 public class AroundArgsWeaveTestCase extends WeaveTestCase {
-	{
-		regenerate = false;
-	}
+  {
+    regenerate = false;
+  }
 
-	public AroundArgsWeaveTestCase(String name) {
-		super(name);
-	}
-		
-    public void testWeave() throws IOException
-    {
-    	String label = "AroundArgs";
-    	ShadowMunger p = 
-                makeConcreteAdvice(
-					"around(list) : "
-					+ "(call(public * add(..)) && target(list)) -> " 
-					+ "static boolean Aspect.ajc_around0" 
-					+ "(java.util.ArrayList, org.aspectj.runtime.internal.AroundClosure)");
-        weaveTest(new String[] {"DynamicHelloWorld"}, label, p);
-        
-    }
+  public AroundArgsWeaveTestCase(String name) {
+    super(name);
+  }
+
+  public void testWeave() throws IOException {
+    final String label = "AroundArgs";
+    final ShadowMunger p =
+        makeConcreteAdvice(
+            "around(list) : "
+                + "(call(public * add(..)) && target(list)) -> "
+                + "static boolean Aspect.ajc_around0"
+                + "(java.util.ArrayList, org.aspectj.runtime.internal.AroundClosure)");
+    weaveTest(new String[]{"DynamicHelloWorld"}, label, p);
+
+  }
 }

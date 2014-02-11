@@ -60,49 +60,49 @@ import java.io.IOException;
  * Instruction that needs one byte
  */
 public class InstructionByte extends Instruction {
-	private final byte theByte;
+  private final byte theByte;
 
-	public InstructionByte(short opcode, byte b) {
-		super(opcode);
-		this.theByte = b;
-	}
+  public InstructionByte(short opcode, byte b) {
+    super(opcode);
+    this.theByte = b;
+  }
 
-	public void dump(DataOutputStream out) throws IOException {
-		out.writeByte(opcode);
-		out.writeByte(theByte);
-	}
+  public void dump(DataOutputStream out) throws IOException {
+    out.writeByte(opcode);
+    out.writeByte(theByte);
+  }
 
-	public String toString(boolean verbose) {
-		return super.toString(verbose) + " " + theByte;
-	}
+  public String toString(boolean verbose) {
+    return super.toString(verbose) + " " + theByte;
+  }
 
-	/**
-	 * For supporting NEWARRAY
-	 * 
-	 * @return typecode of the array
-	 */
-	public final byte getTypecode() {
-		return theByte;
-	}
+  /**
+   * For supporting NEWARRAY
+   *
+   * @return typecode of the array
+   */
+  public final byte getTypecode() {
+    return theByte;
+  }
 
-	/**
-	 * For supporting NEWARRAY
-	 * 
-	 * @return type of the array
-	 */
-	public final Type getType() {
-		return new ArrayType(BasicType.getType(theByte), 1);
-	}
+  /**
+   * For supporting NEWARRAY
+   *
+   * @return type of the array
+   */
+  public final Type getType() {
+    return new ArrayType(BasicType.getType(theByte), 1);
+  }
 
-	public boolean equals(Object other) {
-		if (!(other instanceof InstructionByte)) {
-			return false;
-		}
-		InstructionByte o = (InstructionByte) other;
-		return o.opcode == opcode && o.theByte == theByte;
-	}
+  public boolean equals(Object other) {
+    if (!(other instanceof InstructionByte)) {
+      return false;
+    }
+    final InstructionByte o = (InstructionByte) other;
+    return o.opcode == opcode && o.theByte == theByte;
+  }
 
-	public int hashCode() {
-		return opcode * 37 + theByte;
-	}
+  public int hashCode() {
+    return opcode * 37 + theByte;
+  }
 }

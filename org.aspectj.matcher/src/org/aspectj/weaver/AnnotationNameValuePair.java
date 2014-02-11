@@ -13,35 +13,35 @@ package org.aspectj.weaver;
 
 public class AnnotationNameValuePair {
 
-	private String name;
+  private final String name;
 
-	private AnnotationValue val;
+  private final AnnotationValue val;
 
-	public AnnotationNameValuePair(String name, AnnotationValue val) {
-		this.name = name;
-		this.val = val;
-	}
+  public AnnotationNameValuePair(String name, AnnotationValue val) {
+    this.name = name;
+    this.val = val;
+  }
 
-	public String getName() {
-		return name;
-	}
+  public String getName() {
+    return name;
+  }
 
-	public AnnotationValue getValue() {
-		return val;
-	}
+  public AnnotationValue getValue() {
+    return val;
+  }
 
-	public String toString() {
-		StringBuffer sb = new StringBuffer();
-		sb.append(name + "=" + val.toString());
-		return sb.toString();
-	}
+  public String toString() {
+    final StringBuffer sb = new StringBuffer();
+    sb.append(name + "=" + val.toString());
+    return sb.toString();
+  }
 
-	public String stringify() {
-		StringBuffer sb = new StringBuffer();
-		if (!name.equals("value")) {
-			sb.append(name + "=");
-		}
-		sb.append(val.stringify());
-		return sb.toString();
-	}
+  public String stringify() {
+    final StringBuffer sb = new StringBuffer();
+    if (!name.equals("value")) {
+      sb.append(name + "=");
+    }
+    sb.append(val.stringify());
+    return sb.toString();
+  }
 }

@@ -9,11 +9,12 @@
  * Contributors: 
  *    Ron Bodkin     initial implementation 
  * ******************************************************************/
- package org.aspectj.weaver.reflect;
+package org.aspectj.weaver.reflect;
 
 import org.aspectj.weaver.ResolvedType;
 
 public interface IReflectionWorld {
-	public AnnotationFinder getAnnotationFinder();
-	public ResolvedType resolve(Class aClass);
+  public AnnotationFinder getAnnotationFinder();
+
+  public ResolvedType resolve(Class aClass);
 }

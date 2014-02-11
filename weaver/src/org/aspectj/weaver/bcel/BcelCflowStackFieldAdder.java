@@ -23,55 +23,55 @@ import org.aspectj.weaver.ResolvedMember;
 import org.aspectj.weaver.ResolvedType;
 
 public class BcelCflowStackFieldAdder extends BcelTypeMunger {
-	private ResolvedMember cflowStackField;
+  private ResolvedMember cflowStackField;
 
-	public BcelCflowStackFieldAdder(ResolvedMember cflowStackField) {
-		super(null, (ResolvedType) cflowStackField.getDeclaringType());
-		this.cflowStackField = cflowStackField;
-	}
+  public BcelCflowStackFieldAdder(ResolvedMember cflowStackField) {
+    super(null, (ResolvedType) cflowStackField.getDeclaringType());
+    this.cflowStackField = cflowStackField;
+  }
 
-	@Override
-	public boolean munge(BcelClassWeaver weaver) {
-		LazyClassGen gen = weaver.getLazyClassGen();
-		if (!gen.getType().equals(cflowStackField.getDeclaringType())) {
-			return false;
-		}
-		FieldGen f = new FieldGen(cflowStackField.getModifiers(), BcelWorld.makeBcelType(cflowStackField.getReturnType()),
-				cflowStackField.getName(), gen.getConstantPool());
-		gen.addField(f, getSourceLocation());
+  @Override
+  public boolean munge(BcelClassWeaver weaver) {
+    final LazyClassGen gen = weaver.getLazyClassGen();
+    if (!gen.getType().equals(cflowStackField.getDeclaringType())) {
+      return false;
+    }
+    final FieldGen f = new FieldGen(cflowStackField.getModifiers(), BcelWorld.makeBcelType(cflowStackField.getReturnType()),
+        cflowStackField.getName(), gen.getConstantPool());
+    gen.addField(f, getSourceLocation());
 
-		LazyMethodGen clinit = gen.getAjcPreClinit(); // StaticInitializer();
-		InstructionList setup = new InstructionList();
-		InstructionFactory fact = gen.getFactory();
+    final LazyMethodGen clinit = gen.getAjcPreClinit(); // StaticInitializer();
+    final InstructionList setup = new InstructionList();
+    final InstructionFactory fact = gen.getFactory();
 
-		setup.append(fact.createNew(NameMangler.CFLOW_STACK_TYPE));
-		setup.append(InstructionFactory.createDup(1));
-		setup.append(fact.createInvoke(NameMangler.CFLOW_STACK_TYPE, "<init>", Type.VOID, Type.NO_ARGS, Constants.INVOKESPECIAL));
+    setup.append(fact.createNew(NameMangler.CFLOW_STACK_TYPE));
+    setup.append(InstructionFactory.createDup(1));
+    setup.append(fact.createInvoke(NameMangler.CFLOW_STACK_TYPE, "<init>", Type.VOID, Type.NO_ARGS, Constants.INVOKESPECIAL));
 
-		setup.append(Utility.createSet(fact, cflowStackField));
-		clinit.getBody().insert(setup);
+    setup.append(Utility.createSet(fact, cflowStackField));
+    clinit.getBody().insert(setup);
 
-		return true;
-	}
+    return true;
+  }
 
-	@Override
-	public ResolvedMember getMatchingSyntheticMember(Member member) {
-		return null;
-	}
+  @Override
+  public ResolvedMember getMatchingSyntheticMember(Member member) {
+    return null;
+  }
 
-	@Override
-	public ResolvedMember getSignature() {
-		return cflowStackField;
-	}
+  @Override
+  public ResolvedMember getSignature() {
+    return cflowStackField;
+  }
 
-	@Override
-	public boolean matches(ResolvedType onType) {
-		return onType.equals(cflowStackField.getDeclaringType());
-	}
+  @Override
+  public boolean matches(ResolvedType onType) {
+    return onType.equals(cflowStackField.getDeclaringType());
+  }
 
-	@Override
-	public boolean existsToSupportShadowMunging() {
-		return true;
-	}
+  @Override
+  public boolean existsToSupportShadowMunging() {
+    return true;
+  }
 
 }

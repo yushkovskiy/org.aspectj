@@ -39,264 +39,266 @@ import org.aspectj.weaver.patterns.SimpleScope;
 
 public abstract class WeaveTestCase extends TestCase {
 
-	public boolean regenerate = false;
-	public boolean runTests = true;
-	public boolean behave15 = false;
+  public boolean regenerate = false;
+  public boolean runTests = true;
+  public boolean behave15 = false;
 
-	File outDir;
-	String outDirPath;
+  File outDir;
+  String outDirPath;
 
-	public BcelWorld world = new BcelWorld();
-	{
-		world.addPath(classDir);
-		// Some of the tests in here rely on comparing output from dumping the delegates - if
-		// we are using ASM delegates we don't know the names of parameters (they are irrelevant...)
-		// and are missing from the dumping of asm delegates. This switch ensures we
-		// continue to use BCEL for these tests.
-		// world.setFastDelegateSupport(false);
-	}
+  public BcelWorld world = new BcelWorld();
 
-	public WeaveTestCase(String name) {
-		super(name);
-	}
+  {
+    world.addPath(classDir);
+    // Some of the tests in here rely on comparing output from dumping the delegates - if
+    // we are using ASM delegates we don't know the names of parameters (they are irrelevant...)
+    // and are missing from the dumping of asm delegates. This switch ensures we
+    // continue to use BCEL for these tests.
+    // world.setFastDelegateSupport(false);
+  }
 
-	public void setUp() throws Exception {
-		outDir = BcweaverTests.getOutdir();
-		outDirPath = outDir.getAbsolutePath();
-	}
+  public WeaveTestCase(String name) {
+    super(name);
+  }
 
-	public void tearDown() throws Exception {
-		super.tearDown();
-		BcweaverTests.removeOutDir();
-		outDir = null;
-		outDirPath = null;
-	}
+  public void setUp() throws Exception {
+    outDir = BcweaverTests.getOutdir();
+    outDirPath = outDir.getAbsolutePath();
+  }
 
-	public static InstructionList getAdviceTag(BcelShadow shadow, String where) {
-		String methodName = "ajc_" + where + "_" + shadow.getKind().toLegalJavaIdentifier();
+  public void tearDown() throws Exception {
+    super.tearDown();
+    BcweaverTests.removeOutDir();
+    outDir = null;
+    outDirPath = null;
+  }
 
-		InstructionFactory fact = shadow.getFactory();
-		InvokeInstruction il = fact.createInvoke("Aspect", methodName, Type.VOID, new Type[] {}, Constants.INVOKESTATIC);
-		return new InstructionList(il);
-	}
+  public static InstructionList getAdviceTag(BcelShadow shadow, String where) {
+    final String methodName = "ajc_" + where + "_" + shadow.getKind().toLegalJavaIdentifier();
 
-	public void weaveTest(String name, String outName, ShadowMunger planner) throws IOException {
-		List<ShadowMunger> l = new ArrayList<ShadowMunger>(1);
-		l.add(planner);
-		weaveTest(name, outName, l);
-	}
+    final InstructionFactory fact = shadow.getFactory();
+    final InvokeInstruction il = fact.createInvoke("Aspect", methodName, Type.VOID, new Type[]{}, Constants.INVOKESTATIC);
+    return new InstructionList(il);
+  }
 
-	// static String classDir = "../weaver/bin";
-	static String classDir = BcweaverTests.TESTDATA_PATH + File.separator + "bin";
+  public void weaveTest(String name, String outName, ShadowMunger planner) throws IOException {
+    final List<ShadowMunger> l = new ArrayList<ShadowMunger>(1);
+    l.add(planner);
+    weaveTest(name, outName, l);
+  }
 
-	public void weaveTest(String name, String outName, List<ShadowMunger> planners) throws IOException {
-		BcelWeaver weaver = new BcelWeaver(world);
-		try {
-			if (behave15)
-				world.setBehaveInJava5Way(true);
+  // static String classDir = "../weaver/bin";
+  static String classDir = BcweaverTests.TESTDATA_PATH + File.separator + "bin";
 
-			UnwovenClassFile classFile = makeUnwovenClassFile(classDir, name, outDirPath);
+  public void weaveTest(String name, String outName, List<ShadowMunger> planners) throws IOException {
+    final BcelWeaver weaver = new BcelWeaver(world);
+    try {
+      if (behave15)
+        world.setBehaveInJava5Way(true);
 
-			weaver.addClassFile(classFile, false);
-			weaver.setShadowMungers(planners);
-			weaveTestInner(weaver, classFile, name, outName);
-		} finally {
-			if (behave15)
-				world.setBehaveInJava5Way(false);
-		}
-	}
+      final UnwovenClassFile classFile = makeUnwovenClassFile(classDir, name, outDirPath);
 
-	protected void weaveTestInner(BcelWeaver weaver, UnwovenClassFile classFile, String name, String outName) throws IOException {
-		// int preErrors = currentResult.errorCount();
-		BcelObjectType classType = BcelWorld.getBcelObjectType(world.resolve(classFile.getClassName()));
-		LazyClassGen gen = weaver.weave(classFile, classType);
-		if (gen == null) {
-			// we didn't do any weaving, but let's make a gen anyway
-			gen = classType.getLazyClassGen(); // new LazyClassGen(classType);
-		}
-		try {
-			checkClass(gen, outDirPath, outName + ".txt");
-			if (runTests) {
-				System.out.println("*******RUNNING: " + outName + "  " + name + " *******");
-				TestUtil.runMain(makeClassPath(outDirPath), name);
-			}
-		} catch (Error e) {
-			System.err.println("Comparing to " + outName + ".txt");
-			gen.print(System.err);
-			throw e;
-		} catch (RuntimeException e) {
-			gen.print(System.err);
-			throw e;
-		}
-	}
+      weaver.addClassFile(classFile, false);
+      weaver.setShadowMungers(planners);
+      weaveTestInner(weaver, classFile, name, outName);
+    } finally {
+      if (behave15)
+        world.setBehaveInJava5Way(false);
+    }
+  }
 
-	public String makeClassPath(String outDir) {
-		return outDir + File.pathSeparator + getTraceJar() + File.pathSeparator + classDir + File.pathSeparator
-				+ System.getProperty("java.class.path");
-	}
+  protected void weaveTestInner(BcelWeaver weaver, UnwovenClassFile classFile, String name, String outName) throws IOException {
+    // int preErrors = currentResult.errorCount();
+    final BcelObjectType classType = BcelWorld.getBcelObjectType(world.resolve(classFile.getClassName()));
+    LazyClassGen gen = weaver.weave(classFile, classType);
+    if (gen == null) {
+      // we didn't do any weaving, but let's make a gen anyway
+      gen = classType.getLazyClassGen(); // new LazyClassGen(classType);
+    }
+    try {
+      checkClass(gen, outDirPath, outName + ".txt");
+      if (runTests) {
+        System.out.println("*******RUNNING: " + outName + "  " + name + " *******");
+        TestUtil.runMain(makeClassPath(outDirPath), name);
+      }
+    } catch (Error e) {
+      System.err.println("Comparing to " + outName + ".txt");
+      gen.print(System.err);
+      throw e;
+    } catch (RuntimeException e) {
+      gen.print(System.err);
+      throw e;
+    }
+  }
 
-	/**
-	 * '/' in the name indicates the location of the class
-	 */
-	public static UnwovenClassFile makeUnwovenClassFile(String classDir, String name, String outDir) throws IOException {
-		File outFile = new File(outDir, name + ".class");
-		if (classDir.endsWith(".jar")) {
-			String fname = name + ".class";
-			UnwovenClassFile ret = new UnwovenClassFile(outFile.getAbsolutePath(), FileUtil.readAsByteArray(FileUtil
-					.getStreamFromZip(classDir, fname)));
-			return ret;
-		} else {
-			File inFile = new File(classDir, name + ".class");
-			return new UnwovenClassFile(outFile.getAbsolutePath(), FileUtil.readAsByteArray(inFile));
-		}
-	}
+  public String makeClassPath(String outDir) {
+    return outDir + File.pathSeparator + getTraceJar() + File.pathSeparator + classDir + File.pathSeparator
+        + System.getProperty("java.class.path");
+  }
 
-	public void checkClass(LazyClassGen gen, String outDir, String expectedFile) throws IOException {
-		if (regenerate)
-			genClass(gen, outDir, expectedFile);
-		else
-			realCheckClass(gen, outDir, expectedFile);
-	}
+  /**
+   * '/' in the name indicates the location of the class
+   */
+  public static UnwovenClassFile makeUnwovenClassFile(String classDir, String name, String outDir) throws IOException {
+    final File outFile = new File(outDir, name + ".class");
+    if (classDir.endsWith(".jar")) {
+      final String fname = name + ".class";
+      final UnwovenClassFile ret = new UnwovenClassFile(outFile.getAbsolutePath(), FileUtil.readAsByteArray(FileUtil
+          .getStreamFromZip(classDir, fname)));
+      return ret;
+    } else {
+      final File inFile = new File(classDir, name + ".class");
+      return new UnwovenClassFile(outFile.getAbsolutePath(), FileUtil.readAsByteArray(inFile));
+    }
+  }
 
-	static final File TESTDATA_DIR = new File(BcweaverTests.TESTDATA_PATH);
+  public void checkClass(LazyClassGen gen, String outDir, String expectedFile) throws IOException {
+    if (regenerate)
+      genClass(gen, outDir, expectedFile);
+    else
+      realCheckClass(gen, outDir, expectedFile);
+  }
 
-	void genClass(LazyClassGen gen, String outDir, String expectedFile) throws IOException {
-		// ClassGen b = getJavaClass(outDir, className);
-		FileOutputStream out = new FileOutputStream(new File(TESTDATA_DIR, expectedFile));
-		PrintStream ps = new PrintStream(out);
-		gen.print(ps);
-		ps.flush();
+  static final File TESTDATA_DIR = new File(BcweaverTests.TESTDATA_PATH);
 
-	}
+  void genClass(LazyClassGen gen, String outDir, String expectedFile) throws IOException {
+    // ClassGen b = getJavaClass(outDir, className);
+    final FileOutputStream out = new FileOutputStream(new File(TESTDATA_DIR, expectedFile));
+    final PrintStream ps = new PrintStream(out);
+    gen.print(ps);
+    ps.flush();
 
-	void realCheckClass(LazyClassGen gen, String outDir, String expectedFile) throws IOException {
-		TestUtil.assertMultiLineStringEquals(expectedFile/* "classes" */,
-				FileUtil.readAsString(new File(TESTDATA_DIR, expectedFile)), gen.toLongString());
-	}
+  }
 
-	// ----
-	public ShadowMunger makeConcreteAdvice(String mungerString) {
-		return makeConcreteAdvice(mungerString, 0, null);
-	}
+  void realCheckClass(LazyClassGen gen, String outDir, String expectedFile) throws IOException {
+    TestUtil.assertMultiLineStringEquals(expectedFile/* "classes" */,
+        FileUtil.readAsString(new File(TESTDATA_DIR, expectedFile)), gen.toLongString());
+  }
 
-	public ShadowMunger makeConcreteAdvice(String mungerString, int extraArgFlag) {
-		return makeConcreteAdvice(mungerString, extraArgFlag, null);
-	}
+  // ----
+  public ShadowMunger makeConcreteAdvice(String mungerString) {
+    return makeConcreteAdvice(mungerString, 0, null);
+  }
 
-	protected ShadowMunger makeConcreteAdvice(String mungerString, int extraArgFlag, PerClause perClause) {
-		Advice myMunger = BcelTestUtils.shadowMunger(world, mungerString, extraArgFlag);
+  public ShadowMunger makeConcreteAdvice(String mungerString, int extraArgFlag) {
+    return makeConcreteAdvice(mungerString, extraArgFlag, null);
+  }
 
-		// PerSingleton s = new PerSingleton();
-		// s.concretize(world.resolve("Aspect"));
-		// System.err.println(((KindedPointcut)myMunger.getPointcut().getPointcut()).getKind());
-		Advice cm = (Advice) myMunger.concretize(myMunger.getDeclaringAspect().resolve(world), world, perClause);
-		return cm;
-	}
+  protected ShadowMunger makeConcreteAdvice(String mungerString, int extraArgFlag, PerClause perClause) {
+    final Advice myMunger = BcelTestUtils.shadowMunger(world, mungerString, extraArgFlag);
 
-	public ShadowMunger makeAdviceField(String kind, String extraArgType) {
-		return makeConcreteAdvice(kind + "(): get(* *.*) -> static void Aspect.ajc_" + kind + "_field_get(" + extraArgType + ")", 1);
-	}
+    // PerSingleton s = new PerSingleton();
+    // s.concretize(world.resolve("Aspect"));
+    // System.err.println(((KindedPointcut)myMunger.getPointcut().getPointcut()).getKind());
+    final Advice cm = (Advice) myMunger.concretize(myMunger.getDeclaringAspect().resolve(world), world, perClause);
+    return cm;
+  }
 
-	public List<ShadowMunger> makeAdviceAll(String kind, boolean matchOnlyPrintln) {
-		List<ShadowMunger> ret = new ArrayList<ShadowMunger>();
-		if (matchOnlyPrintln) {
-			ret.add(makeConcreteAdvice(kind + "(): call(* *.println(..)) -> static void Aspect.ajc_" + kind + "_method_execution()"));
-		} else {
-			ret.add(makeConcreteAdvice(kind + "(): call(* *.*(..)) -> static void Aspect.ajc_" + kind + "_method_call()"));
-			ret.add(makeConcreteAdvice(kind + "(): call(*.new(..)) -> static void Aspect.ajc_" + kind + "_constructor_call()"));
-			ret.add(makeConcreteAdvice(kind + "(): execution(* *.*(..)) -> static void Aspect.ajc_" + kind + "_method_execution()"));
-			ret.add(makeConcreteAdvice(kind + "(): execution(*.new(..)) -> static void Aspect.ajc_" + kind
-					+ "_constructor_execution()"));
-			// ret.add(
-			// makeConcreteMunger(
-			// kind
-			// + "(): staticinitialization(*) -> static void Aspect.ajc_"
-			// + kind
-			// + "_staticinitialization()"));
-			ret.add(makeConcreteAdvice(kind + "(): get(* *.*) -> static void Aspect.ajc_" + kind + "_field_get()"));
-			// ret.add(
-			// makeConcreteMunger(
-			// kind + "(): set(* *.*) -> static void Aspect.ajc_" + kind + "_field_set()"));
-			// XXX no test for advice execution, staticInitialization or (god help us) preInitialization
-		}
-		return ret;
-	}
+  public ShadowMunger makeAdviceField(String kind, String extraArgType) {
+    return makeConcreteAdvice(kind + "(): get(* *.*) -> static void Aspect.ajc_" + kind + "_field_get(" + extraArgType + ")", 1);
+  }
 
-	public List<ShadowMunger> makeAdviceAll(final String kind) {
-		return makeAdviceAll(kind, false);
-	}
+  public List<ShadowMunger> makeAdviceAll(String kind, boolean matchOnlyPrintln) {
+    final List<ShadowMunger> ret = new ArrayList<ShadowMunger>();
+    if (matchOnlyPrintln) {
+      ret.add(makeConcreteAdvice(kind + "(): call(* *.println(..)) -> static void Aspect.ajc_" + kind + "_method_execution()"));
+    } else {
+      ret.add(makeConcreteAdvice(kind + "(): call(* *.*(..)) -> static void Aspect.ajc_" + kind + "_method_call()"));
+      ret.add(makeConcreteAdvice(kind + "(): call(*.new(..)) -> static void Aspect.ajc_" + kind + "_constructor_call()"));
+      ret.add(makeConcreteAdvice(kind + "(): execution(* *.*(..)) -> static void Aspect.ajc_" + kind + "_method_execution()"));
+      ret.add(makeConcreteAdvice(kind + "(): execution(*.new(..)) -> static void Aspect.ajc_" + kind
+          + "_constructor_execution()"));
+      // ret.add(
+      // makeConcreteMunger(
+      // kind
+      // + "(): staticinitialization(*) -> static void Aspect.ajc_"
+      // + kind
+      // + "_staticinitialization()"));
+      ret.add(makeConcreteAdvice(kind + "(): get(* *.*) -> static void Aspect.ajc_" + kind + "_field_get()"));
+      // ret.add(
+      // makeConcreteMunger(
+      // kind + "(): set(* *.*) -> static void Aspect.ajc_" + kind + "_field_set()"));
+      // XXX no test for advice execution, staticInitialization or (god help us) preInitialization
+    }
+    return ret;
+  }
 
-	public Pointcut makePointcutAll() {
-		return makeConcretePointcut("get(* *.*) || call(* *.*(..)) || execution(* *.*(..)) || call(*.new(..)) || execution(*.new(..))");
-	}
+  public List<ShadowMunger> makeAdviceAll(final String kind) {
+    return makeAdviceAll(kind, false);
+  }
 
-	public Pointcut makePointcutNoZeroArg() {
-		return makeConcretePointcut("call(* *.*(*, ..)) || execution(* *.*(*, ..)) || call(*.new(*, ..)) || execution(*.new(*, ..))");
-	}
+  public Pointcut makePointcutAll() {
+    return makeConcretePointcut("get(* *.*) || call(* *.*(..)) || execution(* *.*(..)) || call(*.new(..)) || execution(*.new(..))");
+  }
 
-	public Pointcut makePointcutPrintln() {
-		return makeConcretePointcut("call(* *.println(..))");
-	}
+  public Pointcut makePointcutNoZeroArg() {
+    return makeConcretePointcut("call(* *.*(*, ..)) || execution(* *.*(*, ..)) || call(*.new(*, ..)) || execution(*.new(*, ..))");
+  }
 
-	public Pointcut makeConcretePointcut(String s) {
-		return makeResolvedPointcut(s).concretize(null, null, 0);
-	}
+  public Pointcut makePointcutPrintln() {
+    return makeConcretePointcut("call(* *.println(..))");
+  }
 
-	public Pointcut makeResolvedPointcut(String s) {
-		Pointcut pointcut0 = Pointcut.fromString(s);
-		return pointcut0.resolve(new SimpleScope(world, FormalBinding.NONE));
-	}
+  public Pointcut makeConcretePointcut(String s) {
+    return makeResolvedPointcut(s).concretize(null, null, 0);
+  }
 
-	// ----
+  public Pointcut makeResolvedPointcut(String s) {
+    final Pointcut pointcut0 = Pointcut.fromString(s);
+    return pointcut0.resolve(new SimpleScope(world, FormalBinding.NONE));
+  }
 
-	public String[] getStandardTargets() {
-		return new String[] { "HelloWorld", "FancyHelloWorld" };
-	}
+  // ----
 
-	public String getTraceJar() {
-		return BcweaverTests.TESTDATA_PATH + "/tracing.jar";
-	}
+  public String[] getStandardTargets() {
+    return new String[]{"HelloWorld", "FancyHelloWorld"};
+  }
 
-	// ----
+  public String getTraceJar() {
+    return BcweaverTests.TESTDATA_PATH + "/tracing.jar";
+  }
 
-	protected void weaveTest(String[] inClassNames, String outKind, ShadowMunger patternMunger) throws IOException {
-		for (int i = 0; i < inClassNames.length; i++) {
-			String inFileName = inClassNames[i];
-			weaveTest(inFileName, outKind + inFileName, patternMunger);
-		}
-	}
+  // ----
 
-	protected void weaveTest(String[] inClassNames, String outKind, List<ShadowMunger> patternMungers) throws IOException {
-		for (int i = 0; i < inClassNames.length; i++) {
-			String inFileName = inClassNames[i];
-			weaveTest(inFileName, outKind + inFileName, patternMungers);
-		}
-	}
+  protected void weaveTest(String[] inClassNames, String outKind, ShadowMunger patternMunger) throws IOException {
+    for (int i = 0; i < inClassNames.length; i++) {
+      final String inFileName = inClassNames[i];
+      weaveTest(inFileName, outKind + inFileName, patternMunger);
+    }
+  }
 
-	protected List addLexicalOrder(List l) {
-		int i = 10;
-		for (Iterator iter = l.iterator(); iter.hasNext();) {
-			Advice element = (Advice) iter.next();
-			element.setLexicalPosition(i += 10);
-		}
-		return l;
-	}
+  protected void weaveTest(String[] inClassNames, String outKind, List<ShadowMunger> patternMungers) throws IOException {
+    for (int i = 0; i < inClassNames.length; i++) {
+      final String inFileName = inClassNames[i];
+      weaveTest(inFileName, outKind + inFileName, patternMungers);
+    }
+  }
 
-	// XXX cut-and-paster from IdWeaveTestCase
-	public void checkShadowSet(List l, String[] ss) {
-		outer: for (int i = 0, len = ss.length; i < len; i++) {
-			// inner:
-			for (Iterator j = l.iterator(); j.hasNext();) {
-				BcelShadow shadow = (BcelShadow) j.next();
-				String shadowString = shadow.toString();
-				if (shadowString.equals(ss[i])) {
-					j.remove();
-					continue outer;
-				}
-			}
-			assertTrue("didn't find " + ss[i] + " in " + l, false);
-		}
-		assertTrue("too many things in " + l, l.size() == 0);
-	}
+  protected List addLexicalOrder(List l) {
+    int i = 10;
+    for (final Iterator iter = l.iterator(); iter.hasNext(); ) {
+      final Advice element = (Advice) iter.next();
+      element.setLexicalPosition(i += 10);
+    }
+    return l;
+  }
+
+  // XXX cut-and-paster from IdWeaveTestCase
+  public void checkShadowSet(List l, String[] ss) {
+    outer:
+    for (int i = 0, len = ss.length; i < len; i++) {
+      // inner:
+      for (final Iterator j = l.iterator(); j.hasNext(); ) {
+        final BcelShadow shadow = (BcelShadow) j.next();
+        final String shadowString = shadow.toString();
+        if (shadowString.equals(ss[i])) {
+          j.remove();
+          continue outer;
+        }
+      }
+      assertTrue("didn't find " + ss[i] + " in " + l, false);
+    }
+    assertTrue("too many things in " + l, l.size() == 0);
+  }
 
 }

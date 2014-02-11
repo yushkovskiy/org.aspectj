@@ -54,12 +54,14 @@ package org.aspectj.apache.bcel.classfile;
  * <http://www.apache.org/>.
  */
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Denote class to have an accept method();
  *
+ * @author <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
  * @version $Id: Node.java,v 1.3 2008/05/28 23:53:01 aclement Exp $
- * @author  <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
  */
 public interface Node {
-  public void accept(ClassVisitor obj);    
+  public void accept(@NotNull ClassVisitor obj);
 }

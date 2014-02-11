@@ -54,15 +54,20 @@ package org.aspectj.apache.bcel.generic;
  * <http://www.apache.org/>.
  */
 
-/** 
+/**
  * Thrown on internal errors. Extends RuntimeException so it hasn't to be declared
  * in the throws clause every time.
  *
+ * @author <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
  * @version $Id: ClassGenException.java,v 1.3 2008/05/28 23:52:57 aclement Exp $
- * @author  <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
  */
 public class ClassGenException extends RuntimeException {
-  public ClassGenException() { super(); }
-  public ClassGenException(String s) { super(s); }
+  public ClassGenException() {
+    super();
+  }
+
+  public ClassGenException(String s) {
+    super(s);
+  }
 }
 

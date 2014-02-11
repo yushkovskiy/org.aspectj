@@ -24,84 +24,84 @@ import org.aspectj.apache.bcel.util.SyntheticRepository;
 
 
 public class MethodAnnotationsTest extends BcelTestCase {
-	
 
-	protected void setUp() throws Exception {
-		super.setUp();
-	}
-	
-	public void testMethodAnnotations() throws ClassNotFoundException {
-		JavaClass clazz = getClassFromJar("AnnotatedMethods");
-		
-		checkAnnotatedMethod(clazz,"method1","SimpleAnnotation","id","1");
-		checkAnnotatedMethod(clazz,"method2","SimpleAnnotation","id","2");
 
-	}
-	
-	public void testMethodAnnotationsReadWrite() throws ClassNotFoundException,IOException {
-		JavaClass clazz = getClassFromJar("AnnotatedMethods");
-		
-		checkAnnotatedMethod(clazz,"method1","SimpleAnnotation","id","1");
-		checkAnnotatedMethod(clazz,"method2","SimpleAnnotation","id","2");
-		
-		//	 Write it out
-		File tfile = createTestdataFile("AnnotatedMethods.class");
-		clazz.dump(tfile);
-		
-		SyntheticRepository repos2 = createRepos(".");
-		JavaClass           clazz2 = repos2.loadClass("AnnotatedMethods");
-		
-		checkAnnotatedMethod(clazz,"method1","SimpleAnnotation","id","1");
-		checkAnnotatedMethod(clazz,"method2","SimpleAnnotation","id","2");
+  protected void setUp() throws Exception {
+    super.setUp();
+  }
 
-		assertTrue(tfile.delete());
-	}
-	
-	// helper methods
-		
-	public void checkAnnotatedMethod(JavaClass clazz,String methodname,
-			String annotationName,String annotationElementName,String annotationElementValue) {
-		Method[] methods = clazz.getMethods();
+  public void testMethodAnnotations() throws ClassNotFoundException {
+    final JavaClass clazz = getClassFromJar("AnnotatedMethods");
 
-		for (int i = 0; i < methods.length; i++) {
-			Method m = methods[i];
-			AnnotationGen[] methodAnnotations = m.getAnnotations();
-			if (m.getName().equals(methodname)) {
-				checkAnnotation(methodAnnotations[0],annotationName,annotationElementName,annotationElementValue);
-				
-			}
-		}
-	}
-	
-	private void checkAnnotation(AnnotationGen a,String name,String elementname,String elementvalue) {
-		assertTrue("Expected annotation to have name "+name+" but it had name "+a.getTypeName(),
-				a.getTypeName().equals(name));
-		assertTrue("Expected annotation to have one element but it had "+a.getValues().size(),a.getValues().size()==1);
-		NameValuePair envp = a.getValues().get(0);
-		assertTrue("Expected element name "+elementname+" but was "+envp.getNameString(),
-				elementname.equals(envp.getNameString()));
-		assertTrue("Expected element value "+elementvalue+" but was "+envp.getValue().stringifyValue(),
-				elementvalue.equals(envp.getValue().stringifyValue()));
-	}
-	
+    checkAnnotatedMethod(clazz, "method1", "SimpleAnnotation", "id", "1");
+    checkAnnotatedMethod(clazz, "method2", "SimpleAnnotation", "id", "2");
 
-	// helper methods
-	
-	public void checkValue(AnnotationGen a,String name,String tostring) {
-		for (Iterator<NameValuePair> i = a.getValues().iterator(); i.hasNext();) {
-			NameValuePair element = i.next();
-			if (element.getNameString().equals(name)) {
-				if (!element.getValue().stringifyValue().equals(tostring)) {
-					fail("Expected element "+name+" to have value "+tostring+" but it had value "+element.getValue().stringifyValue());
-				}
-				return;
-			}
-		}
-		fail("Didnt find named element "+name);
-	}
+  }
 
-	protected void tearDown() throws Exception {
-		super.tearDown();
-	}
-	
+  public void testMethodAnnotationsReadWrite() throws ClassNotFoundException, IOException {
+    final JavaClass clazz = getClassFromJar("AnnotatedMethods");
+
+    checkAnnotatedMethod(clazz, "method1", "SimpleAnnotation", "id", "1");
+    checkAnnotatedMethod(clazz, "method2", "SimpleAnnotation", "id", "2");
+
+    //	 Write it out
+    final File tfile = createTestdataFile("AnnotatedMethods.class");
+    clazz.dump(tfile);
+
+    final SyntheticRepository repos2 = createRepos(".");
+    final JavaClass clazz2 = repos2.loadClass("AnnotatedMethods");
+
+    checkAnnotatedMethod(clazz, "method1", "SimpleAnnotation", "id", "1");
+    checkAnnotatedMethod(clazz, "method2", "SimpleAnnotation", "id", "2");
+
+    assertTrue(tfile.delete());
+  }
+
+  // helper methods
+
+  public void checkAnnotatedMethod(JavaClass clazz, String methodname,
+                                   String annotationName, String annotationElementName, String annotationElementValue) {
+    final Method[] methods = clazz.getMethods();
+
+    for (int i = 0; i < methods.length; i++) {
+      final Method m = methods[i];
+      final AnnotationGen[] methodAnnotations = m.getAnnotations();
+      if (m.getName().equals(methodname)) {
+        checkAnnotation(methodAnnotations[0], annotationName, annotationElementName, annotationElementValue);
+
+      }
+    }
+  }
+
+  private void checkAnnotation(AnnotationGen a, String name, String elementname, String elementvalue) {
+    assertTrue("Expected annotation to have name " + name + " but it had name " + a.getTypeName(),
+        a.getTypeName().equals(name));
+    assertTrue("Expected annotation to have one element but it had " + a.getValues().size(), a.getValues().size() == 1);
+    final NameValuePair envp = a.getValues().get(0);
+    assertTrue("Expected element name " + elementname + " but was " + envp.getNameString(),
+        elementname.equals(envp.getNameString()));
+    assertTrue("Expected element value " + elementvalue + " but was " + envp.getValue().stringifyValue(),
+        elementvalue.equals(envp.getValue().stringifyValue()));
+  }
+
+
+  // helper methods
+
+  public void checkValue(AnnotationGen a, String name, String tostring) {
+    for (final Iterator<NameValuePair> i = a.getValues().iterator(); i.hasNext(); ) {
+      final NameValuePair element = i.next();
+      if (element.getNameString().equals(name)) {
+        if (!element.getValue().stringifyValue().equals(tostring)) {
+          fail("Expected element " + name + " to have value " + tostring + " but it had value " + element.getValue().stringifyValue());
+        }
+        return;
+      }
+    }
+    fail("Didnt find named element " + name);
+  }
+
+  protected void tearDown() throws Exception {
+    super.tearDown();
+  }
+
 }

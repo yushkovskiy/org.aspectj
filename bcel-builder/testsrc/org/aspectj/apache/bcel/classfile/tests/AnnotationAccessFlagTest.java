@@ -22,34 +22,34 @@ import org.aspectj.apache.bcel.util.ClassPath;
 import org.aspectj.apache.bcel.util.SyntheticRepository;
 
 public class AnnotationAccessFlagTest extends TestCase {
-	
-	private boolean verbose = false;
 
-	protected void setUp() throws Exception {
-		super.setUp();
-	}
-	
-	/**
-	 * If you write an annotation and compile it, the class file generated should be
-	 * marked as an annotation type - which is detectable through BCEL.
-	 */
-	public void testAnnotationClassSaysItIs() throws ClassNotFoundException {
-		ClassPath cp = 
-			new ClassPath("testdata"+File.separator+"testcode.jar"+File.pathSeparator+System.getProperty("java.class.path"));
-		SyntheticRepository repos = SyntheticRepository.getInstance(cp);
-		JavaClass clazz = repos.loadClass("SimpleAnnotation");
-		ConstantPool pool = clazz.getConstantPool();
-		assertTrue("Expected SimpleAnnotation class to say it was an annotation - but it didn't !",
-				clazz.isAnnotation());
-		clazz = repos.loadClass("SimpleClass");
-		assertTrue("Expected SimpleClass class to say it was not an annotation - but it didn't !",
-				!clazz.isAnnotation());
-	}
-	
+  private final boolean verbose = false;
 
-	protected void tearDown() throws Exception {
-		super.tearDown();
-	}
-	
+  protected void setUp() throws Exception {
+    super.setUp();
+  }
+
+  /**
+   * If you write an annotation and compile it, the class file generated should be
+   * marked as an annotation type - which is detectable through BCEL.
+   */
+  public void testAnnotationClassSaysItIs() throws ClassNotFoundException {
+    final ClassPath cp =
+        new ClassPath("testdata" + File.separator + "testcode.jar" + File.pathSeparator + System.getProperty("java.class.path"));
+    final SyntheticRepository repos = SyntheticRepository.getInstance(cp);
+    JavaClass clazz = repos.loadClass("SimpleAnnotation");
+    final ConstantPool pool = clazz.getConstantPool();
+    assertTrue("Expected SimpleAnnotation class to say it was an annotation - but it didn't !",
+        clazz.isAnnotation());
+    clazz = repos.loadClass("SimpleClass");
+    assertTrue("Expected SimpleClass class to say it was not an annotation - but it didn't !",
+        !clazz.isAnnotation());
+  }
+
+
+  protected void tearDown() throws Exception {
+    super.tearDown();
+  }
+
 
 }

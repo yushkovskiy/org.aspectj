@@ -17,32 +17,34 @@ import org.aspectj.weaver.Member;
 import org.aspectj.weaver.ResolvedType;
 
 public class CallExpr extends Expr {
-	// assert m.return value is boolean
-	private final Member method;
-	private final Expr[] args;
-	private final ResolvedType returnType; // yes, stored in method as well, but that one isn't resolved
+  // assert m.return value is boolean
+  private final Member method;
+  private final Expr[] args;
+  private final ResolvedType returnType; // yes, stored in method as well, but that one isn't resolved
 
-	public CallExpr(Member m, Expr[] args, ResolvedType returnType) {
-		super();
-		this.method = m;
-		this.args = args;
-		this.returnType = returnType;
-	}
+  public CallExpr(Member m, Expr[] args, ResolvedType returnType) {
+    super();
+    this.method = m;
+    this.args = args;
+    this.returnType = returnType;
+  }
 
-	public void accept(IExprVisitor v) {
-		v.visit(this);
-	}
+  @Override
+  public void accept(IExprVisitor v) {
+    v.visit(this);
+  }
 
-	public Expr[] getArgs() {
-		return args;
-	}
+  public Expr[] getArgs() {
+    return args;
+  }
 
-	public Member getMethod() {
-		return method;
-	}
+  public Member getMethod() {
+    return method;
+  }
 
-	public ResolvedType getType() {
-		return returnType;
-	}
+  @Override
+  public ResolvedType getType() {
+    return returnType;
+  }
 
 }

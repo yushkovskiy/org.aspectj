@@ -53,84 +53,87 @@ package org.aspectj.apache.bcel.classfile;
  * information on the Apache Software Foundation, please see
  * <http://www.apache.org/>.
  */
-import java.io.DataInputStream;
-import java.io.IOException;
 
 import org.aspectj.apache.bcel.generic.Type;
+
+import java.io.DataInputStream;
+import java.io.IOException;
 
 /**
  * This class represents the field info structure, i.e., the representation for a variable in the class. See JVM specification for
  * details.
- * 
- * @version $Id: Field.java,v 1.6 2009/09/15 03:33:52 aclement Exp $
+ *
  * @author <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
+ * @version $Id: Field.java,v 1.6 2009/09/15 03:33:52 aclement Exp $
  */
 public final class Field extends FieldOrMethod {
 
-	public static final Field[] NoFields = new Field[0];
+  public static final Field[] NoFields = new Field[0];
 
-	private Type fieldType = null; // lazily initialized
+  private Type fieldType = null; // lazily initialized
 
-	private Field() {
-	}
+  private Field() {
+  }
 
-	public Field(Field c) {
-		super(c);
-	}
+  public Field(Field c) {
+    super(c);
+  }
 
-	Field(DataInputStream dis, ConstantPool cpool) throws IOException {
-		super(dis, cpool);
-	}
+  Field(DataInputStream dis, ConstantPool cpool) throws IOException {
+    super(dis, cpool);
+  }
 
-	public Field(int modifiers, int nameIndex, int signatureIndex, Attribute[] attributes, ConstantPool cpool) {
-		super(modifiers, nameIndex, signatureIndex, attributes, cpool);
-	}
+  public Field(int modifiers, int nameIndex, int signatureIndex, Attribute[] attributes, ConstantPool cpool) {
+    super(modifiers, nameIndex, signatureIndex, attributes, cpool);
+  }
 
-	public void accept(ClassVisitor v) {
-		v.visitField(this);
-	}
+  public void accept(ClassVisitor v) {
+    v.visitField(this);
+  }
 
-	/**
-	 * @return constant value associated with this field (may be null)
-	 */
-	public final ConstantValue getConstantValue() {
-		return AttributeUtils.getConstantValueAttribute(attributes);
-	}
+  /**
+   * @return constant value associated with this field (may be null)
+   */
+  public final ConstantValue getConstantValue() {
+    return AttributeUtils.getConstantValueAttribute(attributes);
+  }
 
-	/**
-	 * Return string representation close to declaration format, eg: 'public static final short MAX = 100'
-	 */
-	@Override
-	public final String toString() {
-		// Get names from constant pool
-		StringBuffer buf = new StringBuffer(Utility.accessToString(modifiers));
-		if (buf.length() > 0) {
-			buf.append(" ");
-		}
-		String signature = Utility.signatureToString(getSignature());
+  /**
+   * Return string representation close to declaration format, eg: 'public static final short MAX = 100'
+   */
+  @Override
+  public final String toString() {
+    // Get names from constant pool
+    final StringBuilder buf = new StringBuilder(Utility.accessToString(modifiers));
+    if (buf.length() > 0) {
+      buf.append(" ");
+    }
+    final String signature = Utility.signatureToString(getSignature());
 
-		buf.append(signature).append(" ").append(getName());
+    buf.append(signature).append(" ").append(getName());
 
-		ConstantValue cv = getConstantValue();
-		if (cv != null) {
-			buf.append(" = ").append(cv);
-		}
+    final ConstantValue cv = getConstantValue();
+    if (cv != null) {
+      buf.append(" = ").append(cv);
+    }
 
-		// append all attributes that are *not* "ConstantValue"
-		for (Attribute a : attributes) {
-			if (!(a instanceof ConstantValue)) {
-				buf.append(" [").append(a.toString()).append("]");
-			}
-		}
+    // append all attributes that are *not* "ConstantValue"
+    for (Attribute a : attributes) {
+      if (!(a instanceof ConstantValue)) {
+        buf.append(" [").append(a.toString()).append("]");
+      }
+    }
 
-		return buf.toString();
-	}
+    return buf.toString();
+  }
 
-	/** return the type of the field */
-	public Type getType() {
-		if (fieldType == null) {
-			fieldType = Type.getReturnType(getSignature());
-		}
-		return fieldType;
-	}
+  /**
+   * return the type of the field
+   */
+  public Type getType() {
+    if (fieldType == null) {
+      fieldType = Type.getReturnType(getSignature());
+    }
+    return fieldType;
+  }
 }

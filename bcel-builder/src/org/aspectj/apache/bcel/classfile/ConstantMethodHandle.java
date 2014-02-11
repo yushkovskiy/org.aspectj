@@ -54,45 +54,46 @@
 package org.aspectj.apache.bcel.classfile;
 
 
+import org.aspectj.apache.bcel.Constants;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import org.aspectj.apache.bcel.Constants;
-
 /**
  * This class is derived from the abstract <A HREF="org.aspectj.apache.bcel.classfile.Constant.html">Constant</A> class and
  * represents a reference to the name and signature of a field or method.
- * 
+ * <p/>
  * http://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html#jvms-4.4.8
- * 
+ *
  * @author Andy Clement
  * @see Constant
  */
 public final class ConstantMethodHandle extends Constant {
-	private byte referenceKind;
-	private int referenceIndex; 
+  private final byte referenceKind;
+  private final int referenceIndex;
 
-	ConstantMethodHandle(DataInputStream file) throws IOException {
-		this(file.readByte(), file.readUnsignedShort());
-	}
+  ConstantMethodHandle(DataInputStream file) throws IOException {
+    this(file.readByte(), file.readUnsignedShort());
+  }
 
-	public ConstantMethodHandle(byte referenceKind, int referenceIndex) {
-		super(Constants.CONSTANT_MethodHandle);
-		this.referenceKind = referenceKind;
-		this.referenceIndex = referenceIndex;
-	}
+  public ConstantMethodHandle(byte referenceKind, int referenceIndex) {
+    super(Constants.CONSTANT_MethodHandle);
+    this.referenceKind = referenceKind;
+    this.referenceIndex = referenceIndex;
+  }
 
-	@Override
-	public final void dump(DataOutputStream file) throws IOException {
-		file.writeByte(tag);
-		file.writeByte(referenceKind);
-		file.writeShort(referenceIndex);
-	}
+  @Override
+  public final void dump(@NotNull DataOutputStream file) throws IOException {
+    file.writeByte(tag);
+    file.writeByte(referenceKind);
+    file.writeShort(referenceIndex);
+  }
 
-	public final byte getReferenceKind() {
-		return referenceKind;
-	}
+  public final byte getReferenceKind() {
+    return referenceKind;
+  }
 
 //	public final String getName(ConstantPool cp) {
 //		return cp.constantToString(getNameIndex(), Constants.CONSTANT_Utf8);
@@ -106,19 +107,19 @@ public final class ConstantMethodHandle extends Constant {
 //		return cp.constantToString(getSignatureIndex(), Constants.CONSTANT_Utf8);
 //	}
 
-	@Override
-	public final String toString() {
-		return super.toString() + "(referenceKind=" + referenceKind + ",referenceIndex=" + referenceIndex + ")";
-	}
+  @Override
+  public final String toString() {
+    return super.toString() + "(referenceKind=" + referenceKind + ",referenceIndex=" + referenceIndex + ")";
+  }
 
-	@Override
-	public String getValue() {
-		return toString();
-	}
+  @Override
+  public String getValue() {
+    return toString();
+  }
 
-	@Override
-	public void accept(ClassVisitor v) {
-		v.visitConstantMethodHandle(this);
-	}
+  @Override
+  public void accept(@NotNull ClassVisitor v) {
+    v.visitConstantMethodHandle(this);
+  }
 
 }

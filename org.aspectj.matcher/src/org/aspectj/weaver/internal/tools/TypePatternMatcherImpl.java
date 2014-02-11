@@ -17,18 +17,19 @@ import org.aspectj.weaver.tools.TypePatternMatcher;
 
 public class TypePatternMatcherImpl implements TypePatternMatcher {
 
-	private final TypePattern pattern;
-	private final World world;
+  private final TypePattern pattern;
+  private final World world;
 
-	public TypePatternMatcherImpl(TypePattern pattern, World world) {
-		this.pattern = pattern;
-		this.world = world;		
-	}
-	
-	public boolean matches(Class aClass) {
-		ResolvedType rt = 
-			ReflectionBasedReferenceTypeDelegateFactory.resolveTypeInWorld(aClass,world);
-		return pattern.matchesStatically(rt);
-	}
+  public TypePatternMatcherImpl(TypePattern pattern, World world) {
+    this.pattern = pattern;
+    this.world = world;
+  }
+
+  @Override
+  public boolean matches(Class aClass) {
+    final ResolvedType rt =
+        ReflectionBasedReferenceTypeDelegateFactory.resolveTypeInWorld(aClass, world);
+    return pattern.matchesStatically(rt);
+  }
 
 }

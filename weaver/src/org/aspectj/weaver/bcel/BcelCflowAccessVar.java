@@ -23,65 +23,65 @@ import org.aspectj.weaver.ResolvedType;
 
 /**
  * XXX Erik and I need to discuss this hierarchy. Having FieldRef extend Var is convenient, but hopefully there's a better design.
- * 
+ * <p/>
  * This is always a static reference.
  */
 public class BcelCflowAccessVar extends BcelVar {
 
-	private Member stackField;
-	private int index;
+  private Member stackField;
+  private int index;
 
-	/**
-	 * @param type The type to convert to from Object
-	 * @param stackField the member containing the CFLOW_STACK_TYPE
-	 * @param index yeah yeah
-	 */
-	public BcelCflowAccessVar(ResolvedType type, Member stackField, int index) {
-		super(type, 0);
-		this.stackField = stackField;
-		this.index = index;
-	}
+  /**
+   * @param type       The type to convert to from Object
+   * @param stackField the member containing the CFLOW_STACK_TYPE
+   * @param index      yeah yeah
+   */
+  public BcelCflowAccessVar(ResolvedType type, Member stackField, int index) {
+    super(type, 0);
+    this.stackField = stackField;
+    this.index = index;
+  }
 
-	public String toString() {
-		return "BcelCflowAccessVar(" + getType() + " " + stackField + "." + index + ")";
-	}
+  public String toString() {
+    return "BcelCflowAccessVar(" + getType() + " " + stackField + "." + index + ")";
+  }
 
-	public Instruction createLoad(InstructionFactory fact) {
-		throw new RuntimeException("unimplemented");
-	}
+  public Instruction createLoad(InstructionFactory fact) {
+    throw new RuntimeException("unimplemented");
+  }
 
-	public Instruction createStore(InstructionFactory fact) {
-		throw new RuntimeException("unimplemented");
-	}
+  public Instruction createStore(InstructionFactory fact) {
+    throw new RuntimeException("unimplemented");
+  }
 
-	public InstructionList createCopyFrom(InstructionFactory fact, int oldSlot) {
-		throw new RuntimeException("unimplemented");
-	}
+  public InstructionList createCopyFrom(InstructionFactory fact, int oldSlot) {
+    throw new RuntimeException("unimplemented");
+  }
 
-	public void appendLoad(InstructionList il, InstructionFactory fact) {
-		il.append(createLoadInstructions(getType(), fact));
-	}
+  public void appendLoad(InstructionList il, InstructionFactory fact) {
+    il.append(createLoadInstructions(getType(), fact));
+  }
 
-	public InstructionList createLoadInstructions(ResolvedType toType, InstructionFactory fact) {
-		InstructionList il = new InstructionList();
+  public InstructionList createLoadInstructions(ResolvedType toType, InstructionFactory fact) {
+    final InstructionList il = new InstructionList();
 
-		il.append(Utility.createGet(fact, stackField));
-		il.append(Utility.createConstant(fact, index));
-		il.append(fact.createInvoke(NameMangler.CFLOW_STACK_TYPE, "get", Type.OBJECT, new Type[] { Type.INT },
-				Constants.INVOKEVIRTUAL));
-		il.append(Utility.createConversion(fact, Type.OBJECT, BcelWorld.makeBcelType(toType)));
+    il.append(Utility.createGet(fact, stackField));
+    il.append(Utility.createConstant(fact, index));
+    il.append(fact.createInvoke(NameMangler.CFLOW_STACK_TYPE, "get", Type.OBJECT, new Type[]{Type.INT},
+        Constants.INVOKEVIRTUAL));
+    il.append(Utility.createConversion(fact, Type.OBJECT, BcelWorld.makeBcelType(toType)));
 
-		return il;
+    return il;
 
-	}
+  }
 
-	public void appendLoadAndConvert(InstructionList il, InstructionFactory fact, ResolvedType toType) {
-		il.append(createLoadInstructions(toType, fact));
+  public void appendLoadAndConvert(InstructionList il, InstructionFactory fact, ResolvedType toType) {
+    il.append(createLoadInstructions(toType, fact));
 
-	}
+  }
 
-	public void insertLoad(InstructionList il, InstructionFactory fact) {
-		il.insert(createLoadInstructions(getType(), fact));
-	}
+  public void insertLoad(InstructionList il, InstructionFactory fact) {
+    il.insert(createLoadInstructions(getType(), fact));
+  }
 
 }

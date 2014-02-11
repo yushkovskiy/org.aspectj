@@ -1,11 +1,6 @@
 package org.aspectj.apache.bcel.classfile;
 
-import org.aspectj.apache.bcel.classfile.annotation.RuntimeInvisAnnos;
-import org.aspectj.apache.bcel.classfile.annotation.RuntimeInvisParamAnnos;
-import org.aspectj.apache.bcel.classfile.annotation.RuntimeInvisTypeAnnos;
-import org.aspectj.apache.bcel.classfile.annotation.RuntimeVisAnnos;
-import org.aspectj.apache.bcel.classfile.annotation.RuntimeVisParamAnnos;
-import org.aspectj.apache.bcel.classfile.annotation.RuntimeVisTypeAnnos;
+import org.aspectj.apache.bcel.classfile.annotation.*;
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -64,102 +59,102 @@ import org.aspectj.apache.bcel.classfile.annotation.RuntimeVisTypeAnnos;
 /**
  * Interface to make use of the Visitor pattern programming style. I.e. a class that implements this interface can traverse the
  * contents of a Java class just by calling the `accept' method which all classes have.
- * 
+ * <p/>
  * Implemented by wish of <A HREF="http://www.inf.fu-berlin.de/~bokowski">Boris Bokowski</A>.
- * 
- * @version $Id: ClassVisitor.java,v 1.4 2009/09/15 19:40:13 aclement Exp $
+ *
  * @author <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
+ * @version $Id: ClassVisitor.java,v 1.4 2009/09/15 19:40:13 aclement Exp $
  */
 public interface ClassVisitor {
-	public void visitCode(Code obj);
+  public void visitCode(Code obj);
 
-	public void visitCodeException(CodeException obj);
+  public void visitCodeException(CodeException obj);
 
-	public void visitConstantClass(ConstantClass obj);
+  public void visitConstantClass(ConstantClass obj);
 
-	public void visitConstantDouble(ConstantDouble obj);
+  public void visitConstantDouble(ConstantDouble obj);
 
-	public void visitConstantFieldref(ConstantFieldref obj);
+  public void visitConstantFieldref(ConstantFieldref obj);
 
-	public void visitConstantFloat(ConstantFloat obj);
+  public void visitConstantFloat(ConstantFloat obj);
 
-	public void visitConstantInteger(ConstantInteger obj);
+  public void visitConstantInteger(ConstantInteger obj);
 
-	public void visitConstantInterfaceMethodref(ConstantInterfaceMethodref obj);
+  public void visitConstantInterfaceMethodref(ConstantInterfaceMethodref obj);
 
-	public void visitConstantLong(ConstantLong obj);
+  public void visitConstantLong(ConstantLong obj);
 
-	public void visitConstantMethodref(ConstantMethodref obj);
-	
-	public void visitConstantMethodHandle(ConstantMethodHandle obj);
+  public void visitConstantMethodref(ConstantMethodref obj);
 
-	public void visitConstantNameAndType(ConstantNameAndType obj);
-	
-	public void visitConstantMethodType(ConstantMethodType obj);
-	
-	public void visitConstantInvokeDynamic(ConstantInvokeDynamic obj);
+  public void visitConstantMethodHandle(ConstantMethodHandle obj);
 
-	public void visitConstantPool(ConstantPool obj);
+  public void visitConstantNameAndType(ConstantNameAndType obj);
 
-	public void visitConstantString(ConstantString obj);
+  public void visitConstantMethodType(ConstantMethodType obj);
 
-	public void visitConstantUtf8(ConstantUtf8 obj);
+  public void visitConstantInvokeDynamic(ConstantInvokeDynamic obj);
 
-	public void visitConstantValue(ConstantValue obj);
+  public void visitConstantPool(ConstantPool obj);
 
-	public void visitDeprecated(Deprecated obj);
+  public void visitConstantString(ConstantString obj);
 
-	public void visitExceptionTable(ExceptionTable obj);
+  public void visitConstantUtf8(ConstantUtf8 obj);
 
-	public void visitField(Field obj);
+  public void visitConstantValue(ConstantValue obj);
 
-	public void visitInnerClass(InnerClass obj);
+  public void visitDeprecated(Deprecated obj);
 
-	public void visitInnerClasses(InnerClasses obj);
+  public void visitExceptionTable(ExceptionTable obj);
 
-	public void visitJavaClass(JavaClass obj);
+  public void visitField(Field obj);
 
-	public void visitLineNumber(LineNumber obj);
+  public void visitInnerClass(InnerClass obj);
 
-	public void visitLineNumberTable(LineNumberTable obj);
+  public void visitInnerClasses(InnerClasses obj);
 
-	public void visitLocalVariable(LocalVariable obj);
+  public void visitJavaClass(JavaClass obj);
 
-	public void visitLocalVariableTable(LocalVariableTable obj);
+  public void visitLineNumber(LineNumber obj);
 
-	public void visitMethod(Method obj);
+  public void visitLineNumberTable(LineNumberTable obj);
 
-	public void visitSignature(Signature obj);
+  public void visitLocalVariable(LocalVariable obj);
 
-	public void visitSourceFile(SourceFile obj);
+  public void visitLocalVariableTable(LocalVariableTable obj);
 
-	public void visitSynthetic(Synthetic obj);
-	
-	public void visitBootstrapMethods(BootstrapMethods obj);
+  public void visitMethod(Method obj);
 
-	public void visitUnknown(Unknown obj);
+  public void visitSignature(Signature obj);
 
-	public void visitStackMap(StackMap obj);
+  public void visitSourceFile(SourceFile obj);
 
-	public void visitStackMapEntry(StackMapEntry obj);
+  public void visitSynthetic(Synthetic obj);
 
-	public void visitEnclosingMethod(EnclosingMethod obj);
+  public void visitBootstrapMethods(BootstrapMethods obj);
 
-	public void visitRuntimeVisibleAnnotations(RuntimeVisAnnos obj);
+  public void visitUnknown(Unknown obj);
 
-	public void visitRuntimeInvisibleAnnotations(RuntimeInvisAnnos obj);
+  public void visitStackMap(StackMap obj);
 
-	public void visitRuntimeVisibleParameterAnnotations(RuntimeVisParamAnnos obj);
+  public void visitStackMapEntry(StackMapEntry obj);
 
-	public void visitRuntimeInvisibleParameterAnnotations(RuntimeInvisParamAnnos obj);
+  public void visitEnclosingMethod(EnclosingMethod obj);
 
-	public void visitRuntimeVisibleTypeAnnotations(RuntimeVisTypeAnnos obj);
+  public void visitRuntimeVisibleAnnotations(RuntimeVisAnnos obj);
 
-	public void visitRuntimeInvisibleTypeAnnotations(RuntimeInvisTypeAnnos obj);
+  public void visitRuntimeInvisibleAnnotations(RuntimeInvisAnnos obj);
 
-	public void visitAnnotationDefault(AnnotationDefault obj);
+  public void visitRuntimeVisibleParameterAnnotations(RuntimeVisParamAnnos obj);
 
-	public void visitLocalVariableTypeTable(LocalVariableTypeTable obj);
+  public void visitRuntimeInvisibleParameterAnnotations(RuntimeInvisParamAnnos obj);
 
-	public void visitMethodParameters(MethodParameters methodParameters);
+  public void visitRuntimeVisibleTypeAnnotations(RuntimeVisTypeAnnos obj);
+
+  public void visitRuntimeInvisibleTypeAnnotations(RuntimeInvisTypeAnnos obj);
+
+  public void visitAnnotationDefault(AnnotationDefault obj);
+
+  public void visitLocalVariableTypeTable(LocalVariableTypeTable obj);
+
+  public void visitMethodParameters(MethodParameters methodParameters);
 }

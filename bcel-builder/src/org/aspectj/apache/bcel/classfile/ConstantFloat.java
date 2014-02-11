@@ -54,55 +54,56 @@ package org.aspectj.apache.bcel.classfile;
  * <http://www.apache.org/>.
  */
 
+import org.aspectj.apache.bcel.Constants;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import org.aspectj.apache.bcel.Constants;
-
 /**
  * This class is derived from the abstract <A HREF="org.aspectj.apache.bcel.classfile.Constant.html">Constant</A> class and
  * represents a reference to a float object.
- * 
- * @version $Id: ConstantFloat.java,v 1.5 2009/09/16 00:43:49 aclement Exp $
+ *
  * @author <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
+ * @version $Id: ConstantFloat.java,v 1.5 2009/09/16 00:43:49 aclement Exp $
  * @see Constant
  */
 public final class ConstantFloat extends Constant implements SimpleConstant {
-	private float floatValue;
+  private final float floatValue;
 
-	public ConstantFloat(float floatValue) {
-		super(Constants.CONSTANT_Float);
-		this.floatValue = floatValue;
-	}
+  public ConstantFloat(float floatValue) {
+    super(Constants.CONSTANT_Float);
+    this.floatValue = floatValue;
+  }
 
-	ConstantFloat(DataInputStream file) throws IOException {
-		this(file.readFloat());
-	}
+  ConstantFloat(DataInputStream file) throws IOException {
+    this(file.readFloat());
+  }
 
-	@Override
-	public void accept(ClassVisitor v) {
-		v.visitConstantFloat(this);
-	}
+  @Override
+  public void accept(@NotNull ClassVisitor v) {
+    v.visitConstantFloat(this);
+  }
 
-	@Override
-	public final void dump(DataOutputStream file) throws IOException {
-		file.writeByte(tag);
-		file.writeFloat(floatValue);
-	}
+  @Override
+  public final void dump(@NotNull DataOutputStream file) throws IOException {
+    file.writeByte(tag);
+    file.writeFloat(floatValue);
+  }
 
-	@Override
-	public final Float getValue() {
-		return floatValue;
-	}
+  @Override
+  public final Float getValue() {
+    return floatValue;
+  }
 
-	public final String getStringValue() {
-		return Float.toString(floatValue);
-	}
+  public final String getStringValue() {
+    return Float.toString(floatValue);
+  }
 
-	@Override
-	public final String toString() {
-		return super.toString() + "(bytes = " + floatValue + ")";
-	}
+  @Override
+  public final String toString() {
+    return super.toString() + "(bytes = " + floatValue + ")";
+  }
 
 }

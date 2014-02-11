@@ -15,9 +15,9 @@ package org.aspectj.weaver.tools;
  */
 public interface TypePatternMatcher {
 
-	/**
-	 * Does this type pattern matcher match the
-	 * given type (Class).
-	 */
-	public boolean matches(Class aClass);
+  /**
+   * Does this type pattern matcher match the
+   * given type (Class).
+   */
+  public boolean matches(Class aClass);
 }

@@ -16,24 +16,25 @@ package org.aspectj.weaver.ast;
 
 public final class Literal extends Test {
 
-	boolean noTest;
-	boolean val;
+  boolean noTest;
+  boolean val;
 
-	private Literal(boolean val, boolean noTest) {
-		super();
-		this.val = val;
-		this.noTest = noTest;
-	}
-	
-	public void accept(ITestVisitor v) {
-		v.visit(this);
-	}
-	
-	public static final Literal TRUE = new Literal(true, false);
-	public static final Literal FALSE = new Literal(false, false);
+  private Literal(boolean val, boolean noTest) {
+    super();
+    this.val = val;
+    this.noTest = noTest;
+  }
+
+  @Override
+  public void accept(ITestVisitor v) {
+    v.visit(this);
+  }
+
+  public static final Literal TRUE = new Literal(true, false);
+  public static final Literal FALSE = new Literal(false, false);
 //	public static final Literal NO_TEST = new Literal(false, true);
-	
-	public String toString() {
-		return noTest ? "NO_TEST" : val ? "TRUE" : "FALSE";
-	}
+
+  public String toString() {
+    return noTest ? "NO_TEST" : val ? "TRUE" : "FALSE";
+  }
 }

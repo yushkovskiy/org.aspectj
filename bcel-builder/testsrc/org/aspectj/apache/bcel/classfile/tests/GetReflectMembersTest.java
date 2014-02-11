@@ -19,43 +19,47 @@ import junit.framework.TestCase;
 
 /**
  * @author colyer
- *
  */
 public class GetReflectMembersTest extends TestCase {
 
   private Repository bcelRepository;
   private JavaClass jc;
-	
+
   public void testGetMethod() throws Exception {
-	  assertNotNull(jc.getMethod(GetMe.class.getMethod("foo",new Class[] {String.class})));
+    assertNotNull(jc.getMethod(GetMe.class.getMethod("foo", new Class[]{String.class})));
   }
-  
+
   public void testGetConstructor() throws Exception {
-	  assertNotNull(jc.getMethod(GetMe.class.getConstructor(new Class[] {int.class})));	  
+    assertNotNull(jc.getMethod(GetMe.class.getConstructor(new Class[]{int.class})));
   }
-  
+
   public void testGetField() throws Exception {
-	  assertNotNull(jc.getField(GetMe.class.getDeclaredField("x")));
+    assertNotNull(jc.getField(GetMe.class.getDeclaredField("x")));
   }
-  
+
   protected void setUp() throws Exception {
-	super.setUp();
-	this.bcelRepository = new ClassLoaderRepository(getClass().getClassLoader());
-	this.jc = bcelRepository.loadClass(GetMe.class);
+    super.setUp();
+    this.bcelRepository = new ClassLoaderRepository(getClass().getClassLoader());
+    this.jc = bcelRepository.loadClass(GetMe.class);
   }
-  
+
   protected void tearDown() throws Exception {
-	super.tearDown();
-	this.bcelRepository.clear();
+    super.tearDown();
+    this.bcelRepository.clear();
   }
-  
+
   private static class GetMe {
-	 
-	  private int x;
-	  
-	  public GetMe(int x) { this.x = x;}
-	  
-	  public void foo(String s) {};
-	  
+
+    private final int x;
+
+    public GetMe(int x) {
+      this.x = x;
+    }
+
+    public void foo(String s) {
+    }
+
+    ;
+
   }
 }

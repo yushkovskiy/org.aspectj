@@ -14,14 +14,18 @@ import org.aspectj.org.eclipse.jdt.core.dom.AST;
 import org.aspectj.org.eclipse.jdt.core.dom.AjTypeDeclaration;
 import org.aspectj.org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.aspectj.org.eclipse.jdt.core.dom.TypeDeclaration.ITypeDeclFactory;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Factory, dynamically loaded by the TypeDeclaration class in the shadows/dom tree.
  * This is a factory for type declaration that returns the Aj subclass of typedeclaration.
+ *
  * @author AndyClement
  */
-public class AjTypeDeclFactory implements ITypeDeclFactory {
-	public TypeDeclaration createTypeFor(AST ast) {
-		return new AjTypeDeclaration(ast);
-	}
+public final class AjTypeDeclFactory implements ITypeDeclFactory {
+  @Override
+  @NotNull
+  public TypeDeclaration createTypeFor(@NotNull AST ast) {
+    return new AjTypeDeclaration(ast);
+  }
 }

@@ -12,182 +12,190 @@
 
 package org.aspectj.weaver.patterns;
 
+import org.aspectj.util.FuzzyBoolean;
+import org.aspectj.weaver.*;
+
 import java.io.IOException;
 import java.util.Map;
 
-import org.aspectj.util.FuzzyBoolean;
-import org.aspectj.weaver.CompressingDataOutputStream;
-import org.aspectj.weaver.ISourceContext;
-import org.aspectj.weaver.ResolvedType;
-import org.aspectj.weaver.UnresolvedType;
-import org.aspectj.weaver.VersionedDataInputStream;
-import org.aspectj.weaver.World;
-
 /**
  * left || right
- * 
- * <p>
+ * <p/>
+ * <p/>
  * any binding to formals is explicitly forbidden for any composite by the language
- * 
+ *
  * @author Erik Hilsdale
  * @author Jim Hugunin
  */
 public class OrTypePattern extends TypePattern {
-	private TypePattern left, right;
+  private TypePattern left, right;
 
-	public OrTypePattern(TypePattern left, TypePattern right) {
-		super(false, false); // ??? we override all methods that care about includeSubtypes
-		this.left = left;
-		this.right = right;
-		setLocation(left.getSourceContext(), left.getStart(), right.getEnd());
-	}
+  public OrTypePattern(TypePattern left, TypePattern right) {
+    super(false, false); // ??? we override all methods that care about includeSubtypes
+    this.left = left;
+    this.right = right;
+    setLocation(left.getSourceContext(), left.getStart(), right.getEnd());
+  }
 
-	public TypePattern getRight() {
-		return right;
-	}
+  public TypePattern getRight() {
+    return right;
+  }
 
-	public TypePattern getLeft() {
-		return left;
-	}
+  public TypePattern getLeft() {
+    return left;
+  }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.aspectj.weaver.patterns.TypePattern#couldEverMatchSameTypesAs(org.aspectj.weaver.patterns.TypePattern)
-	 */
-	protected boolean couldEverMatchSameTypesAs(TypePattern other) {
-		return true; // don't dive at the moment...
-	}
+  /*
+   * (non-Javadoc)
+   *
+   * @see org.aspectj.weaver.patterns.TypePattern#couldEverMatchSameTypesAs(org.aspectj.weaver.patterns.TypePattern)
+   */
+  @Override
+  protected boolean couldEverMatchSameTypesAs(TypePattern other) {
+    return true; // don't dive at the moment...
+  }
 
-	public FuzzyBoolean matchesInstanceof(ResolvedType type) {
-		return left.matchesInstanceof(type).or(right.matchesInstanceof(type));
-	}
+  @Override
+  public FuzzyBoolean matchesInstanceof(ResolvedType type) {
+    return left.matchesInstanceof(type).or(right.matchesInstanceof(type));
+  }
 
-	protected boolean matchesExactly(ResolvedType type) {
-		// ??? if these had side-effects, this sort-circuit could be a mistake
-		return left.matchesExactly(type) || right.matchesExactly(type);
-	}
+  @Override
+  protected boolean matchesExactly(ResolvedType type) {
+    // ??? if these had side-effects, this sort-circuit could be a mistake
+    return left.matchesExactly(type) || right.matchesExactly(type);
+  }
 
-	protected boolean matchesExactly(ResolvedType type, ResolvedType annotatedType) {
-		// ??? if these had side-effects, this sort-circuit could be a mistake
-		return left.matchesExactly(type, annotatedType) || right.matchesExactly(type, annotatedType);
-	}
+  @Override
+  protected boolean matchesExactly(ResolvedType type, ResolvedType annotatedType) {
+    // ??? if these had side-effects, this sort-circuit could be a mistake
+    return left.matchesExactly(type, annotatedType) || right.matchesExactly(type, annotatedType);
+  }
 
-	public boolean matchesStatically(ResolvedType type) {
-		return left.matchesStatically(type) || right.matchesStatically(type);
-	}
+  @Override
+  public boolean matchesStatically(ResolvedType type) {
+    return left.matchesStatically(type) || right.matchesStatically(type);
+  }
 
-	public void setIsVarArgs(boolean isVarArgs) {
-		this.isVarArgs = isVarArgs;
-		left.setIsVarArgs(isVarArgs);
-		right.setIsVarArgs(isVarArgs);
-	}
+  @Override
+  public void setIsVarArgs(boolean isVarArgs) {
+    this.isVarArgs = isVarArgs;
+    left.setIsVarArgs(isVarArgs);
+    right.setIsVarArgs(isVarArgs);
+  }
 
-	public void setAnnotationTypePattern(AnnotationTypePattern annPatt) {
-		if (annPatt == AnnotationTypePattern.ANY) {
-			return;
-		}
-		if (left.annotationPattern == AnnotationTypePattern.ANY) {
-			left.setAnnotationTypePattern(annPatt);
-		} else {
-			left.setAnnotationTypePattern(new AndAnnotationTypePattern(left.annotationPattern, annPatt));
-		}
-		if (right.annotationPattern == AnnotationTypePattern.ANY) {
-			right.setAnnotationTypePattern(annPatt);
-		} else {
-			right.setAnnotationTypePattern(new AndAnnotationTypePattern(right.annotationPattern, annPatt));
-		}
-	}
+  @Override
+  public void setAnnotationTypePattern(AnnotationTypePattern annPatt) {
+    if (annPatt == AnnotationTypePattern.ANY) {
+      return;
+    }
+    if (left.annotationPattern == AnnotationTypePattern.ANY) {
+      left.setAnnotationTypePattern(annPatt);
+    } else {
+      left.setAnnotationTypePattern(new AndAnnotationTypePattern(left.annotationPattern, annPatt));
+    }
+    if (right.annotationPattern == AnnotationTypePattern.ANY) {
+      right.setAnnotationTypePattern(annPatt);
+    } else {
+      right.setAnnotationTypePattern(new AndAnnotationTypePattern(right.annotationPattern, annPatt));
+    }
+  }
 
-	public void write(CompressingDataOutputStream s) throws IOException {
-		s.writeByte(TypePattern.OR);
-		left.write(s);
-		right.write(s);
-		writeLocation(s);
-	}
+  @Override
+  public void write(CompressingDataOutputStream s) throws IOException {
+    s.writeByte(TypePattern.OR);
+    left.write(s);
+    right.write(s);
+    writeLocation(s);
+  }
 
-	public static TypePattern read(VersionedDataInputStream s, ISourceContext context) throws IOException {
-		OrTypePattern ret = new OrTypePattern(TypePattern.read(s, context), TypePattern.read(s, context));
-		ret.readLocation(context, s);
-		if (ret.left.isVarArgs && ret.right.isVarArgs) {
-			ret.isVarArgs = true;
-		}
-		return ret;
-	}
+  public static TypePattern read(VersionedDataInputStream s, ISourceContext context) throws IOException {
+    final OrTypePattern ret = new OrTypePattern(TypePattern.read(s, context), TypePattern.read(s, context));
+    ret.readLocation(context, s);
+    if (ret.left.isVarArgs && ret.right.isVarArgs) {
+      ret.isVarArgs = true;
+    }
+    return ret;
+  }
 
-	public TypePattern resolveBindings(IScope scope, Bindings bindings, boolean allowBinding, boolean requireExactType) {
-		if (requireExactType) {
-			return notExactType(scope);
-		}
-		left = left.resolveBindings(scope, bindings, false, false);
-		right = right.resolveBindings(scope, bindings, false, false);
-		return this;
-	}
- 
-	public TypePattern parameterizeWith(Map<String,UnresolvedType> typeVariableMap, World w) {
-		TypePattern newLeft = left.parameterizeWith(typeVariableMap, w);
-		TypePattern newRight = right.parameterizeWith(typeVariableMap, w);
-		OrTypePattern ret = new OrTypePattern(newLeft, newRight);
-		ret.copyLocationFrom(this);
-		return ret;
-	}
+  @Override
+  public TypePattern resolveBindings(IScope scope, Bindings bindings, boolean allowBinding, boolean requireExactType) {
+    if (requireExactType) {
+      return notExactType(scope);
+    }
+    left = left.resolveBindings(scope, bindings, false, false);
+    right = right.resolveBindings(scope, bindings, false, false);
+    return this;
+  }
 
-	public String toString() {
-		StringBuffer buff = new StringBuffer();
-		if (annotationPattern != AnnotationTypePattern.ANY) {
-			buff.append('(');
-			buff.append(annotationPattern.toString());
-			buff.append(' ');
-		}
-		buff.append('(');
-		buff.append(left.toString());
-		buff.append(" || ");
-		buff.append(right.toString());
-		buff.append(')');
-		if (annotationPattern != AnnotationTypePattern.ANY) {
-			buff.append(')');
-		}
-		return buff.toString();
-	}
+  @Override
+  public TypePattern parameterizeWith(Map<String, UnresolvedType> typeVariableMap, World w) {
+    final TypePattern newLeft = left.parameterizeWith(typeVariableMap, w);
+    final TypePattern newRight = right.parameterizeWith(typeVariableMap, w);
+    final OrTypePattern ret = new OrTypePattern(newLeft, newRight);
+    ret.copyLocationFrom(this);
+    return ret;
+  }
 
-	public boolean isStarAnnotation() {
-		return left.isStarAnnotation() || right.isStarAnnotation();
-	}
+  public String toString() {
+    final StringBuffer buff = new StringBuffer();
+    if (annotationPattern != AnnotationTypePattern.ANY) {
+      buff.append('(');
+      buff.append(annotationPattern.toString());
+      buff.append(' ');
+    }
+    buff.append('(');
+    buff.append(left.toString());
+    buff.append(" || ");
+    buff.append(right.toString());
+    buff.append(')');
+    if (annotationPattern != AnnotationTypePattern.ANY) {
+      buff.append(')');
+    }
+    return buff.toString();
+  }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
-	public boolean equals(Object obj) {
-		if (!(obj instanceof OrTypePattern)) {
-			return false;
-		}
-		OrTypePattern other = (OrTypePattern) obj;
-		return left.equals(other.left) && right.equals(other.right);
-	}
+  @Override
+  public boolean isStarAnnotation() {
+    return left.isStarAnnotation() || right.isStarAnnotation();
+  }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#hashCode()
-	 */
-	public int hashCode() {
-		int ret = 17;
-		ret = ret + 37 * left.hashCode();
-		ret = ret + 37 * right.hashCode();
-		return ret;
-	}
+  /*
+   * (non-Javadoc)
+   *
+   * @see java.lang.Object#equals(java.lang.Object)
+   */
+  public boolean equals(Object obj) {
+    if (!(obj instanceof OrTypePattern)) {
+      return false;
+    }
+    final OrTypePattern other = (OrTypePattern) obj;
+    return left.equals(other.left) && right.equals(other.right);
+  }
 
-	public Object accept(PatternNodeVisitor visitor, Object data) {
-		return visitor.visit(this, data);
-	}
+  /*
+   * (non-Javadoc)
+   *
+   * @see java.lang.Object#hashCode()
+   */
+  public int hashCode() {
+    int ret = 17;
+    ret = ret + 37 * left.hashCode();
+    ret = ret + 37 * right.hashCode();
+    return ret;
+  }
 
-	public Object traverse(PatternNodeVisitor visitor, Object data) {
-		Object ret = accept(visitor, data);
-		left.traverse(visitor, ret);
-		right.traverse(visitor, ret);
-		return ret;
-	}
+  @Override
+  public Object accept(PatternNodeVisitor visitor, Object data) {
+    return visitor.visit(this, data);
+  }
+
+  @Override
+  public Object traverse(PatternNodeVisitor visitor, Object data) {
+    final Object ret = accept(visitor, data);
+    left.traverse(visitor, ret);
+    right.traverse(visitor, ret);
+    return ret;
+  }
 
 }

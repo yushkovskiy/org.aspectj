@@ -54,78 +54,78 @@ package org.aspectj.apache.bcel.classfile;
  * <http://www.apache.org/>.
  */
 
+import org.aspectj.apache.bcel.Constants;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import org.aspectj.apache.bcel.Constants;
-
 /**
  * This class is derived from <em>Attribute</em> and represents a constant value, i.e., a default value for initializing a class
  * field. This class is instantiated by the <em>Attribute.readAttribute()</em> method.
- * 
- * @version $Id: ConstantValue.java,v 1.6 2009/09/16 00:43:49 aclement Exp $
+ *
  * @author <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
+ * @version $Id: ConstantValue.java,v 1.6 2009/09/16 00:43:49 aclement Exp $
  * @see Attribute
  */
 public final class ConstantValue extends Attribute {
-	private int constantvalue_index;
+  private final int constantvalue_index;
 
-	ConstantValue(int name_index, int length, DataInputStream file, ConstantPool constant_pool) throws IOException {
-		this(name_index, length, file.readUnsignedShort(), constant_pool);
-	}
+  ConstantValue(int name_index, int length, DataInputStream file, ConstantPool constant_pool) throws IOException {
+    this(name_index, length, file.readUnsignedShort(), constant_pool);
+  }
 
-	public ConstantValue(int name_index, int length, int constantvalue_index, ConstantPool constant_pool) {
-		super(Constants.ATTR_CONSTANT_VALUE, name_index, length, constant_pool);
-		this.constantvalue_index = constantvalue_index;
-	}
+  public ConstantValue(int name_index, int length, int constantvalue_index, ConstantPool constant_pool) {
+    super(Constants.ATTR_CONSTANT_VALUE, name_index, length, constant_pool);
+    this.constantvalue_index = constantvalue_index;
+  }
 
-	@Override
-	public void accept(ClassVisitor v) {
-		v.visitConstantValue(this);
-	}
+  @Override
+  public void accept(ClassVisitor v) {
+    v.visitConstantValue(this);
+  }
 
-	@Override
-	public final void dump(DataOutputStream file) throws IOException {
-		super.dump(file);
-		file.writeShort(constantvalue_index);
-	}
+  @Override
+  public final void dump(DataOutputStream file) throws IOException {
+    super.dump(file);
+    file.writeShort(constantvalue_index);
+  }
 
-	public final int getConstantValueIndex() {
-		return constantvalue_index;
-	}
+  public final int getConstantValueIndex() {
+    return constantvalue_index;
+  }
 
-	@Override
-	public final String toString() {
-		Constant c = cpool.getConstant(constantvalue_index);
+  @Override
+  public final String toString() {
+    Constant c = cpool.getConstant(constantvalue_index);
 
-		String buf;
-		int i;
+    final String buf;
+    final int i;
 
-		// Print constant to string depending on its type
-		switch (c.getTag()) {
-		case Constants.CONSTANT_Long:
-			buf = "" + ((ConstantLong) c).getValue();
-			break;
-		case Constants.CONSTANT_Float:
-			buf = "" + ((ConstantFloat) c).getValue();
-			break;
-		case Constants.CONSTANT_Double:
-			buf = "" + ((ConstantDouble) c).getValue();
-			break;
-		case Constants.CONSTANT_Integer:
-			buf = "" + ((ConstantInteger) c).getValue();
-			break;
-		case Constants.CONSTANT_String:
-			i = ((ConstantString) c).getStringIndex();
-			c = cpool.getConstant(i, Constants.CONSTANT_Utf8);
-			buf = "\"" + Utility.convertString(((ConstantUtf8) c).getValue()) + "\"";
-			break;
+    // Print constant to string depending on its type
+    switch (c.getTag()) {
+      case Constants.CONSTANT_Long:
+        buf = "" + ((ConstantLong) c).getValue();
+        break;
+      case Constants.CONSTANT_Float:
+        buf = "" + ((ConstantFloat) c).getValue();
+        break;
+      case Constants.CONSTANT_Double:
+        buf = "" + ((ConstantDouble) c).getValue();
+        break;
+      case Constants.CONSTANT_Integer:
+        buf = "" + ((ConstantInteger) c).getValue();
+        break;
+      case Constants.CONSTANT_String:
+        i = ((ConstantString) c).getStringIndex();
+        c = cpool.getConstant(i, Constants.CONSTANT_Utf8);
+        buf = "\"" + Utility.convertString(((ConstantUtf8) c).getValue()) + "\"";
+        break;
 
-		default:
-			throw new IllegalStateException("Type of ConstValue invalid: " + c);
-		}
+      default:
+        throw new IllegalStateException("Type of ConstValue invalid: " + c);
+    }
 
-		return buf;
-	}
+    return buf;
+  }
 }

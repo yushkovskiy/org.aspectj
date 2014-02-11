@@ -25,6 +25,7 @@ import org.aspectj.weaver.BcweaverTests;
 import org.aspectj.weaver.ResolvedMember;
 import org.aspectj.weaver.ResolvedType;
 import org.aspectj.weaver.bcel.BcelWorld;
+import org.jetbrains.annotations.NotNull;
 
 /*
  * Sample types that this program uses are:
@@ -59,194 +60,194 @@ import org.aspectj.weaver.bcel.BcelWorld;
  */
 public class AnnotationPatternMatchingTestCase extends TestCase {
 
-	private BcelWorld world;
-	private AnnotationTypePattern fooTP, simpleAnnotationTP;
+  private BcelWorld world;
+  private AnnotationTypePattern fooTP, simpleAnnotationTP;
 
-	private ResolvedType loadType(String name) {
-		if (world == null) {
-			world = new BcelWorld(BcweaverTests.TESTDATA_PATH + "/testcode.jar");
-			world.setBehaveInJava5Way(true);
-		}
-		return world.resolve(name);
-	}
+  private ResolvedType loadType(String name) {
+    if (world == null) {
+      world = new BcelWorld(BcweaverTests.TESTDATA_PATH + "/testcode.jar");
+      world.setBehaveInJava5Way(true);
+    }
+    return world.resolve(name);
+  }
 
-	private void initAnnotationTypePatterns() {
-		PatternParser p = new PatternParser("@Foo");
-		fooTP = p.maybeParseAnnotationPattern();
-		fooTP = fooTP.resolveBindings(makeSimpleScope(), new Bindings(3), true);
+  private void initAnnotationTypePatterns() {
+    PatternParser p = new PatternParser("@Foo");
+    fooTP = p.maybeParseAnnotationPattern();
+    fooTP = fooTP.resolveBindings(makeSimpleScope(), new Bindings(3), true);
 
-		p = new PatternParser("@p.SimpleAnnotation");
-		simpleAnnotationTP = p.maybeParseAnnotationPattern();
-		simpleAnnotationTP = simpleAnnotationTP.resolveBindings(makeSimpleScope(), new Bindings(3), true);
-	}
+    p = new PatternParser("@p.SimpleAnnotation");
+    simpleAnnotationTP = p.maybeParseAnnotationPattern();
+    simpleAnnotationTP = simpleAnnotationTP.resolveBindings(makeSimpleScope(), new Bindings(3), true);
+  }
 
-	public void testAnnotationPatternMatchingOnTypes() {
-		if (LangUtil.is15VMOrGreater()) {
-			ResolvedType rtx = loadType("AnnotatedClass");
-			initAnnotationTypePatterns();
+  public void testAnnotationPatternMatchingOnTypes() {
+    if (LangUtil.is15VMOrGreater()) {
+      final ResolvedType rtx = loadType("AnnotatedClass");
+      initAnnotationTypePatterns();
 
-			// One should match
-			assertTrue("@Foo should not match on the AnnotatedClass", fooTP.matches(rtx).alwaysFalse());
-			assertTrue("@SimpleAnnotation should match on the AnnotatedClass", simpleAnnotationTP.matches(rtx).alwaysTrue());
-		}
+      // One should match
+      assertTrue("@Foo should not match on the AnnotatedClass", fooTP.matches(rtx).alwaysFalse());
+      assertTrue("@SimpleAnnotation should match on the AnnotatedClass", simpleAnnotationTP.matches(rtx).alwaysTrue());
+    }
 
-	}
+  }
 
-	static class MyMessageHandler implements IMessageHandler {
-		public List<IMessage> messages = new ArrayList<IMessage>();
+  static class MyMessageHandler implements IMessageHandler {
+    public List<IMessage> messages = new ArrayList<IMessage>();
 
-		public boolean handleMessage(IMessage message) throws AbortException {
-			messages.add(message);
-			return false;
-		}
+    public boolean handleMessage(@NotNull IMessage message) throws AbortException {
+      messages.add(message);
+      return false;
+    }
 
-		public boolean isIgnoring(Kind kind) {
-			return false;
-		}
+    public boolean isIgnoring(Kind kind) {
+      return false;
+    }
 
-		public void dontIgnore(IMessage.Kind kind) {
-		}
+    public void dontIgnore(IMessage.Kind kind) {
+    }
 
-		public void ignore(Kind kind) {
-		}
-	}
+    public void ignore(Kind kind) {
+    }
+  }
 
-	public void testReferenceToNonAnnotationType() {
-		// ResolvedType rtx =
-		loadType("AnnotatedClass"); // inits the world
-		PatternParser p = new PatternParser("@java.lang.String");
+  public void testReferenceToNonAnnotationType() {
+    // ResolvedType rtx =
+    loadType("AnnotatedClass"); // inits the world
+    final PatternParser p = new PatternParser("@java.lang.String");
 
-		MyMessageHandler mh = new MyMessageHandler();
-		world.setMessageHandler(mh);
-		AnnotationTypePattern atp = p.maybeParseAnnotationPattern();
-		atp = atp.resolveBindings(makeSimpleScope(), new Bindings(3), true);
+    final MyMessageHandler mh = new MyMessageHandler();
+    world.setMessageHandler(mh);
+    AnnotationTypePattern atp = p.maybeParseAnnotationPattern();
+    atp = atp.resolveBindings(makeSimpleScope(), new Bindings(3), true);
 
-		assertTrue("Expected 1 error message but got " + mh.messages.size(), mh.messages.size() == 1);
+    assertTrue("Expected 1 error message but got " + mh.messages.size(), mh.messages.size() == 1);
 
-		String expected = "Type referred to is not an annotation type";
-		String msg = ((IMessage) mh.messages.get(0)).toString();
-		assertTrue("Expected: " + expected + " but got " + msg, msg.indexOf(expected) != -1);
-	}
+    final String expected = "Type referred to is not an annotation type";
+    final String msg = ((IMessage) mh.messages.get(0)).toString();
+    assertTrue("Expected: " + expected + " but got " + msg, msg.indexOf(expected) != -1);
+  }
 
-	public void testReferenceViaFormalToNonAnnotationType() {
-		// ResolvedType rtx =
-		loadType("AnnotatedClass"); // inits the world
-		PatternParser p = new PatternParser("a");
+  public void testReferenceViaFormalToNonAnnotationType() {
+    // ResolvedType rtx =
+    loadType("AnnotatedClass"); // inits the world
+    final PatternParser p = new PatternParser("a");
 
-		MyMessageHandler mh = new MyMessageHandler();
-		world.setMessageHandler(mh);
-		AnnotationTypePattern atp = p.parseAnnotationNameOrVarTypePattern();
-		atp = atp.resolveBindings(makeSimpleScope(), new Bindings(3), true);
+    final MyMessageHandler mh = new MyMessageHandler();
+    world.setMessageHandler(mh);
+    AnnotationTypePattern atp = p.parseAnnotationNameOrVarTypePattern();
+    atp = atp.resolveBindings(makeSimpleScope(), new Bindings(3), true);
 
-		assertTrue("Expected 3 error messages but got " + mh.messages.size(), mh.messages.size() == 3);
+    assertTrue("Expected 3 error messages but got " + mh.messages.size(), mh.messages.size() == 3);
 
-		String expected = "Type referred to is not an annotation type";
-		String msg = ((IMessage) mh.messages.get(0)).toString();
-		assertTrue("Expected: " + expected + " but got " + msg, msg.indexOf(expected) != -1);
+    final String expected = "Type referred to is not an annotation type";
+    final String msg = ((IMessage) mh.messages.get(0)).toString();
+    assertTrue("Expected: " + expected + " but got " + msg, msg.indexOf(expected) != -1);
 
-		// expected = "Binding not supported in @pcds (1.5.0 M1 limitation): null";
-		// msg = ((IMessage)mh.messages.get(1)).toString();
-		// assertTrue("Expected: "+expected+" but got "+msg,msg.indexOf(expected)!=-1);
-	}
+    // expected = "Binding not supported in @pcds (1.5.0 M1 limitation): null";
+    // msg = ((IMessage)mh.messages.get(1)).toString();
+    // assertTrue("Expected: "+expected+" but got "+msg,msg.indexOf(expected)!=-1);
+  }
 
-	public TestScope makeSimpleScope() {
-		return new TestScope(new String[] { "int", "java.lang.String" }, new String[] { "a", "b" }, world);
-	}
+  public TestScope makeSimpleScope() {
+    return new TestScope(new String[]{"int", "java.lang.String"}, new String[]{"a", "b"}, world);
+  }
 
-	public void testUnresolvedAnnotationTypes() {
-		ResolvedType rtx = loadType("AnnotatedClass");
+  public void testUnresolvedAnnotationTypes() {
+    final ResolvedType rtx = loadType("AnnotatedClass");
 
-		PatternParser p = new PatternParser("@Foo");
-		AnnotationTypePattern fooTP = p.maybeParseAnnotationPattern();
-		try {
-			fooTP.matches(rtx);
-			fail("Should have failed with illegal state exception, fooTP is not resolved");
-		} catch (IllegalStateException ise) {
-			// Correct!
-		}
-	}
+    final PatternParser p = new PatternParser("@Foo");
+    final AnnotationTypePattern fooTP = p.maybeParseAnnotationPattern();
+    try {
+      fooTP.matches(rtx);
+      fail("Should have failed with illegal state exception, fooTP is not resolved");
+    } catch (IllegalStateException ise) {
+      // Correct!
+    }
+  }
 
-	public void testAnnotationPatternMatchingOnMethods() {
-		if (LangUtil.is15VMOrGreater()) {
-			ResolvedType rtx = loadType("AnnotatedClass");
-			ResolvedMember aMethod = rtx.getDeclaredMethods()[1];
+  public void testAnnotationPatternMatchingOnMethods() {
+    if (LangUtil.is15VMOrGreater()) {
+      final ResolvedType rtx = loadType("AnnotatedClass");
+      final ResolvedMember aMethod = rtx.getDeclaredMethods()[1];
 
-			assertTrue("Haven't got the right method, I'm looking for 'm1()': " + aMethod.getName(), aMethod.getName().equals("m1"));
+      assertTrue("Haven't got the right method, I'm looking for 'm1()': " + aMethod.getName(), aMethod.getName().equals("m1"));
 
-			initAnnotationTypePatterns();
+      initAnnotationTypePatterns();
 
-			// One should match
-			assertTrue("@Foo should not match on the AnnotatedClass.m1() method", fooTP.matches(aMethod).alwaysFalse());
-			assertTrue("@SimpleAnnotation should match on the AnnotatedClass.m1() method", simpleAnnotationTP.matches(aMethod)
-					.alwaysTrue());
-		}
-	}
+      // One should match
+      assertTrue("@Foo should not match on the AnnotatedClass.m1() method", fooTP.matches(aMethod).alwaysFalse());
+      assertTrue("@SimpleAnnotation should match on the AnnotatedClass.m1() method", simpleAnnotationTP.matches(aMethod)
+          .alwaysTrue());
+    }
+  }
 
-	public void testAnnotationPatternMatchingOnFields() {
-		if (LangUtil.is15VMOrGreater()) {
-			ResolvedType rtx = loadType("AnnotatedClass");
-			ResolvedMember aField = rtx.getDeclaredFields()[0];
+  public void testAnnotationPatternMatchingOnFields() {
+    if (LangUtil.is15VMOrGreater()) {
+      final ResolvedType rtx = loadType("AnnotatedClass");
+      final ResolvedMember aField = rtx.getDeclaredFields()[0];
 
-			assertTrue("Haven't got the right field, I'm looking for 'i'" + aField.getName(), aField.getName().equals("i"));
+      assertTrue("Haven't got the right field, I'm looking for 'i'" + aField.getName(), aField.getName().equals("i"));
 
-			initAnnotationTypePatterns();
+      initAnnotationTypePatterns();
 
-			// One should match
-			assertTrue("@Foo should not match on the AnnotatedClass.i field", fooTP.matches(aField).alwaysFalse());
-			assertTrue("@SimpleAnnotation should match on the AnnotatedClass.i field", simpleAnnotationTP.matches(aField)
-					.alwaysTrue());
-		}
+      // One should match
+      assertTrue("@Foo should not match on the AnnotatedClass.i field", fooTP.matches(aField).alwaysFalse());
+      assertTrue("@SimpleAnnotation should match on the AnnotatedClass.i field", simpleAnnotationTP.matches(aField)
+          .alwaysTrue());
+    }
 
-	}
+  }
 
-	public void testAnnotationTypeResolutionOnTypes() {
-		ResolvedType rtx = loadType("AnnotatedClass");
-		ResolvedType[] types = rtx.getAnnotationTypes();
-		assertTrue("Did not expect null", types != null);
-		assertTrue("Expected 1 entry but got " + types.length, types.length == 1);
-		assertTrue("Should be 'p.SimpleAnnotation' but is " + types[0], types[0].equals(world.resolve("p.SimpleAnnotation")));
-	}
+  public void testAnnotationTypeResolutionOnTypes() {
+    final ResolvedType rtx = loadType("AnnotatedClass");
+    final ResolvedType[] types = rtx.getAnnotationTypes();
+    assertTrue("Did not expect null", types != null);
+    assertTrue("Expected 1 entry but got " + types.length, types.length == 1);
+    assertTrue("Should be 'p.SimpleAnnotation' but is " + types[0], types[0].equals(world.resolve("p.SimpleAnnotation")));
+  }
 
-	public void testAnnotationTypeResolutionOnMethods() {
-		ResolvedType rtx = loadType("AnnotatedClass");
+  public void testAnnotationTypeResolutionOnMethods() {
+    final ResolvedType rtx = loadType("AnnotatedClass");
 
-		ResolvedMember aMethod = rtx.getDeclaredMethods()[1];
-		assertTrue("Haven't got the right method, I'm looking for 'm1()': " + aMethod.getName(), aMethod.getName().equals("m1"));
+    final ResolvedMember aMethod = rtx.getDeclaredMethods()[1];
+    assertTrue("Haven't got the right method, I'm looking for 'm1()': " + aMethod.getName(), aMethod.getName().equals("m1"));
 
-		ResolvedType[] types = aMethod.getAnnotationTypes();
-		assertTrue("Did not expect null", types != null);
-		assertTrue("Expected 1 entry but got " + types.length, types.length == 1);
-		assertTrue("Should be 'p.SimpleAnnotation' but is " + types[0], types[0].equals(world.resolve("p.SimpleAnnotation")));
-	}
+    final ResolvedType[] types = aMethod.getAnnotationTypes();
+    assertTrue("Did not expect null", types != null);
+    assertTrue("Expected 1 entry but got " + types.length, types.length == 1);
+    assertTrue("Should be 'p.SimpleAnnotation' but is " + types[0], types[0].equals(world.resolve("p.SimpleAnnotation")));
+  }
 
-	public void testAnnotationTypeResolutionOnFields() {
-		ResolvedType rtx = loadType("AnnotatedClass");
+  public void testAnnotationTypeResolutionOnFields() {
+    final ResolvedType rtx = loadType("AnnotatedClass");
 
-		ResolvedMember aField = rtx.getDeclaredFields()[0];
+    final ResolvedMember aField = rtx.getDeclaredFields()[0];
 
-		assertTrue("Haven't got the right field, I'm looking for 'i'" + aField.getName(), aField.getName().equals("i"));
+    assertTrue("Haven't got the right field, I'm looking for 'i'" + aField.getName(), aField.getName().equals("i"));
 
-		ResolvedType[] types = aField.getAnnotationTypes();
-		assertTrue("Did not expect null", types != null);
-		assertTrue("Expected 1 entry but got " + types.length, types.length == 1);
-		assertTrue("Should be 'p.SimpleAnnotation' but is " + types[0], types[0].equals(world.resolve("p.SimpleAnnotation")));
-	}
+    final ResolvedType[] types = aField.getAnnotationTypes();
+    assertTrue("Did not expect null", types != null);
+    assertTrue("Expected 1 entry but got " + types.length, types.length == 1);
+    assertTrue("Should be 'p.SimpleAnnotation' but is " + types[0], types[0].equals(world.resolve("p.SimpleAnnotation")));
+  }
 
-	public void testWildPatternMatchingOnTypes() {
+  public void testWildPatternMatchingOnTypes() {
 
-		ResolvedType rtx = loadType("AnnotatedClass");
-		initAnnotationTypePatterns();
+    final ResolvedType rtx = loadType("AnnotatedClass");
+    initAnnotationTypePatterns();
 
-		// Let's create something wild
-		PatternParser p = new PatternParser("@(Foo || Boo)");
-		AnnotationTypePattern ap = p.maybeParseAnnotationPattern();
-		ap = ap.resolveBindings(makeSimpleScope(), new Bindings(3), true);
-		assertTrue("shouldnt match the type AnnotatedClass", ap.matches(rtx).alwaysFalse());
+    // Let's create something wild
+    PatternParser p = new PatternParser("@(Foo || Boo)");
+    AnnotationTypePattern ap = p.maybeParseAnnotationPattern();
+    ap = ap.resolveBindings(makeSimpleScope(), new Bindings(3), true);
+    assertTrue("shouldnt match the type AnnotatedClass", ap.matches(rtx).alwaysFalse());
 
-		p = new PatternParser("@(p.SimpleAnnotation || Boo)");
-		ap = p.maybeParseAnnotationPattern();
-		ap = ap.resolveBindings(makeSimpleScope(), new Bindings(3), true);
-		assertTrue("should match the type AnnotatedClass", ap.matches(rtx).alwaysTrue());
-	}
+    p = new PatternParser("@(p.SimpleAnnotation || Boo)");
+    ap = p.maybeParseAnnotationPattern();
+    ap = ap.resolveBindings(makeSimpleScope(), new Bindings(3), true);
+    assertTrue("should match the type AnnotatedClass", ap.matches(rtx).alwaysTrue());
+  }
 
 }

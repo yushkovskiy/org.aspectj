@@ -13,40 +13,41 @@
 
 package org.aspectj.weaver.patterns;
 
-import java.util.List;
-
 import org.aspectj.weaver.ResolvedType;
 import org.aspectj.weaver.World;
 import org.aspectj.weaver.ast.Test;
 import org.aspectj.weaver.ast.Var;
 
+import java.util.List;
+
 /**
  * Common super type for Pointcuts that can bind formal parameters.
- * 
+ *
  * @author Erik Hilsdale
  * @author Jim Hugunin
  */
 public abstract class NameBindingPointcut extends Pointcut {
 
-	public NameBindingPointcut() {
-		super();
-	}
+  public NameBindingPointcut() {
+    super();
+  }
 
-	protected Test exposeStateForVar(Var var,TypePattern type, ExposedState state, World world) {
-		if (type instanceof BindingTypePattern) {
-			BindingTypePattern b = (BindingTypePattern)type;
-			state.set(b.getFormalIndex(), var);
-		}
-		ResolvedType myType = type.getExactType().resolve(world);
-		if (myType.isParameterizedType()) {
-			// unchecked warning already issued...
-			myType = (ResolvedType) myType.getRawType();
-		}
-		return Test.makeInstanceof(var, myType.resolve(world));
-	}
-	
-	public abstract List/*<BindingTypePattern>*/ getBindingTypePatterns();
-	public abstract List/*<BindingAnnotationTypePattern>*/ getBindingAnnotationTypePatterns();
+  protected Test exposeStateForVar(Var var, TypePattern type, ExposedState state, World world) {
+    if (type instanceof BindingTypePattern) {
+      final BindingTypePattern b = (BindingTypePattern) type;
+      state.set(b.getFormalIndex(), var);
+    }
+    ResolvedType myType = type.getExactType().resolve(world);
+    if (myType.isParameterizedType()) {
+      // unchecked warning already issued...
+      myType = (ResolvedType) myType.getRawType();
+    }
+    return Test.makeInstanceof(var, myType.resolve(world));
+  }
+
+  public abstract List/*<BindingTypePattern>*/ getBindingTypePatterns();
+
+  public abstract List/*<BindingAnnotationTypePattern>*/ getBindingAnnotationTypePatterns();
 
 
 }

@@ -25,89 +25,91 @@ import org.aspectj.weaver.patterns.DeclareAnnotation;
 
 public class DeclareAnnotationDeclaration extends DeclareDeclaration {
 
-	private Annotation annotation;
-	private boolean isRemover = false;
+  private Annotation annotation;
+  private boolean isRemover = false;
 
-	public DeclareAnnotationDeclaration(CompilationResult result, DeclareAnnotation symbolicDeclare, Annotation annotation) {
-		super(result, symbolicDeclare);
-		this.annotation = annotation;
+  public DeclareAnnotationDeclaration(CompilationResult result, DeclareAnnotation symbolicDeclare, Annotation annotation) {
+    super(result, symbolicDeclare);
+    this.annotation = annotation;
 
-		addAnnotation(annotation);
-		if (symbolicDeclare == null) {
-			return; // there is an error that will already be getting reported (e.g. incorrect pattern on decaf/decac)
-		}
-		this.isRemover = symbolicDeclare.isRemover();
-		symbolicDeclare.setAnnotationString(annotation.toString());
-		symbolicDeclare.setAnnotationLocation(annotation.sourceStart, annotation.sourceEnd);
-	}
+    addAnnotation(annotation);
+    if (symbolicDeclare == null) {
+      return; // there is an error that will already be getting reported (e.g. incorrect pattern on decaf/decac)
+    }
+    this.isRemover = symbolicDeclare.isRemover();
+    symbolicDeclare.setAnnotationString(annotation.toString());
+    symbolicDeclare.setAnnotationLocation(annotation.sourceStart, annotation.sourceEnd);
+  }
 
-	public void analyseCode(ClassScope classScope, InitializationFlowContext initializationContext, FlowInfo flowInfo) {
-		super.analyseCode(classScope, initializationContext, flowInfo);
+  @Override
+  public void analyseCode(ClassScope classScope, InitializationFlowContext initializationContext, FlowInfo flowInfo) {
+    super.analyseCode(classScope, initializationContext, flowInfo);
 
-		if (isRemover) {
-			if (((DeclareAnnotation) declareDecl).getKind() != DeclareAnnotation.AT_FIELD) {
-				classScope.problemReporter().signalError(this.sourceStart(), this.sourceEnd,
-						"Annotation removal only supported for declare @field (compiler limitation)");
-			}
-			else if (isRemover && !(annotation instanceof MarkerAnnotation)) {
-				classScope.problemReporter().signalError(this.sourceStart(), this.sourceEnd,
-						"Annotation removal does not allow values to be specified for the annotation (compiler limitation)");
-			}
-		}
-		long bits = annotation.resolvedType.getAnnotationTagBits();
+    if (isRemover) {
+      if (((DeclareAnnotation) declareDecl).getKind() != DeclareAnnotation.AT_FIELD) {
+        classScope.problemReporter().signalError(this.sourceStart(), this.sourceEnd,
+            "Annotation removal only supported for declare @field (compiler limitation)");
+      } else if (isRemover && !(annotation instanceof MarkerAnnotation)) {
+        classScope.problemReporter().signalError(this.sourceStart(), this.sourceEnd,
+            "Annotation removal does not allow values to be specified for the annotation (compiler limitation)");
+      }
+    }
+    final long bits = annotation.resolvedType.getAnnotationTagBits();
 
-		if ((bits & TagBits.AnnotationTarget) != 0) {
-			// The annotation is stored against a method. For declare @type we need to
-			// confirm the annotation targets the right types. Earlier checking will
-			// have not found this problem because an annotation for target METHOD will
-			// not be reported on as we *do* store it against a method in this case
-			DeclareAnnotation.Kind k = ((DeclareAnnotation) declareDecl).getKind();
-			if (k.equals(DeclareAnnotation.AT_TYPE)) {
-				if ((bits & TagBits.AnnotationForMethod) != 0) {
-					classScope.problemReporter().disallowedTargetForAnnotation(annotation);
-				}
-			}
-			if (k.equals(DeclareAnnotation.AT_FIELD)) {
-				if ((bits & TagBits.AnnotationForMethod) != 0) {
-					classScope.problemReporter().disallowedTargetForAnnotation(annotation);
-				}
-			}
-		}
+    if ((bits & TagBits.AnnotationTarget) != 0) {
+      // The annotation is stored against a method. For declare @type we need to
+      // confirm the annotation targets the right types. Earlier checking will
+      // have not found this problem because an annotation for target METHOD will
+      // not be reported on as we *do* store it against a method in this case
+      final DeclareAnnotation.Kind k = ((DeclareAnnotation) declareDecl).getKind();
+      if (k.equals(DeclareAnnotation.AT_TYPE)) {
+        if ((bits & TagBits.AnnotationForMethod) != 0) {
+          classScope.problemReporter().disallowedTargetForAnnotation(annotation);
+        }
+      }
+      if (k.equals(DeclareAnnotation.AT_FIELD)) {
+        if ((bits & TagBits.AnnotationForMethod) != 0) {
+          classScope.problemReporter().disallowedTargetForAnnotation(annotation);
+        }
+      }
+    }
 
-	}
+  }
 
-	public Annotation getDeclaredAnnotation() {
-		return annotation;
-	}
+  public Annotation getDeclaredAnnotation() {
+    return annotation;
+  }
 
-	protected boolean shouldDelegateCodeGeneration() {
-		return true; // declare annotation needs a method to be written out.
-	}
+  @Override
+  protected boolean shouldDelegateCodeGeneration() {
+    return true; // declare annotation needs a method to be written out.
+  }
 
-	protected boolean shouldBeSynthetic() {
-		return false;
-	}
+  @Override
+  protected boolean shouldBeSynthetic() {
+    return false;
+  }
 
-	private void addAnnotation(Annotation ann) {
-		if (this.annotations == null) {
-			this.annotations = new Annotation[1];
-		}
-		else {
-			Annotation[] old = this.annotations;
-			this.annotations = new Annotation[old.length + 1];
-			System.arraycopy(old, 0, this.annotations, 1, old.length);
-		}
-		this.annotations[0] = ann;
-	}
+  private void addAnnotation(Annotation ann) {
+    if (this.annotations == null) {
+      this.annotations = new Annotation[1];
+    } else {
+      final Annotation[] old = this.annotations;
+      this.annotations = new Annotation[old.length + 1];
+      System.arraycopy(old, 0, this.annotations, 1, old.length);
+    }
+    this.annotations[0] = ann;
+  }
 
-	public void postParse(TypeDeclaration typeDec) {
-		super.postParse(typeDec);
-		if (declareDecl != null) {
-			((DeclareAnnotation) declareDecl).setAnnotationMethod(new String(selector));
-		}
-	}
+  @Override
+  public void postParse(TypeDeclaration typeDec) {
+    super.postParse(typeDec);
+    if (declareDecl != null) {
+      ((DeclareAnnotation) declareDecl).setAnnotationMethod(new String(selector));
+    }
+  }
 
-	public boolean isRemover() {
-		return isRemover;
-	}
+  public boolean isRemover() {
+    return isRemover;
+  }
 }

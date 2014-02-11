@@ -13,98 +13,96 @@
 
 package org.aspectj.weaver.patterns;
 
+import org.aspectj.weaver.*;
+
 import java.io.IOException;
 import java.util.Map;
 
-import org.aspectj.weaver.AjAttribute;
-import org.aspectj.weaver.CompressingDataOutputStream;
-import org.aspectj.weaver.ISourceContext;
-import org.aspectj.weaver.IntMap;
-import org.aspectj.weaver.UnresolvedType;
-import org.aspectj.weaver.VersionedDataInputStream;
-import org.aspectj.weaver.World;
-
 public class BindingTypePattern extends ExactTypePattern implements BindingPattern {
-	private int formalIndex;
-	private String bindingName;
+  private final int formalIndex;
+  private String bindingName;
 
-	public BindingTypePattern(UnresolvedType type, int index, boolean isVarArgs) {
-		super(type, false, isVarArgs);
-		this.formalIndex = index;
-	}
+  public BindingTypePattern(UnresolvedType type, int index, boolean isVarArgs) {
+    super(type, false, isVarArgs);
+    this.formalIndex = index;
+  }
 
-	public BindingTypePattern(FormalBinding binding, boolean isVarArgs) {
-		this(binding.getType(), binding.getIndex(), isVarArgs);
-		this.bindingName = binding.getName();
-	}
+  public BindingTypePattern(FormalBinding binding, boolean isVarArgs) {
+    this(binding.getType(), binding.getIndex(), isVarArgs);
+    this.bindingName = binding.getName();
+  }
 
-	public int getFormalIndex() {
-		return formalIndex;
-	}
-	
-	public String getBindingName() {
-		return bindingName;
-	}
+  @Override
+  public int getFormalIndex() {
+    return formalIndex;
+  }
 
-	public boolean equals(Object other) {
-		if (!(other instanceof BindingTypePattern)) {
-			return false;
-		}
-		BindingTypePattern o = (BindingTypePattern) other;
-		if (includeSubtypes != o.includeSubtypes) {
-			return false;
-		}
-		if (isVarArgs != o.isVarArgs) {
-			return false;
-		}
-		return o.type.equals(this.type) && o.formalIndex == this.formalIndex;
-	}
+  public String getBindingName() {
+    return bindingName;
+  }
 
-	public int hashCode() {
-		int result = 17;
-		result = 37 * result + super.hashCode();
-		result = 37 * result + formalIndex;
-		return result;
-	}
+  public boolean equals(Object other) {
+    if (!(other instanceof BindingTypePattern)) {
+      return false;
+    }
+    final BindingTypePattern o = (BindingTypePattern) other;
+    if (includeSubtypes != o.includeSubtypes) {
+      return false;
+    }
+    if (isVarArgs != o.isVarArgs) {
+      return false;
+    }
+    return o.type.equals(this.type) && o.formalIndex == this.formalIndex;
+  }
 
-	public void write(CompressingDataOutputStream out) throws IOException {
-		out.writeByte(TypePattern.BINDING);
-		type.write(out);
-		out.writeShort((short) formalIndex);
-		out.writeBoolean(isVarArgs);
-		writeLocation(out);
-	}
+  public int hashCode() {
+    int result = 17;
+    result = 37 * result + super.hashCode();
+    result = 37 * result + formalIndex;
+    return result;
+  }
 
-	public static TypePattern read(VersionedDataInputStream s, ISourceContext context) throws IOException {
-		UnresolvedType type = UnresolvedType.read(s);
-		int index = s.readShort();
-		boolean isVarargs = false;
-		if (s.getMajorVersion() >= AjAttribute.WeaverVersionInfo.WEAVER_VERSION_MAJOR_AJ150) {
-			isVarargs = s.readBoolean();
-		}
-		TypePattern ret = new BindingTypePattern(type, index, isVarargs);
-		ret.readLocation(context, s);
-		return ret;
-	}
+  @Override
+  public void write(CompressingDataOutputStream out) throws IOException {
+    out.writeByte(TypePattern.BINDING);
+    type.write(out);
+    out.writeShort((short) formalIndex);
+    out.writeBoolean(isVarArgs);
+    writeLocation(out);
+  }
 
-	public TypePattern remapAdviceFormals(IntMap bindings) {
-		if (!bindings.hasKey(formalIndex)) {
-			return new ExactTypePattern(type, false, isVarArgs);
-		} else {
-			int newFormalIndex = bindings.get(formalIndex);
-			return new BindingTypePattern(type, newFormalIndex, isVarArgs);
-		}
-	}
+  public static TypePattern read(VersionedDataInputStream s, ISourceContext context) throws IOException {
+    final UnresolvedType type = UnresolvedType.read(s);
+    final int index = s.readShort();
+    boolean isVarargs = false;
+    if (s.getMajorVersion() >= AjAttribute.WeaverVersionInfo.WEAVER_VERSION_MAJOR_AJ150) {
+      isVarargs = s.readBoolean();
+    }
+    final TypePattern ret = new BindingTypePattern(type, index, isVarargs);
+    ret.readLocation(context, s);
+    return ret;
+  }
 
-	public TypePattern parameterizeWith(Map typeVariableMap, World w) {
-		ExactTypePattern superParameterized = (ExactTypePattern) super.parameterizeWith(typeVariableMap, w);
-		BindingTypePattern ret = new BindingTypePattern(superParameterized.getExactType(), this.formalIndex, this.isVarArgs);
-		ret.copyLocationFrom(this);
-		return ret;
-	}
+  @Override
+  public TypePattern remapAdviceFormals(IntMap bindings) {
+    if (!bindings.hasKey(formalIndex)) {
+      return new ExactTypePattern(type, false, isVarArgs);
+    } else {
+      final int newFormalIndex = bindings.get(formalIndex);
+      return new BindingTypePattern(type, newFormalIndex, isVarArgs);
+    }
+  }
 
-	public String toString() {
-		// Thread.currentThread().dumpStack();
-		return "BindingTypePattern(" + super.toString() + ", " + formalIndex + ")";
-	}
+  @Override
+  public TypePattern parameterizeWith(Map typeVariableMap, World w) {
+    final ExactTypePattern superParameterized = (ExactTypePattern) super.parameterizeWith(typeVariableMap, w);
+    final BindingTypePattern ret = new BindingTypePattern(superParameterized.getExactType(), this.formalIndex, this.isVarArgs);
+    ret.copyLocationFrom(this);
+    return ret;
+  }
+
+  public String toString() {
+    // Thread.currentThread().dumpStack();
+    return "BindingTypePattern(" + super.toString() + ", " + formalIndex + ")";
+  }
 }

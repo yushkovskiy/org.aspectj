@@ -21,18 +21,19 @@ import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 /**
  * Used to represent super references inside of inter-type declarations.  Special mechanism
  * needed for handling in an interface context.
- * 
+ *
  * @author Jim Hugunin
  */
 public class InterSuperReference extends SuperReference {
-	public InterSuperReference(SuperReference template, TypeBinding myType) {
-		super(template.sourceStart, template.sourceEnd);
-		this.resolvedType = myType;
-		this.constant=Constant.NotAConstant;
-	}
+  public InterSuperReference(SuperReference template, TypeBinding myType) {
+    super(template.sourceStart, template.sourceEnd);
+    this.resolvedType = myType;
+    this.constant = Constant.NotAConstant;
+  }
 
-	public TypeBinding resolveType(BlockScope scope) {
-		return resolvedType;
-	}
+  @Override
+  public TypeBinding resolveType(BlockScope scope) {
+    return resolvedType;
+  }
 
 }

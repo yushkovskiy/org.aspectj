@@ -25,8 +25,8 @@ public class SimpleSyntheticAccessMethodBinding extends SyntheticMethodBinding {
 //		this.parameters = method.parameters;
 //		this.returnType = method.returnType;
 //	}
-	
-	public SimpleSyntheticAccessMethodBinding(MethodBinding binding) {
-		super(binding);
-	}
+
+  public SimpleSyntheticAccessMethodBinding(MethodBinding binding) {
+    super(binding);
+  }
 }

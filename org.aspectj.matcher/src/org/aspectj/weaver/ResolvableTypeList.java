@@ -16,28 +16,28 @@ package org.aspectj.weaver;
  * and a ResolvedType array is passed on. Depending on the situation there may not be a need to resolve all the entries so this can
  * perform better. Note: the array elements are resolved in place, so the caller should not be surprised if elements and resolved
  * after the type list has been used.
- * 
+ *
  * @author Andy Clement
  */
 public class ResolvableTypeList {
 
-	public int length;
-	private World world;
-	private UnresolvedType[] types;
+  public int length;
+  private final World world;
+  private final UnresolvedType[] types;
 
-	public ResolvableTypeList(World world, UnresolvedType[] unresolvedTypes) {
-		length = unresolvedTypes.length;
-		types = unresolvedTypes;
-		this.world = world;
-	}
+  public ResolvableTypeList(World world, UnresolvedType[] unresolvedTypes) {
+    length = unresolvedTypes.length;
+    types = unresolvedTypes;
+    this.world = world;
+  }
 
-	public ResolvedType getResolved(int nameIndex) {
-		UnresolvedType ut = types[nameIndex];
-		if (!(ut instanceof ResolvedType)) {
-			types[nameIndex] = world.resolve(ut);
-			return (ResolvedType) types[nameIndex];
-		} else {
-			return (ResolvedType) ut;
-		}
-	}
+  public ResolvedType getResolved(int nameIndex) {
+    final UnresolvedType ut = types[nameIndex];
+    if (!(ut instanceof ResolvedType)) {
+      types[nameIndex] = world.resolve(ut);
+      return (ResolvedType) types[nameIndex];
+    } else {
+      return (ResolvedType) ut;
+    }
+  }
 }

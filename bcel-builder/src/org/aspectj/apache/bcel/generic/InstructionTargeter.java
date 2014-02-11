@@ -58,13 +58,14 @@ package org.aspectj.apache.bcel.generic;
  * Denote that a class targets InstructionHandles within an InstructionList. Namely
  * the following implementers:
  *
+ * @author <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
+ * @version $Id: InstructionTargeter.java,v 1.3 2008/05/28 23:52:57 aclement Exp $
  * @see BranchHandle
  * @see LocalVariableGen
  * @see CodeExceptionGen
- * @version $Id: InstructionTargeter.java,v 1.3 2008/05/28 23:52:57 aclement Exp $
- * @author  <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
  */
 public interface InstructionTargeter {
   public boolean containsTarget(InstructionHandle ih);
+
   public void updateTarget(InstructionHandle old_ih, InstructionHandle new_ih);
 }

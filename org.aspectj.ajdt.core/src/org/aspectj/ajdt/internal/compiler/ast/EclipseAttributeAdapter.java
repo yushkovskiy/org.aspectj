@@ -12,23 +12,25 @@
 
 package org.aspectj.ajdt.internal.compiler.ast;
 
-import org.aspectj.weaver.AjAttribute;
 import org.aspectj.org.eclipse.jdt.internal.compiler.IAttribute;
 import org.aspectj.org.eclipse.jdt.internal.compiler.codegen.ConstantPool;
+import org.aspectj.weaver.AjAttribute;
 
 public class EclipseAttributeAdapter implements IAttribute {
-	AjAttribute attr;
+  AjAttribute attr;
 
-	public EclipseAttributeAdapter(AjAttribute attr) {
-		this.attr = attr;
-	}
+  public EclipseAttributeAdapter(AjAttribute attr) {
+    this.attr = attr;
+  }
 
-	public char[] getNameChars() {
-		return attr.getNameChars();
-	}
+  @Override
+  public char[] getNameChars() {
+    return attr.getNameChars();
+  }
 
-	public byte[] getAllBytes(short nameIndex, ConstantPool constantPool) {
-		return attr.getAllBytes(nameIndex, new EclipseConstantPoolWriter(constantPool));
-	}
+  @Override
+  public byte[] getAllBytes(short nameIndex, ConstantPool constantPool) {
+    return attr.getAllBytes(nameIndex, new EclipseConstantPoolWriter(constantPool));
+  }
 
 }

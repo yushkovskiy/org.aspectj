@@ -13,11 +13,11 @@ package org.aspectj.weaver;
 
 /**
  * Used during attribute reading to decode constant pool references.
- * 
+ *
  * @author Andy Clement
  */
 public interface ConstantPoolReader {
 
-	String readUtf8(int constantPoolIndex);
+  String readUtf8(int constantPoolIndex);
 
 }

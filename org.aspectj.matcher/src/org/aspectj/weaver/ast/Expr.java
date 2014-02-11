@@ -17,18 +17,18 @@ import org.aspectj.weaver.ResolvedType;
 
 public abstract class Expr extends ASTNode {
 
-	public Expr() {
-		super();
-	}
+  public Expr() {
+    super();
+  }
 
-	public static final Expr[] NONE = new Expr[0];
+  public static final Expr[] NONE = new Expr[0];
 
-	public abstract void accept(IExprVisitor v);
+  public abstract void accept(IExprVisitor v);
 
-	public abstract ResolvedType getType();
+  public abstract ResolvedType getType();
 
-	public static CallExpr makeCallExpr(Member member, Expr[] exprs, ResolvedType returnType) {
-		return new CallExpr(member, exprs, returnType);
-	}
+  public static CallExpr makeCallExpr(Member member, Expr[] exprs, ResolvedType returnType) {
+    return new CallExpr(member, exprs, returnType);
+  }
 
 }

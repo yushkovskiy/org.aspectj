@@ -53,50 +53,51 @@ package org.aspectj.apache.bcel.generic;
  * information on the Apache Software Foundation, please see
  * <http://www.apache.org/>.
  */
-import org.aspectj.apache.bcel.Constants;
-import org.aspectj.apache.bcel.generic.InstructionHandle;
 
-/** 
+import org.aspectj.apache.bcel.Constants;
+
+/**
  * Returnaddress, the type JSR or JSR_W instructions push upon the stack.
+ * <p/>
+ * see vmspec2 ï¿½3.3.3
  *
- * see vmspec2 §3.3.3
+ * @author <A HREF="http://www.inf.fu-berlin.de/~ehaase">Enver Haase</A>
  * @version $Id: ReturnaddressType.java,v 1.3 2008/05/28 23:52:56 aclement Exp $
- * @author  <A HREF="http://www.inf.fu-berlin.de/~ehaase">Enver Haase</A>
  */
 public class ReturnaddressType extends Type {
 
   public static final ReturnaddressType NO_TARGET = new ReturnaddressType();
   private InstructionHandle returnTarget;
- 
+
   /**
    * A Returnaddress [that doesn't know where to return to].
    */
-  private ReturnaddressType(){
+  private ReturnaddressType() {
     super(Constants.T_ADDRESS, "<return address>");
   }
- 	
+
   /**
    * Creates a ReturnaddressType object with a target.
    */
   public ReturnaddressType(InstructionHandle returnTarget) {
-    super(Constants.T_ADDRESS, "<return address targeting "+returnTarget+">");
-  	this.returnTarget = returnTarget;
+    super(Constants.T_ADDRESS, "<return address targeting " + returnTarget + ">");
+    this.returnTarget = returnTarget;
   }
-	
+
   /**
    * Returns if the two Returnaddresses refer to the same target.
    */
-  public boolean equals(Object rat){
-    if(!(rat instanceof ReturnaddressType))
+  public boolean equals(Object rat) {
+    if (!(rat instanceof ReturnaddressType))
       return false;
 
-    return ((ReturnaddressType)rat).returnTarget.equals(this.returnTarget);
-  }	
+    return ((ReturnaddressType) rat).returnTarget.equals(this.returnTarget);
+  }
 
   /**
    * @return the target of this ReturnaddressType
    */
-  public InstructionHandle getTarget(){
+  public InstructionHandle getTarget() {
     return returnTarget;
   }
 }

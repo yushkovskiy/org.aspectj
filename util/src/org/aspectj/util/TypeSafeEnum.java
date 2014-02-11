@@ -12,33 +12,38 @@
 
 package org.aspectj.util;
 
-import java.io.*;
+import org.jetbrains.annotations.NotNull;
+
+import java.io.DataOutputStream;
+import java.io.IOException;
 
 public class TypeSafeEnum {
-	private byte key;
-	private String name;
+  private final byte key;
+  @NotNull
+  private final String name;
 
-	public TypeSafeEnum(String name, int key) {
-		this.name = name;
-		if (key > Byte.MAX_VALUE || key < Byte.MIN_VALUE) {
-			throw new IllegalArgumentException("key doesn't fit into a byte: " + key);
-		}
-		this.key = (byte) key;
-	}
+  public TypeSafeEnum(@NotNull String name, int key) {
+    this.name = name;
+    if (key > Byte.MAX_VALUE || key < Byte.MIN_VALUE) {
+      throw new IllegalArgumentException("key doesn't fit into a byte: " + key);
+    }
+    this.key = (byte) key;
+  }
 
-	public String toString() {
-		return name;
-	}
+  public String toString() {
+    return name;
+  }
 
-	public String getName() {
-		return name;
-	}
+  @NotNull
+  public String getName() {
+    return name;
+  }
 
-	public byte getKey() {
-		return key;
-	}
+  public byte getKey() {
+    return key;
+  }
 
-	public void write(DataOutputStream s) throws IOException {
-		s.writeByte(key);
-	}
+  public void write(@NotNull DataOutputStream s) throws IOException {
+    s.writeByte(key);
+  }
 }

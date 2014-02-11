@@ -18,18 +18,20 @@ import junit.framework.*;
 
 public class AjdtBuilderTests extends TestCase {
 
-    public static Test suite() { 
-        TestSuite suite = new TestSuite(AjdtBuilderTests.class.getName());
-        //$JUnit-BEGIN$
-        suite.addTestSuite(AjBuildManagerTest.class); 
-		suite.addTestSuite(AsmBuilderTest.class); 
-		suite.addTestSuite(AjCompilerOptionsTest.class);
-		suite.addTestSuite(AjStateTest.class);
-		suite.addTestSuite(OutjarTest.class);
-        //$JUnit-END$
-        return suite;
-    }
+  public static Test suite() {
+    final TestSuite suite = new TestSuite(AjdtBuilderTests.class.getName());
+    //$JUnit-BEGIN$
+    suite.addTestSuite(AjBuildManagerTest.class);
+    suite.addTestSuite(AsmBuilderTest.class);
+    suite.addTestSuite(AjCompilerOptionsTest.class);
+    suite.addTestSuite(AjStateTest.class);
+    suite.addTestSuite(OutjarTest.class);
+    //$JUnit-END$
+    return suite;
+  }
 
-    public AjdtBuilderTests(String name) { super(name); }
+  public AjdtBuilderTests(String name) {
+    super(name);
+  }
 
 }  

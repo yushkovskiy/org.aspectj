@@ -11,107 +11,108 @@
  * ******************************************************************/
 package org.aspectj.weaver.patterns;
 
-import java.io.IOException;
-import java.util.Map;
-
 import org.aspectj.util.FuzzyBoolean;
 import org.aspectj.weaver.CompressingDataOutputStream;
 import org.aspectj.weaver.ResolvedType;
 import org.aspectj.weaver.World;
 
+import java.io.IOException;
+import java.util.Map;
+
 public class NoTypePattern extends TypePattern {
 
-	public NoTypePattern() {
-		super(false, false, new TypePatternList());
-	}
+  public NoTypePattern() {
+    super(false, false, new TypePatternList());
+  }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.aspectj.weaver.patterns.TypePattern#couldEverMatchSameTypesAs(org.aspectj.weaver.patterns.TypePattern)
-	 */
-	@Override
-	protected boolean couldEverMatchSameTypesAs(TypePattern other) {
-		return false;
-	}
+  /*
+   * (non-Javadoc)
+   *
+   * @see org.aspectj.weaver.patterns.TypePattern#couldEverMatchSameTypesAs(org.aspectj.weaver.patterns.TypePattern)
+   */
+  @Override
+  protected boolean couldEverMatchSameTypesAs(TypePattern other) {
+    return false;
+  }
 
-	/**
-	 * @see org.aspectj.weaver.patterns.TypePattern#matchesExactly(IType)
-	 */
-	@Override
-	protected boolean matchesExactly(ResolvedType type) {
-		return false;
-	}
+  /**
+   * @see org.aspectj.weaver.patterns.TypePattern#matchesExactly(IType)
+   */
+  @Override
+  protected boolean matchesExactly(ResolvedType type) {
+    return false;
+  }
 
-	@Override
-	protected boolean matchesExactly(ResolvedType type, ResolvedType annotatedType) {
-		return false;
-	}
+  @Override
+  protected boolean matchesExactly(ResolvedType type, ResolvedType annotatedType) {
+    return false;
+  }
 
-	/**
-	 * @see org.aspectj.weaver.patterns.TypePattern#matchesInstanceof(IType)
-	 */
-	@Override
-	public FuzzyBoolean matchesInstanceof(ResolvedType type) {
-		return FuzzyBoolean.NO;
-	}
+  /**
+   * @see org.aspectj.weaver.patterns.TypePattern#matchesInstanceof(IType)
+   */
+  @Override
+  public FuzzyBoolean matchesInstanceof(ResolvedType type) {
+    return FuzzyBoolean.NO;
+  }
 
-	@Override
-	public void write(CompressingDataOutputStream s) throws IOException {
-		s.writeByte(NO_KEY);
-	}
+  @Override
+  public void write(CompressingDataOutputStream s) throws IOException {
+    s.writeByte(NO_KEY);
+  }
 
-	/**
-	 * @see org.aspectj.weaver.patterns.TypePattern#matches(IType, MatchKind)
-	 */
-	// public FuzzyBoolean matches(IType type, MatchKind kind) {
-	// return FuzzyBoolean.YES;
-	// }
-	/**
-	 * @see org.aspectj.weaver.patterns.TypePattern#matchesSubtypes(IType)
-	 */
-	@Override
-	protected boolean matchesSubtypes(ResolvedType type) {
-		return false;
-	}
+  /**
+   * @see org.aspectj.weaver.patterns.TypePattern#matches(IType, MatchKind)
+   */
+  // public FuzzyBoolean matches(IType type, MatchKind kind) {
+  // return FuzzyBoolean.YES;
+  // }
 
-	@Override
-	public boolean isStar() {
-		return false;
-	}
+  /**
+   * @see org.aspectj.weaver.patterns.TypePattern#matchesSubtypes(IType)
+   */
+  @Override
+  protected boolean matchesSubtypes(ResolvedType type) {
+    return false;
+  }
 
-	@Override
-	public String toString() {
-		return "<nothing>";
-	}// FIXME AV - bad! toString() cannot be parsed back (not idempotent)
+  @Override
+  public boolean isStar() {
+    return false;
+  }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
-	@Override
-	public boolean equals(Object obj) {
-		return (obj instanceof NoTypePattern);
-	}
+  @Override
+  public String toString() {
+    return "<nothing>";
+  }// FIXME AV - bad! toString() cannot be parsed back (not idempotent)
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#hashCode()
-	 */
-	@Override
-	public int hashCode() {
-		return 17 * 37 * 37;
-	}
+  /*
+   * (non-Javadoc)
+   *
+   * @see java.lang.Object#equals(java.lang.Object)
+   */
+  @Override
+  public boolean equals(Object obj) {
+    return (obj instanceof NoTypePattern);
+  }
 
-	@Override
-	public Object accept(PatternNodeVisitor visitor, Object data) {
-		return visitor.visit(this, data);
-	}
+  /*
+   * (non-Javadoc)
+   *
+   * @see java.lang.Object#hashCode()
+   */
+  @Override
+  public int hashCode() {
+    return 17 * 37 * 37;
+  }
 
-	@Override
-	public TypePattern parameterizeWith(Map arg0, World w) {
-		return this;
-	}
+  @Override
+  public Object accept(PatternNodeVisitor visitor, Object data) {
+    return visitor.visit(this, data);
+  }
+
+  @Override
+  public TypePattern parameterizeWith(Map arg0, World w) {
+    return this;
+  }
 }

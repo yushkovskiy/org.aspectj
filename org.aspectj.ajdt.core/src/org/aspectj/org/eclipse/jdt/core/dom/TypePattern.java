@@ -4,7 +4,7 @@
  * under the terms of the Eclipse Public License v1.0 
  * which accompanies this distribution and is available at 
  * http://eclipse.org/legal/epl-v10.html 
- *  
+ *
  * Contributors: IBM Corporation - initial API and implementation 
  * 				 Helen Hawkins   - iniital version
  *               Nieraj Singh
@@ -16,41 +16,43 @@ package org.aspectj.org.eclipse.jdt.core.dom;
  */
 public abstract class TypePattern extends PatternNode {
 
-	private String typePatternExpression;
-	
-	public static final String EMPTY_EXPRESSION = "";
+  private String typePatternExpression;
 
-	TypePattern(AST ast) {
-		super(ast);
-	}
+  public static final String EMPTY_EXPRESSION = "";
 
-	TypePattern(AST ast, String typePatternExpression) {
-		super(ast);
-		this.typePatternExpression = typePatternExpression;
-	}
+  TypePattern(AST ast) {
+    super(ast);
+  }
 
-	/**
-	 * Should be called for internal setting only, if the expression needs to be set
-	 * lazily
-	 * @param typePatternExpression
-	 */
-	protected void setTypePatternExpression(String typePatternExpression) {
-		this.typePatternExpression = typePatternExpression;
-	}
+  TypePattern(AST ast, String typePatternExpression) {
+    super(ast);
+    this.typePatternExpression = typePatternExpression;
+  }
 
-	/**
-	 * Return the type pattern in expression form (String representation). In
-	 * many cases, this is not null, although it may be null in some cases like
-	 * the NoTypePattern
-	 * 
-	 * @return String expression of the type pattern. May be null.
-	 */
-	public String getTypePatternExpression() {
-		return typePatternExpression;
-	}
+  /**
+   * Should be called for internal setting only, if the expression needs to be set
+   * lazily
+   *
+   * @param typePatternExpression
+   */
+  protected void setTypePatternExpression(String typePatternExpression) {
+    this.typePatternExpression = typePatternExpression;
+  }
 
-	int treeSize() {
-		return memSize();
-	}
+  /**
+   * Return the type pattern in expression form (String representation). In
+   * many cases, this is not null, although it may be null in some cases like
+   * the NoTypePattern
+   *
+   * @return String expression of the type pattern. May be null.
+   */
+  public String getTypePatternExpression() {
+    return typePatternExpression;
+  }
+
+  @Override
+  int treeSize() {
+    return memSize();
+  }
 
 }

@@ -53,57 +53,59 @@ package org.aspectj.apache.bcel.classfile;
  * information on the Apache Software Foundation, please see
  * <http://www.apache.org/>.
  */
+
+import org.aspectj.apache.bcel.Constants;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import org.aspectj.apache.bcel.Constants;
-
 /**
  * Abstract super class for Fieldref and Methodref constants.
- * 
- * @version $Id: ConstantCP.java,v 1.5 2009/09/16 00:43:49 aclement Exp $
+ *
  * @author <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
+ * @version $Id: ConstantCP.java,v 1.5 2009/09/16 00:43:49 aclement Exp $
  * @see ConstantFieldref
  * @see ConstantMethodref
  * @see ConstantInterfaceMethodref
  */
 public abstract class ConstantCP extends Constant {
 
-	protected int classIndex, nameAndTypeIndex;
+  protected int classIndex, nameAndTypeIndex;
 
-	ConstantCP(byte tag, DataInputStream file) throws IOException {
-		this(tag, file.readUnsignedShort(), file.readUnsignedShort());
-	}
+  ConstantCP(byte tag, DataInputStream file) throws IOException {
+    this(tag, file.readUnsignedShort(), file.readUnsignedShort());
+  }
 
-	protected ConstantCP(byte tag, int classIndex, int nameAndTypeIndex) {
-		super(tag);
-		this.classIndex = classIndex;
-		this.nameAndTypeIndex = nameAndTypeIndex;
-	}
+  protected ConstantCP(byte tag, int classIndex, int nameAndTypeIndex) {
+    super(tag);
+    this.classIndex = classIndex;
+    this.nameAndTypeIndex = nameAndTypeIndex;
+  }
 
-	@Override
-	public final void dump(DataOutputStream file) throws IOException {
-		file.writeByte(tag);
-		file.writeShort(classIndex);
-		file.writeShort(nameAndTypeIndex);
-	}
+  @Override
+  public final void dump(@NotNull DataOutputStream file) throws IOException {
+    file.writeByte(tag);
+    file.writeShort(classIndex);
+    file.writeShort(nameAndTypeIndex);
+  }
 
-	public final int getClassIndex() {
-		return classIndex;
-	}
+  public final int getClassIndex() {
+    return classIndex;
+  }
 
-	public final int getNameAndTypeIndex() {
-		return nameAndTypeIndex;
-	}
+  public final int getNameAndTypeIndex() {
+    return nameAndTypeIndex;
+  }
 
-	public String getClass(ConstantPool cp) {
-		return cp.constantToString(classIndex, Constants.CONSTANT_Class);
-	}
+  public String getClass(ConstantPool cp) {
+    return cp.constantToString(classIndex, Constants.CONSTANT_Class);
+  }
 
-	@Override
-	public final String toString() {
-		return super.toString() + "(classIndex = " + classIndex + ", nameAndTypeIndex = " + nameAndTypeIndex + ")";
-	}
+  @Override
+  public final String toString() {
+    return super.toString() + "(classIndex = " + classIndex + ", nameAndTypeIndex = " + nameAndTypeIndex + ")";
+  }
 
 }

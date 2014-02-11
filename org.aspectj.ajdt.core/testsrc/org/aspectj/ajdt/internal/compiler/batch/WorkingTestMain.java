@@ -21,115 +21,114 @@ import org.aspectj.tools.ajc.AjcTests;
 
 public class WorkingTestMain {
 
-	public static void main(String[] args1) throws IOException {
-		//testExamples();
-		testOne();
-	}
-	
-	public static void testOne() throws IOException {
-		//CommandTestCase.checkCompile("src1/Parents.java", CommandTestCase.NO_ERRORS);
-		
-		//CommandTestCase.checkCompile("../../tests/new/ArgsInCflow2.java", CommandTestCase.NO_ERRORS);
-		
-		//CommandTestCase.checkCompile("src1/ParentsFail.java", CommandTestCase.NO_ERRORS);
-		
-		List args = new ArrayList();
-		args.add("-verbose");
-		
-		//args.add("-1.3");
-		args.add("-d");
-		args.add("out");
-		
-		args.add("-classpath");
-        args.add(AjcTests.aspectjrtClasspath() + File.pathSeparator
-                + "../testing-client/bin");
-		//args.add("../runtime/bin;../lib/junit/junit.jar");
-		
+  public static void main(String[] args1) throws IOException {
+    //testExamples();
+    testOne();
+  }
+
+  public static void testOne() throws IOException {
+    //CommandTestCase.checkCompile("src1/Parents.java", CommandTestCase.NO_ERRORS);
+
+    //CommandTestCase.checkCompile("../../tests/new/ArgsInCflow2.java", CommandTestCase.NO_ERRORS);
+
+    //CommandTestCase.checkCompile("src1/ParentsFail.java", CommandTestCase.NO_ERRORS);
+
+    final List args = new ArrayList();
+    args.add("-verbose");
+
+    //args.add("-1.3");
+    args.add("-d");
+    args.add("out");
+
+    args.add("-classpath");
+    args.add(AjcTests.aspectjrtClasspath() + File.pathSeparator
+        + "../testing-client/bin");
+    //args.add("../runtime/bin;../lib/junit/junit.jar");
+
 //		args.add("-injars");
 //		args.add("testdata/testclasses.jar");
-		
-		//args.add("-aspectpath");
-		//args.add("../weaver/testdata/megatrace.jar");
-		
-		args.add("c:/aspectj/scratch/arno/*.java");
-		//args.add("-XnoInline");
-		//args.add("../tests/new/Counting1.java");
-		//args.add("-Xlint:error");
-		//args.add("testdata/src1/InterType.java");
-		//args.add("@" + examplesDir + "tjp/files.lst");
-		
-		
-		CommandTestCase.runCompiler(args, CommandTestCase.NO_ERRORS);
-		//CommandTestCase.runCompiler(args, new int[] {11, 14, 18, 32, 43});
-		
-		//CommandTestCase.printGenerated("../out", "AroundA1");
+
+    //args.add("-aspectpath");
+    //args.add("../weaver/testdata/megatrace.jar");
+
+    args.add("c:/aspectj/scratch/arno/*.java");
+    //args.add("-XnoInline");
+    //args.add("../tests/new/Counting1.java");
+    //args.add("-Xlint:error");
+    //args.add("testdata/src1/InterType.java");
+    //args.add("@" + examplesDir + "tjp/files.lst");
+
+
+    CommandTestCase.runCompiler(args, CommandTestCase.NO_ERRORS);
+    //CommandTestCase.runCompiler(args, new int[] {11, 14, 18, 32, 43});
+
+    //CommandTestCase.printGenerated("../out", "AroundA1");
 //		CommandTestCase.printGenerated("../out", "SuperC");
-		CommandTestCase.printGenerated("../out", "org.schmidmeier.unittests.cache.TimeCacheTestsWorking");
+    CommandTestCase.printGenerated("../out", "org.schmidmeier.unittests.cache.TimeCacheTestsWorking");
 
-		TestUtil.runMain("out;../lib/test/testing-client.jar", "org.schmidmeier.unittests.cache.AllTimeCacheTests");
-	}
-	
-	private static String examplesDir = "../docs/dist/doc/examples/";
-	private static void example(String[] argfiles, String[] classes) {
-		List args = new ArrayList();
-		args.add("-verbose");
-		
-		args.add("-d");
-		args.add("out");
-		
-		args.add("-classpath");
-		args.add(AjcTests.aspectjrtClasspath());
-		
-		for (int i=0; i < argfiles.length; i++) {
-			args.add("@" + examplesDir + argfiles[i]);
-		}
-		
-		CommandTestCase.runCompiler(args, CommandTestCase.NO_ERRORS);
-		for (int i=0; i < classes.length; i++) {
-			TestUtil.runMain("out", classes[i]);
-		}		
-	}
-	
-	
-	public static void testExamples() throws IOException {
-		example(new String[] {"observer/files.lst"}, 
-				new String[] {}); // don't run the gui
-				
-		example(new String[] {"tjp/files.lst"}, 
-				new String[] {"tjp.Demo"});
-				
-		example(new String[] {"telecom/timing.lst"}, 
-				new String[] {"telecom.TimingSimulation"});
-				
-		example(new String[] {"telecom/billing.lst"}, 
-				new String[] {"telecom.BillingSimulation"});
-				
-		example(new String[] {"tracing/tracev1.lst"}, 
-				new String[] {"tracing.version1.TraceMyClasses"});
-				
-		example(new String[] {"tracing/tracev2.lst"}, 
-				new String[] {"tracing.version2.TraceMyClasses"});
-				
-		example(new String[] {"tracing/tracev3.lst"}, 
-				new String[] {"tracing.version3.TraceMyClasses"});
-				
+    TestUtil.runMain("out;../lib/test/testing-client.jar", "org.schmidmeier.unittests.cache.AllTimeCacheTests");
+  }
 
-		example(new String[] {"introduction/files.lst"}, 
-				new String[] {"introduction.HashablePoint", "introduction.ComparablePoint"});
+  private static String examplesDir = "../docs/dist/doc/examples/";
+
+  private static void example(String[] argfiles, String[] classes) {
+    final List args = new ArrayList();
+    args.add("-verbose");
+
+    args.add("-d");
+    args.add("out");
+
+    args.add("-classpath");
+    args.add(AjcTests.aspectjrtClasspath());
+
+    for (int i = 0; i < argfiles.length; i++) {
+      args.add("@" + examplesDir + argfiles[i]);
+    }
+
+    CommandTestCase.runCompiler(args, CommandTestCase.NO_ERRORS);
+    for (int i = 0; i < classes.length; i++) {
+      TestUtil.runMain("out", classes[i]);
+    }
+  }
 
 
-				
-		
-		example(new String[] {"bean/files.lst"}, 
-				new String[] {"bean.Demo"});
-				
-		example(new String[] {"spacewar/demo.lst"}, 
-				new String[] {});  // don't run the gui
-				
-		example(new String[] {"spacewar/debug.lst"}, 
-				new String[] {});  // don't run the gui
-				
-		System.out.println("done!!!!!!!!!!!!!!!!!!!!");
-	}
-		
+  public static void testExamples() throws IOException {
+    example(new String[]{"observer/files.lst"},
+        new String[]{}); // don't run the gui
+
+    example(new String[]{"tjp/files.lst"},
+        new String[]{"tjp.Demo"});
+
+    example(new String[]{"telecom/timing.lst"},
+        new String[]{"telecom.TimingSimulation"});
+
+    example(new String[]{"telecom/billing.lst"},
+        new String[]{"telecom.BillingSimulation"});
+
+    example(new String[]{"tracing/tracev1.lst"},
+        new String[]{"tracing.version1.TraceMyClasses"});
+
+    example(new String[]{"tracing/tracev2.lst"},
+        new String[]{"tracing.version2.TraceMyClasses"});
+
+    example(new String[]{"tracing/tracev3.lst"},
+        new String[]{"tracing.version3.TraceMyClasses"});
+
+
+    example(new String[]{"introduction/files.lst"},
+        new String[]{"introduction.HashablePoint", "introduction.ComparablePoint"});
+
+
+    example(new String[]{"bean/files.lst"},
+        new String[]{"bean.Demo"});
+
+    example(new String[]{"spacewar/demo.lst"},
+        new String[]{});  // don't run the gui
+
+    example(new String[]{"spacewar/debug.lst"},
+        new String[]{});  // don't run the gui
+
+    System.out.println("done!!!!!!!!!!!!!!!!!!!!");
+  }
+
 }

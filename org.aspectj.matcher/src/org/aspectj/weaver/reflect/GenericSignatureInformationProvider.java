@@ -14,18 +14,18 @@ package org.aspectj.weaver.reflect;
 import org.aspectj.weaver.UnresolvedType;
 
 /**
- * This interface exists to support two different strategies for answering 
+ * This interface exists to support two different strategies for answering
  * generic signature related questions on Java 5 and pre-Java 5.
  */
 public interface GenericSignatureInformationProvider {
 
-	UnresolvedType[]  getGenericParameterTypes(ReflectionBasedResolvedMemberImpl resolvedMember);
-	
-	UnresolvedType    getGenericReturnType(ReflectionBasedResolvedMemberImpl resolvedMember);
+  UnresolvedType[] getGenericParameterTypes(ReflectionBasedResolvedMemberImpl resolvedMember);
 
-	boolean isBridge(ReflectionBasedResolvedMemberImpl resolvedMember);
-	
-	boolean isVarArgs(ReflectionBasedResolvedMemberImpl resolvedMember);
-	
-	boolean isSynthetic(ReflectionBasedResolvedMemberImpl resolvedMember);
+  UnresolvedType getGenericReturnType(ReflectionBasedResolvedMemberImpl resolvedMember);
+
+  boolean isBridge(ReflectionBasedResolvedMemberImpl resolvedMember);
+
+  boolean isVarArgs(ReflectionBasedResolvedMemberImpl resolvedMember);
+
+  boolean isSynthetic(ReflectionBasedResolvedMemberImpl resolvedMember);
 }

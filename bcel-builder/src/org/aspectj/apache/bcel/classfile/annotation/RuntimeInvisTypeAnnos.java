@@ -11,27 +11,27 @@
  * ******************************************************************/
 package org.aspectj.apache.bcel.classfile.annotation;
 
+import org.aspectj.apache.bcel.Constants;
+import org.aspectj.apache.bcel.classfile.ClassVisitor;
+import org.aspectj.apache.bcel.classfile.ConstantPool;
+
 import java.io.DataInputStream;
 import java.io.IOException;
 
-import org.aspectj.apache.bcel.Constants;
-import org.aspectj.apache.bcel.classfile.ConstantPool;
-import org.aspectj.apache.bcel.classfile.ClassVisitor;
-
 public class RuntimeInvisTypeAnnos extends RuntimeTypeAnnos {
 
-	public RuntimeInvisTypeAnnos(int nameIdx, int len, DataInputStream dis,
-			ConstantPool cpool) throws IOException {
-		this(nameIdx, len, cpool);
-		readTypeAnnotations(dis, cpool);
-	}
+  public RuntimeInvisTypeAnnos(int nameIdx, int len, DataInputStream dis,
+                               ConstantPool cpool) throws IOException {
+    this(nameIdx, len, cpool);
+    readTypeAnnotations(dis, cpool);
+  }
 
-	public RuntimeInvisTypeAnnos(int nameIdx, int len, ConstantPool cpool) {
-		super(Constants.ATTR_RUNTIME_INVISIBLE_TYPE_ANNOTATIONS, true, nameIdx, len, cpool);
-	}
+  public RuntimeInvisTypeAnnos(int nameIdx, int len, ConstantPool cpool) {
+    super(Constants.ATTR_RUNTIME_INVISIBLE_TYPE_ANNOTATIONS, true, nameIdx, len, cpool);
+  }
 
-	public void accept(ClassVisitor v) {
-		v.visitRuntimeInvisibleTypeAnnotations(this);
-	}
-	
+  public void accept(ClassVisitor v) {
+    v.visitRuntimeInvisibleTypeAnnotations(this);
+  }
+
 }

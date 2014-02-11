@@ -24,74 +24,74 @@ import org.aspectj.apache.bcel.util.SyntheticRepository;
 
 
 public class VarargsTest extends BcelTestCase {
-	
 
-	protected void setUp() throws Exception {
-		super.setUp();
-	}
-	
-	
-	public void testVarargs() throws ClassNotFoundException {
-		JavaClass clazz = getClassFromJar("VarargsClass");
-		
-		checkMarkedVarargs(clazz,"foo",true);
-		checkMarkedVarargs(clazz,"goo",true);
-		checkMarkedVarargs(clazz,"hoo",false);
-	}
-	
-	public void testVarargsReadWrite() throws ClassNotFoundException,IOException {
-		JavaClass clazz = getClassFromJar("VarargsClass");
-		
-		checkMarkedVarargs(clazz,"foo",true);
-		checkMarkedVarargs(clazz,"goo",true);
-		checkMarkedVarargs(clazz,"hoo",false);
-		
-		//	 Write it out
-		File tfile = createTestdataFile("VarargsClass.class");
-		clazz.dump(tfile);
-		
-		SyntheticRepository repos2 = createRepos(".");
-		JavaClass           clazz2 = repos2.loadClass("VarargsClass");
-		
-		checkMarkedVarargs(clazz,"foo",true);
-		checkMarkedVarargs(clazz,"goo",true);
-		checkMarkedVarargs(clazz,"hoo",false);
 
-		assertTrue(tfile.delete());
-	}
-	
-	// helper methods
-		
-	public void checkMarkedVarargs(JavaClass clazz,String methodname,boolean shouldBeMarked) {
-		Method[] methods = clazz.getMethods();
+  protected void setUp() throws Exception {
+    super.setUp();
+  }
 
-		for (int i = 0; i < methods.length; i++) {
-			Method m = methods[i];
-			if (m.getName().equals(methodname)) {
-				assertTrue("Method '"+methodname+"' should answer varargs="+shouldBeMarked,
-						m.isVarargs()==shouldBeMarked);
-			}
-		}
-	}
-	
 
-	// helper methods
-	
-	public void checkValue(AnnotationGen a,String name,String tostring) {
-		for (Iterator<NameValuePair> i = a.getValues().iterator(); i.hasNext();) {
-			NameValuePair element = i.next();
-			if (element.getNameString().equals(name)) {
-				if (!element.getValue().stringifyValue().equals(tostring)) {
-					fail("Expected element "+name+" to have value "+tostring+" but it had value "+element.getValue().stringifyValue());
-				}
-				return;
-			}
-		}
-		fail("Didnt find named element "+name);
-	}
+  public void testVarargs() throws ClassNotFoundException {
+    final JavaClass clazz = getClassFromJar("VarargsClass");
 
-	protected void tearDown() throws Exception {
-		super.tearDown();
-	}
-	
+    checkMarkedVarargs(clazz, "foo", true);
+    checkMarkedVarargs(clazz, "goo", true);
+    checkMarkedVarargs(clazz, "hoo", false);
+  }
+
+  public void testVarargsReadWrite() throws ClassNotFoundException, IOException {
+    final JavaClass clazz = getClassFromJar("VarargsClass");
+
+    checkMarkedVarargs(clazz, "foo", true);
+    checkMarkedVarargs(clazz, "goo", true);
+    checkMarkedVarargs(clazz, "hoo", false);
+
+    //	 Write it out
+    final File tfile = createTestdataFile("VarargsClass.class");
+    clazz.dump(tfile);
+
+    final SyntheticRepository repos2 = createRepos(".");
+    final JavaClass clazz2 = repos2.loadClass("VarargsClass");
+
+    checkMarkedVarargs(clazz, "foo", true);
+    checkMarkedVarargs(clazz, "goo", true);
+    checkMarkedVarargs(clazz, "hoo", false);
+
+    assertTrue(tfile.delete());
+  }
+
+  // helper methods
+
+  public void checkMarkedVarargs(JavaClass clazz, String methodname, boolean shouldBeMarked) {
+    final Method[] methods = clazz.getMethods();
+
+    for (int i = 0; i < methods.length; i++) {
+      final Method m = methods[i];
+      if (m.getName().equals(methodname)) {
+        assertTrue("Method '" + methodname + "' should answer varargs=" + shouldBeMarked,
+            m.isVarargs() == shouldBeMarked);
+      }
+    }
+  }
+
+
+  // helper methods
+
+  public void checkValue(AnnotationGen a, String name, String tostring) {
+    for (final Iterator<NameValuePair> i = a.getValues().iterator(); i.hasNext(); ) {
+      final NameValuePair element = i.next();
+      if (element.getNameString().equals(name)) {
+        if (!element.getValue().stringifyValue().equals(tostring)) {
+          fail("Expected element " + name + " to have value " + tostring + " but it had value " + element.getValue().stringifyValue());
+        }
+        return;
+      }
+    }
+    fail("Didnt find named element " + name);
+  }
+
+  protected void tearDown() throws Exception {
+    super.tearDown();
+  }
+
 }

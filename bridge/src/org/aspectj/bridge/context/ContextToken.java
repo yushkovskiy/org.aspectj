@@ -13,8 +13,9 @@ package org.aspectj.bridge.context;
 
 /**
  * When an entry is added to the CompilationAndWeavingContext stack,
- * a ContextToken is returned. 
+ * a ContextToken is returned.
  * When leaving a compilation or weaving phase, this token must be supplied.
  * The token details are opaque to clients
  */
-public interface ContextToken {}
+public interface ContextToken {
+}

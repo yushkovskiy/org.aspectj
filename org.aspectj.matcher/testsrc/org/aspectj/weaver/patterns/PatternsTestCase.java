@@ -11,25 +11,26 @@ import org.aspectj.weaver.World;
 
 public abstract class PatternsTestCase extends TestCase {
 
-	protected World world;
+  protected World world;
 
-	public void setUp() throws Exception {
-		super.setUp();
-		world = getWorld();
-	}
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    world = getWorld();
+  }
 
-	protected File getTestDataJar() {
-		return new File("../weaver/testdata/testcode.jar");
-	}
+  protected File getTestDataJar() {
+    return new File("../weaver/testdata/testcode.jar");
+  }
 
-	public URLClassLoader getClassLoaderForFile(File f) {
-		try {
-			URLClassLoader ucl = new URLClassLoader(new URL[] { f.toURL() }, this.getClass().getClassLoader());
-			return ucl;
-		} catch (MalformedURLException mue) {
-			throw new RuntimeException(mue);
-		}
-	}
+  public URLClassLoader getClassLoaderForFile(File f) {
+    try {
+      final URLClassLoader ucl = new URLClassLoader(new URL[]{f.toURL()}, this.getClass().getClassLoader());
+      return ucl;
+    } catch (MalformedURLException mue) {
+      throw new RuntimeException(mue);
+    }
+  }
 
-	public abstract World getWorld();
+  public abstract World getWorld();
 }

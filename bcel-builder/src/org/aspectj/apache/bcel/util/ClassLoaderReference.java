@@ -62,6 +62,6 @@ package org.aspectj.apache.bcel.util;
  */
 public interface ClassLoaderReference {
 
-    java.lang.ClassLoader getClassLoader();
-    
+  java.lang.ClassLoader getClassLoader();
+
 }

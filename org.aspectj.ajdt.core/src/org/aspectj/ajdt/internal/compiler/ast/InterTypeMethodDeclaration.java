@@ -12,8 +12,6 @@
 
 package org.aspectj.ajdt.internal.compiler.ast;
 
-import java.lang.reflect.Modifier;
-
 import org.aspectj.ajdt.internal.compiler.lookup.EclipseFactory;
 import org.aspectj.ajdt.internal.compiler.lookup.EclipseTypeMunger;
 import org.aspectj.ajdt.internal.compiler.problem.AjProblemReporter;
@@ -22,383 +20,376 @@ import org.aspectj.org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.aspectj.org.eclipse.jdt.internal.compiler.ast.Argument;
 import org.aspectj.org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.aspectj.org.eclipse.jdt.internal.compiler.ast.LocalDeclaration;
-import org.aspectj.org.eclipse.jdt.internal.compiler.ast.TypeParameter;
 import org.aspectj.org.eclipse.jdt.internal.compiler.ast.TypeReference;
 import org.aspectj.org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
 import org.aspectj.org.eclipse.jdt.internal.compiler.codegen.CodeStream;
 import org.aspectj.org.eclipse.jdt.internal.compiler.codegen.Opcodes;
 import org.aspectj.org.eclipse.jdt.internal.compiler.flow.FlowInfo;
 import org.aspectj.org.eclipse.jdt.internal.compiler.flow.InitializationFlowContext;
-import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.ClassScope;
-import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.ExtraCompilerModifiers;
-import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.LocalVariableBinding;
-import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
-import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
-import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
-import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.TagBits;
-import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
-import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.TypeVariableBinding;
+import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.*;
 import org.aspectj.org.eclipse.jdt.internal.compiler.parser.Parser;
 import org.aspectj.org.eclipse.jdt.internal.compiler.problem.AbortCompilationUnit;
-import org.aspectj.weaver.AjAttribute;
-import org.aspectj.weaver.AjcMemberMaker;
-import org.aspectj.weaver.Constants;
-import org.aspectj.weaver.NameMangler;
-import org.aspectj.weaver.NewMethodTypeMunger;
-import org.aspectj.weaver.ResolvedMember;
-import org.aspectj.weaver.ResolvedMemberImpl;
-import org.aspectj.weaver.ResolvedType;
-import org.aspectj.weaver.Shadow;
-import org.aspectj.weaver.UnresolvedType;
+import org.aspectj.weaver.*;
+
+import java.lang.reflect.Modifier;
 
 /**
  * An inter-type method declaration.
- * 
+ *
  * @author Jim Hugunin
  */
 public class InterTypeMethodDeclaration extends InterTypeDeclaration {
-	public InterTypeMethodDeclaration(CompilationResult result, TypeReference onType) {
-		super(result, onType);
-	}
+  public InterTypeMethodDeclaration(CompilationResult result, TypeReference onType) {
+    super(result, onType);
+  }
 
-	public void parseStatements(Parser parser, CompilationUnitDeclaration unit) {
-		if (ignoreFurtherInvestigation)
-			return;
-		if (!Modifier.isAbstract(declaredModifiers)) {
-			parser.parse(this, unit);
-		}
-	}
+  @Override
+  public void parseStatements(Parser parser, CompilationUnitDeclaration unit) {
+    if (ignoreFurtherInvestigation)
+      return;
+    if (!Modifier.isAbstract(declaredModifiers)) {
+      parser.parse(this, unit);
+    }
+  }
 
-	protected char[] getPrefix() {
-		return (NameMangler.ITD_PREFIX + "interMethod$").toCharArray();
-	}
+  @Override
+  protected char[] getPrefix() {
+    return (NameMangler.ITD_PREFIX + "interMethod$").toCharArray();
+  }
 
-	public boolean isFinal() {
-		return (declaredModifiers & ClassFileConstants.AccFinal) != 0;
-	}
+  public boolean isFinal() {
+    return (declaredModifiers & ClassFileConstants.AccFinal) != 0;
+  }
 
-	public void analyseCode(ClassScope currentScope, InitializationFlowContext flowContext, FlowInfo flowInfo) {
-		if (Modifier.isAbstract(declaredModifiers))
-			return;
+  @Override
+  public void analyseCode(ClassScope currentScope, InitializationFlowContext flowContext, FlowInfo flowInfo) {
+    if (Modifier.isAbstract(declaredModifiers))
+      return;
 
-		super.analyseCode(currentScope, flowContext, flowInfo);
-	}
+    super.analyseCode(currentScope, flowContext, flowInfo);
+  }
 
-	public void resolve(ClassScope upperScope) {
-		if (munger == null)
-			ignoreFurtherInvestigation = true;
-		if (binding == null)
-			ignoreFurtherInvestigation = true;
-		if (ignoreFurtherInvestigation)
-			return;
+  @Override
+  public void resolve(ClassScope upperScope) {
+    if (munger == null)
+      ignoreFurtherInvestigation = true;
+    if (binding == null)
+      ignoreFurtherInvestigation = true;
+    if (ignoreFurtherInvestigation)
+      return;
 
-		if (!Modifier.isStatic(declaredModifiers)) {
-			this.arguments = AstUtil.insert(AstUtil.makeFinalArgument("ajc$this_".toCharArray(), onTypeBinding), this.arguments);
-			binding.parameters = AstUtil.insert(onTypeBinding, binding.parameters);
-			
-			// If the inserted argument is a generic type, we should include the associated type variables to ensure
-			// the generated signature is correct (it will be checked by eclipse when this type is consumed in binary form).
-			TypeVariableBinding onTypeTVBs[] = onTypeBinding.typeVariables();
-			if (onTypeTVBs!=null && onTypeTVBs.length!=0) {
-				// The type parameters don't seem to need to be correct
-	//			TypeParameter tp = new TypeParameter();
-	//			tp.binding = tvb[0];
-	//			tp.name = tvb[0].sourceName;
-	//			this.typeParameters = AstUtil.insert(tp,this.typeParameters);
-				binding.typeVariables = AstUtil.insert(onTypeBinding.typeVariables(), binding.typeVariables);
-			}
-		}
+    if (!Modifier.isStatic(declaredModifiers)) {
+      this.arguments = AstUtil.insert(AstUtil.makeFinalArgument("ajc$this_".toCharArray(), onTypeBinding), this.arguments);
+      binding.parameters = AstUtil.insert(onTypeBinding, binding.parameters);
 
-		super.resolve(upperScope);
-	}
+      // If the inserted argument is a generic type, we should include the associated type variables to ensure
+      // the generated signature is correct (it will be checked by eclipse when this type is consumed in binary form).
+      final TypeVariableBinding[] onTypeTVBs = onTypeBinding.typeVariables();
+      if (onTypeTVBs != null && onTypeTVBs.length != 0) {
+        // The type parameters don't seem to need to be correct
+        //			TypeParameter tp = new TypeParameter();
+        //			tp.binding = tvb[0];
+        //			tp.name = tvb[0].sourceName;
+        //			this.typeParameters = AstUtil.insert(tp,this.typeParameters);
+        binding.typeVariables = AstUtil.insert(onTypeBinding.typeVariables(), binding.typeVariables);
+      }
+    }
 
-	public void resolveStatements() {
-		checkAndSetModifiersForMethod();
-		if ((modifiers & ExtraCompilerModifiers.AccSemicolonBody) != 0) {
-			if ((declaredModifiers & ClassFileConstants.AccAbstract) == 0)
-				scope.problemReporter().methodNeedBody(this);
-		} else {
-			// the method HAS a body --> abstract native modifiers are forbiden
-			if (((declaredModifiers & ClassFileConstants.AccAbstract) != 0))
-				scope.problemReporter().methodNeedingNoBody(this);
-		}
+    super.resolve(upperScope);
+  }
 
-		// XXX AMC we need to do this, but I'm not 100% comfortable as I don't
-		// know why the return type is wrong in this case. Also, we don't seem to need
-		// to do it for args...
-		if (munger.getSignature().getReturnType().isRawType()) {
-			if (!binding.returnType.isRawType()) {
-				EclipseFactory world = EclipseFactory.fromScopeLookupEnvironment(scope);
-				binding.returnType = world.makeTypeBinding(munger.getSignature().getReturnType());
-			}
-		}
+  @Override
+  public void resolveStatements() {
+    checkAndSetModifiersForMethod();
+    if ((modifiers & ExtraCompilerModifiers.AccSemicolonBody) != 0) {
+      if ((declaredModifiers & ClassFileConstants.AccAbstract) == 0)
+        scope.problemReporter().methodNeedBody(this);
+    } else {
+      // the method HAS a body --> abstract native modifiers are forbiden
+      if (((declaredModifiers & ClassFileConstants.AccAbstract) != 0))
+        scope.problemReporter().methodNeedingNoBody(this);
+    }
 
-		// check @Override annotation - based on MethodDeclaration.resolveStatements() @Override processing
-		checkOverride: {
-			if (this.binding == null)
-				break checkOverride;
-			if (this.scope.compilerOptions().sourceLevel < ClassFileConstants.JDK1_5)
-				break checkOverride;
-			boolean hasOverrideAnnotation = (this.binding.tagBits & TagBits.AnnotationOverride) != 0;
+    // XXX AMC we need to do this, but I'm not 100% comfortable as I don't
+    // know why the return type is wrong in this case. Also, we don't seem to need
+    // to do it for args...
+    if (munger.getSignature().getReturnType().isRawType()) {
+      if (!binding.returnType.isRawType()) {
+        final EclipseFactory world = EclipseFactory.fromScopeLookupEnvironment(scope);
+        binding.returnType = world.makeTypeBinding(munger.getSignature().getReturnType());
+      }
+    }
 
-			// Need to verify
-			if (hasOverrideAnnotation) {
+    // check @Override annotation - based on MethodDeclaration.resolveStatements() @Override processing
+    checkOverride:
+    {
+      if (this.binding == null)
+        break checkOverride;
+      if (this.scope.compilerOptions().sourceLevel < ClassFileConstants.JDK1_5)
+        break checkOverride;
+      final boolean hasOverrideAnnotation = (this.binding.tagBits & TagBits.AnnotationOverride) != 0;
 
-				// Work out the real method binding that we can use for comparison
-				EclipseFactory world = EclipseFactory.fromScopeLookupEnvironment(scope);
-				MethodBinding realthing = world.makeMethodBinding(munger.getSignature(), munger.getTypeVariableAliases());
+      // Need to verify
+      if (hasOverrideAnnotation) {
 
-				boolean reportError = true;
-				// Go up the hierarchy, looking for something we override
-				ReferenceBinding supertype = onTypeBinding.superclass();
-				while (supertype != null && reportError) {
-					MethodBinding[] possibles = supertype.getMethods(declaredSelector);
-					for (int i = 0; i < possibles.length; i++) {
-						MethodBinding mb = possibles[i];
+        // Work out the real method binding that we can use for comparison
+        final EclipseFactory world = EclipseFactory.fromScopeLookupEnvironment(scope);
+        final MethodBinding realthing = world.makeMethodBinding(munger.getSignature(), munger.getTypeVariableAliases());
 
-						boolean couldBeMatch = true;
-						if (mb.parameters.length != realthing.parameters.length)
-							couldBeMatch = false;
-						else {
-							for (int j = 0; j < mb.parameters.length && couldBeMatch; j++) {
-								if (!mb.parameters[j].equals(realthing.parameters[j]))
-									couldBeMatch = false;
-							}
-						}
-						// return types compatible? (allow for covariance)
-						if (couldBeMatch && !returnType.resolvedType.isCompatibleWith(mb.returnType))
-							couldBeMatch = false;
-						if (couldBeMatch)
-							reportError = false;
-					}
-					supertype = supertype.superclass(); // superclass of object is null
-				}
-				// If we couldn't find something we override, report the error
-				if (reportError)
-					((AjProblemReporter) this.scope.problemReporter()).itdMethodMustOverride(this, realthing);
-			}
-		}
+        boolean reportError = true;
+        // Go up the hierarchy, looking for something we override
+        ReferenceBinding supertype = onTypeBinding.superclass();
+        while (supertype != null && reportError) {
+          final MethodBinding[] possibles = supertype.getMethods(declaredSelector);
+          for (int i = 0; i < possibles.length; i++) {
+            final MethodBinding mb = possibles[i];
 
-		if (!Modifier.isAbstract(declaredModifiers))
-			super.resolveStatements();
-		if (Modifier.isStatic(declaredModifiers)) {
-			// Check the target for ITD is not an interface
-			if (onTypeBinding.isInterface()) {
-				scope.problemReporter().signalError(sourceStart, sourceEnd, "methods in interfaces cannot be declared static");
-			}
-		}
-	}
+            boolean couldBeMatch = true;
+            if (mb.parameters.length != realthing.parameters.length)
+              couldBeMatch = false;
+            else {
+              for (int j = 0; j < mb.parameters.length && couldBeMatch; j++) {
+                if (!mb.parameters[j].equals(realthing.parameters[j]))
+                  couldBeMatch = false;
+              }
+            }
+            // return types compatible? (allow for covariance)
+            if (couldBeMatch && !returnType.resolvedType.isCompatibleWith(mb.returnType))
+              couldBeMatch = false;
+            if (couldBeMatch)
+              reportError = false;
+          }
+          supertype = supertype.superclass(); // superclass of object is null
+        }
+        // If we couldn't find something we override, report the error
+        if (reportError)
+          ((AjProblemReporter) this.scope.problemReporter()).itdMethodMustOverride(this, realthing);
+      }
+    }
 
-	public EclipseTypeMunger build(ClassScope classScope) {
-		EclipseFactory factory = EclipseFactory.fromScopeLookupEnvironment(classScope);
+    if (!Modifier.isAbstract(declaredModifiers))
+      super.resolveStatements();
+    if (Modifier.isStatic(declaredModifiers)) {
+      // Check the target for ITD is not an interface
+      if (onTypeBinding.isInterface()) {
+        scope.problemReporter().signalError(sourceStart, sourceEnd, "methods in interfaces cannot be declared static");
+      }
+    }
+  }
 
-		resolveOnType(classScope);
-		if (ignoreFurtherInvestigation)
-			return null;
+  @Override
+  public EclipseTypeMunger build(ClassScope classScope) {
+    final EclipseFactory factory = EclipseFactory.fromScopeLookupEnvironment(classScope);
 
-		binding = classScope.referenceContext.binding.resolveTypesFor(binding);
-		if (binding == null) {
-			// if binding is null, we failed to find a type used in the method params, this error
-			// has already been reported.
-			this.ignoreFurtherInvestigation = true;
-			// return null;
-			throw new AbortCompilationUnit(compilationResult, null);
-		}
+    resolveOnType(classScope);
+    if (ignoreFurtherInvestigation)
+      return null;
 
-		if (isTargetAnnotation(classScope, "method"))
-			return null; // Error message output in isTargetAnnotation
-		if (isTargetEnum(classScope, "method"))
-			return null; // Error message output in isTargetEnum
+    binding = classScope.referenceContext.binding.resolveTypesFor(binding);
+    if (binding == null) {
+      // if binding is null, we failed to find a type used in the method params, this error
+      // has already been reported.
+      this.ignoreFurtherInvestigation = true;
+      // return null;
+      throw new AbortCompilationUnit(compilationResult, null);
+    }
 
-		if (interTypeScope == null)
-			return null; // We encountered a problem building the scope, don't continue - error already reported
+    if (isTargetAnnotation(classScope, "method"))
+      return null; // Error message output in isTargetAnnotation
+    if (isTargetEnum(classScope, "method"))
+      return null; // Error message output in isTargetEnum
 
-		// This signature represents what we want consumers of the targetted type to 'see'
-		// must use the factory method to build it since there may be typevariables from the binding
-		// referred to in the parameters/returntype
-		ResolvedMemberImpl sig = factory.makeResolvedMemberForITD(binding, onTypeBinding, interTypeScope.getRecoveryAliases());
-		sig.resetName(new String(declaredSelector));
-		int resetModifiers = declaredModifiers;
-		if (binding.isVarargs())
-			resetModifiers = resetModifiers | Constants.ACC_VARARGS;
-		sig.resetModifiers(resetModifiers);
-		NewMethodTypeMunger myMunger = new NewMethodTypeMunger(sig, null, typeVariableAliases);
-		setMunger(myMunger);
-		ResolvedType aspectType = factory.fromEclipse(classScope.referenceContext.binding);
-		ResolvedMember me = myMunger.getInterMethodBody(aspectType);
-		this.selector = binding.selector = me.getName().toCharArray();
-		return new EclipseTypeMunger(factory, myMunger, aspectType, this);
-	}
+    if (interTypeScope == null)
+      return null; // We encountered a problem building the scope, don't continue - error already reported
 
-	private AjAttribute makeAttribute() {
-		return new AjAttribute.TypeMunger(munger);
-	}
+    // This signature represents what we want consumers of the targetted type to 'see'
+    // must use the factory method to build it since there may be typevariables from the binding
+    // referred to in the parameters/returntype
+    final ResolvedMemberImpl sig = factory.makeResolvedMemberForITD(binding, onTypeBinding, interTypeScope.getRecoveryAliases());
+    sig.resetName(new String(declaredSelector));
+    int resetModifiers = declaredModifiers;
+    if (binding.isVarargs())
+      resetModifiers = resetModifiers | Constants.ACC_VARARGS;
+    sig.resetModifiers(resetModifiers);
+    final NewMethodTypeMunger myMunger = new NewMethodTypeMunger(sig, null, typeVariableAliases);
+    setMunger(myMunger);
+    final ResolvedType aspectType = factory.fromEclipse(classScope.referenceContext.binding);
+    final ResolvedMember me = myMunger.getInterMethodBody(aspectType);
+    this.selector = binding.selector = me.getName().toCharArray();
+    return new EclipseTypeMunger(factory, myMunger, aspectType, this);
+  }
 
-	public void generateCode(ClassScope classScope, ClassFile classFile) {
-		if (ignoreFurtherInvestigation) {
-			// System.err.println("no code for " + this);
-			return;
-		}
+  private AjAttribute makeAttribute() {
+    return new AjAttribute.TypeMunger(munger);
+  }
 
-		classFile.extraAttributes.add(new EclipseAttributeAdapter(makeAttribute()));
+  @Override
+  public void generateCode(ClassScope classScope, ClassFile classFile) {
+    if (ignoreFurtherInvestigation) {
+      // System.err.println("no code for " + this);
+      return;
+    }
 
-		if (!Modifier.isAbstract(declaredModifiers)) {
-			super.generateCode(classScope, classFile); // this makes the interMethodBody
-		}
+    classFile.extraAttributes.add(new EclipseAttributeAdapter(makeAttribute()));
 
-		// annotations on the ITD declaration get put on this method
-		generateDispatchMethod(classScope, classFile);
-	}
+    if (!Modifier.isAbstract(declaredModifiers)) {
+      super.generateCode(classScope, classFile); // this makes the interMethodBody
+    }
 
-	public void generateDispatchMethod(ClassScope classScope, ClassFile classFile) {
-		EclipseFactory world = EclipseFactory.fromScopeLookupEnvironment(classScope);
+    // annotations on the ITD declaration get put on this method
+    generateDispatchMethod(classScope, classFile);
+  }
 
-		UnresolvedType aspectType = world.fromBinding(classScope.referenceContext.binding);
-		ResolvedMember signature = munger.getSignature();
+  public void generateDispatchMethod(ClassScope classScope, ClassFile classFile) {
+    final EclipseFactory world = EclipseFactory.fromScopeLookupEnvironment(classScope);
 
-		ResolvedMember dispatchMember = AjcMemberMaker.interMethodDispatcher(signature, aspectType);
-		MethodBinding dispatchBinding = world.makeMethodBinding(dispatchMember, munger.getTypeVariableAliases(), munger
-				.getSignature().getDeclaringType());
-		MethodBinding introducedMethod = world.makeMethodBinding(AjcMemberMaker.interMethod(signature, aspectType, onTypeBinding
-				.isInterface()), munger.getTypeVariableAliases());
+    final UnresolvedType aspectType = world.fromBinding(classScope.referenceContext.binding);
+    final ResolvedMember signature = munger.getSignature();
 
-		classFile.generateMethodInfoHeader(dispatchBinding);
-		int methodAttributeOffset = classFile.contentsOffset;
+    final ResolvedMember dispatchMember = AjcMemberMaker.interMethodDispatcher(signature, aspectType);
+    final MethodBinding dispatchBinding = world.makeMethodBinding(dispatchMember, munger.getTypeVariableAliases(), munger
+        .getSignature().getDeclaringType());
+    final MethodBinding introducedMethod = world.makeMethodBinding(AjcMemberMaker.interMethod(signature, aspectType, onTypeBinding
+        .isInterface()), munger.getTypeVariableAliases());
 
-		// Watch out! We are passing in 'binding' here (instead of dispatchBinding) so that
-		// the dispatch binding attributes will include the annotations from the 'binding'.
-		// There is a chance that something else on the binding (e.g. throws clause) might
-		// damage the attributes generated for the dispatch binding.
-		int attributeNumber = classFile.generateMethodInfoAttributes(binding, makeEffectiveSignatureAttribute(signature,
-				Shadow.MethodCall, false));
-		int codeAttributeOffset = classFile.contentsOffset;
-		classFile.generateCodeAttributeHeader();
-		CodeStream codeStream = classFile.codeStream;
-		codeStream.reset(this, classFile);
-		codeStream.initializeMaxLocals(dispatchBinding);
+    classFile.generateMethodInfoHeader(dispatchBinding);
+    final int methodAttributeOffset = classFile.contentsOffset;
 
-		Argument[] itdArgs = this.arguments;
-		if (itdArgs != null) {
-			for (int a = 0; a < itdArgs.length; a++) {
-				LocalVariableBinding lvb = itdArgs[a].binding;
-				LocalVariableBinding lvbCopy = new LocalVariableBinding(lvb.name, lvb.type, lvb.modifiers, true);
-				// e37: have to create a declaration so that the check in ClassFile (line 2538) won't skip it
-				lvbCopy.declaration = new LocalDeclaration(itdArgs[a].name,0,0);
-				codeStream.record(lvbCopy);
-				lvbCopy.recordInitializationStartPC(0);
-				lvbCopy.resolvedPosition = lvb.resolvedPosition;
-			}
-		}
+    // Watch out! We are passing in 'binding' here (instead of dispatchBinding) so that
+    // the dispatch binding attributes will include the annotations from the 'binding'.
+    // There is a chance that something else on the binding (e.g. throws clause) might
+    // damage the attributes generated for the dispatch binding.
+    int attributeNumber = classFile.generateMethodInfoAttributes(binding, makeEffectiveSignatureAttribute(signature,
+        Shadow.MethodCall, false));
+    final int codeAttributeOffset = classFile.contentsOffset;
+    classFile.generateCodeAttributeHeader();
+    final CodeStream codeStream = classFile.codeStream;
+    codeStream.reset(this, classFile);
+    codeStream.initializeMaxLocals(dispatchBinding);
 
-		MethodBinding methodBinding = introducedMethod;
-		TypeBinding[] parameters = methodBinding.parameters;
-		int length = parameters.length;
-		int resolvedPosition;
-		if (methodBinding.isStatic())
-			resolvedPosition = 0;
-		else {
-			codeStream.aload_0();
-			resolvedPosition = 1;
-		}
-		for (int i = 0; i < length; i++) {
-			codeStream.load(parameters[i], resolvedPosition);
-			if ((parameters[i] == TypeBinding.DOUBLE) || (parameters[i] == TypeBinding.LONG))
-				resolvedPosition += 2;
-			else
-				resolvedPosition++;
-		}
-		// TypeBinding type;
-		if (methodBinding.isStatic())
-			codeStream.invoke(Opcodes.OPC_invokestatic,methodBinding,null);
-		else {
-			if (methodBinding.declaringClass.isInterface()) {
-				codeStream.invoke(Opcodes.OPC_invokeinterface, methodBinding, null);
-			} else {
-				codeStream.invoke(Opcodes.OPC_invokevirtual, methodBinding, null);
-			}
-		}
-		AstUtil.generateReturn(dispatchBinding.returnType, codeStream);
+    final Argument[] itdArgs = this.arguments;
+    if (itdArgs != null) {
+      for (int a = 0; a < itdArgs.length; a++) {
+        final LocalVariableBinding lvb = itdArgs[a].binding;
+        final LocalVariableBinding lvbCopy = new LocalVariableBinding(lvb.name, lvb.type, lvb.modifiers, true);
+        // e37: have to create a declaration so that the check in ClassFile (line 2538) won't skip it
+        lvbCopy.declaration = new LocalDeclaration(itdArgs[a].name, 0, 0);
+        codeStream.record(lvbCopy);
+        lvbCopy.recordInitializationStartPC(0);
+        lvbCopy.resolvedPosition = lvb.resolvedPosition;
+      }
+    }
 
-		// tag the local variables as used throughout the method
-		if (itdArgs != null && codeStream.locals != null) {
-			for (int a = 0; a < itdArgs.length; a++) {
-				if (codeStream.locals[a] != null) {
-					codeStream.locals[a].recordInitializationEndPC(codeStream.position);
-				}
-			}
-		}
-		classFile.completeCodeAttribute(codeAttributeOffset);
-		attributeNumber++;
-		classFile.completeMethodInfo(binding,methodAttributeOffset, attributeNumber);
-	}
+    final MethodBinding methodBinding = introducedMethod;
+    final TypeBinding[] parameters = methodBinding.parameters;
+    final int length = parameters.length;
+    int resolvedPosition;
+    if (methodBinding.isStatic())
+      resolvedPosition = 0;
+    else {
+      codeStream.aload_0();
+      resolvedPosition = 1;
+    }
+    for (int i = 0; i < length; i++) {
+      codeStream.load(parameters[i], resolvedPosition);
+      if ((parameters[i] == TypeBinding.DOUBLE) || (parameters[i] == TypeBinding.LONG))
+        resolvedPosition += 2;
+      else
+        resolvedPosition++;
+    }
+    // TypeBinding type;
+    if (methodBinding.isStatic())
+      codeStream.invoke(Opcodes.OPC_invokestatic, methodBinding, null);
+    else {
+      if (methodBinding.declaringClass.isInterface()) {
+        codeStream.invoke(Opcodes.OPC_invokeinterface, methodBinding, null);
+      } else {
+        codeStream.invoke(Opcodes.OPC_invokevirtual, methodBinding, null);
+      }
+    }
+    AstUtil.generateReturn(dispatchBinding.returnType, codeStream);
 
-	protected Shadow.Kind getShadowKindForBody() {
-		return Shadow.MethodExecution;
-	}
+    // tag the local variables as used throughout the method
+    if (itdArgs != null && codeStream.locals != null) {
+      for (int a = 0; a < itdArgs.length; a++) {
+        if (codeStream.locals[a] != null) {
+          codeStream.locals[a].recordInitializationEndPC(codeStream.position);
+        }
+      }
+    }
+    classFile.completeCodeAttribute(codeAttributeOffset);
+    attributeNumber++;
+    classFile.completeMethodInfo(binding, methodAttributeOffset, attributeNumber);
+  }
 
-	// XXX this code is copied from MethodScope, with a few adjustments for ITDs...
-	private void checkAndSetModifiersForMethod() {
+  @Override
+  protected Shadow.Kind getShadowKindForBody() {
+    return Shadow.MethodExecution;
+  }
 
-		// for reported problems, we want the user to see the declared selector
-		char[] realSelector = this.selector;
-		this.selector = declaredSelector;
+  // XXX this code is copied from MethodScope, with a few adjustments for ITDs...
+  private void checkAndSetModifiersForMethod() {
 
-		final ReferenceBinding declaringClass = this.binding.declaringClass;
-		if ((declaredModifiers & ExtraCompilerModifiers.AccAlternateModifierProblem) != 0)
-			scope.problemReporter().duplicateModifierForMethod(onTypeBinding, this);
+    // for reported problems, we want the user to see the declared selector
+    final char[] realSelector = this.selector;
+    this.selector = declaredSelector;
 
-		// after this point, tests on the 16 bits reserved.
-		int realModifiers = declaredModifiers & ExtraCompilerModifiers.AccJustFlag;
+    final ReferenceBinding declaringClass = this.binding.declaringClass;
+    if ((declaredModifiers & ExtraCompilerModifiers.AccAlternateModifierProblem) != 0)
+      scope.problemReporter().duplicateModifierForMethod(onTypeBinding, this);
 
-		// check for abnormal modifiers
-		int unexpectedModifiers = ~(ClassFileConstants.AccPublic | ClassFileConstants.AccPrivate | ClassFileConstants.AccProtected
-				| ClassFileConstants.AccAbstract | ClassFileConstants.AccStatic | ClassFileConstants.AccFinal
-				| ClassFileConstants.AccSynchronized | ClassFileConstants.AccNative | ClassFileConstants.AccStrictfp);
-		if ((realModifiers & unexpectedModifiers) != 0) {
-			scope.problemReporter().illegalModifierForMethod(this);
-			declaredModifiers &= ~ExtraCompilerModifiers.AccJustFlag | ~unexpectedModifiers;
-		}
+    // after this point, tests on the 16 bits reserved.
+    final int realModifiers = declaredModifiers & ExtraCompilerModifiers.AccJustFlag;
 
-		// check for incompatible modifiers in the visibility bits, isolate the visibility bits
-		int accessorBits = realModifiers
-				& (ClassFileConstants.AccPublic | ClassFileConstants.AccProtected | ClassFileConstants.AccPrivate);
-		if ((accessorBits & (accessorBits - 1)) != 0) {
-			scope.problemReporter().illegalVisibilityModifierCombinationForMethod(onTypeBinding, this);
+    // check for abnormal modifiers
+    final int unexpectedModifiers = ~(ClassFileConstants.AccPublic | ClassFileConstants.AccPrivate | ClassFileConstants.AccProtected
+        | ClassFileConstants.AccAbstract | ClassFileConstants.AccStatic | ClassFileConstants.AccFinal
+        | ClassFileConstants.AccSynchronized | ClassFileConstants.AccNative | ClassFileConstants.AccStrictfp);
+    if ((realModifiers & unexpectedModifiers) != 0) {
+      scope.problemReporter().illegalModifierForMethod(this);
+      declaredModifiers &= ~ExtraCompilerModifiers.AccJustFlag | ~unexpectedModifiers;
+    }
 
-			// need to keep the less restrictive so disable Protected/Private as necessary
-			if ((accessorBits & ClassFileConstants.AccPublic) != 0) {
-				if ((accessorBits & ClassFileConstants.AccProtected) != 0)
-					declaredModifiers &= ~ClassFileConstants.AccProtected;
-				if ((accessorBits & ClassFileConstants.AccPrivate) != 0)
-					declaredModifiers &= ~ClassFileConstants.AccPrivate;
-			} else if ((accessorBits & ClassFileConstants.AccProtected) != 0 && (accessorBits & ClassFileConstants.AccPrivate) != 0) {
-				declaredModifiers &= ~ClassFileConstants.AccPrivate;
-			}
-		}
+    // check for incompatible modifiers in the visibility bits, isolate the visibility bits
+    final int accessorBits = realModifiers
+        & (ClassFileConstants.AccPublic | ClassFileConstants.AccProtected | ClassFileConstants.AccPrivate);
+    if ((accessorBits & (accessorBits - 1)) != 0) {
+      scope.problemReporter().illegalVisibilityModifierCombinationForMethod(onTypeBinding, this);
 
-		// check for modifiers incompatible with abstract modifier
-		if ((declaredModifiers & ClassFileConstants.AccAbstract) != 0) {
-			int incompatibleWithAbstract = ClassFileConstants.AccStatic | ClassFileConstants.AccFinal
-					| ClassFileConstants.AccSynchronized | ClassFileConstants.AccNative | ClassFileConstants.AccStrictfp;
-			if ((declaredModifiers & incompatibleWithAbstract) != 0)
-				scope.problemReporter().illegalAbstractModifierCombinationForMethod(onTypeBinding, this);
-			if (!onTypeBinding.isAbstract())
-				scope.problemReporter().abstractMethodInAbstractClass((SourceTypeBinding) onTypeBinding, this);
-		}
+      // need to keep the less restrictive so disable Protected/Private as necessary
+      if ((accessorBits & ClassFileConstants.AccPublic) != 0) {
+        if ((accessorBits & ClassFileConstants.AccProtected) != 0)
+          declaredModifiers &= ~ClassFileConstants.AccProtected;
+        if ((accessorBits & ClassFileConstants.AccPrivate) != 0)
+          declaredModifiers &= ~ClassFileConstants.AccPrivate;
+      } else if ((accessorBits & ClassFileConstants.AccProtected) != 0 && (accessorBits & ClassFileConstants.AccPrivate) != 0) {
+        declaredModifiers &= ~ClassFileConstants.AccPrivate;
+      }
+    }
+
+    // check for modifiers incompatible with abstract modifier
+    if ((declaredModifiers & ClassFileConstants.AccAbstract) != 0) {
+      final int incompatibleWithAbstract = ClassFileConstants.AccStatic | ClassFileConstants.AccFinal
+          | ClassFileConstants.AccSynchronized | ClassFileConstants.AccNative | ClassFileConstants.AccStrictfp;
+      if ((declaredModifiers & incompatibleWithAbstract) != 0)
+        scope.problemReporter().illegalAbstractModifierCombinationForMethod(onTypeBinding, this);
+      if (!onTypeBinding.isAbstract())
+        scope.problemReporter().abstractMethodInAbstractClass((SourceTypeBinding) onTypeBinding, this);
+    }
 
 		/*
-		 * DISABLED for backward compatibility with javac (if enabled should also mark private methods as final) // methods from a
+     * DISABLED for backward compatibility with javac (if enabled should also mark private methods as final) // methods from a
 		 * final class are final : 8.4.3.3 if (methodBinding.declaringClass.isFinal()) modifiers |= AccFinal;
 		 */
-		// native methods cannot also be tagged as strictfp
-		if ((declaredModifiers & ClassFileConstants.AccNative) != 0 && (declaredModifiers & ClassFileConstants.AccStrictfp) != 0)
-			scope.problemReporter().nativeMethodsCannotBeStrictfp(onTypeBinding, this);
+    // native methods cannot also be tagged as strictfp
+    if ((declaredModifiers & ClassFileConstants.AccNative) != 0 && (declaredModifiers & ClassFileConstants.AccStrictfp) != 0)
+      scope.problemReporter().nativeMethodsCannotBeStrictfp(onTypeBinding, this);
 
-		// static members are only authorized in a static member or top level type
-		if (((realModifiers & ClassFileConstants.AccStatic) != 0) && declaringClass.isNestedType() && !declaringClass.isStatic())
-			scope.problemReporter().unexpectedStaticModifierForMethod(onTypeBinding, this);
+    // static members are only authorized in a static member or top level type
+    if (((realModifiers & ClassFileConstants.AccStatic) != 0) && declaringClass.isNestedType() && !declaringClass.isStatic())
+      scope.problemReporter().unexpectedStaticModifierForMethod(onTypeBinding, this);
 
-		// restore the true selector now that any problems have been reported
-		this.selector = realSelector;
-	}
+    // restore the true selector now that any problems have been reported
+    this.selector = realSelector;
+  }
 }

@@ -13,23 +13,24 @@ package org.aspectj.weaver;
 
 public class AnnotationAnnotationValue extends AnnotationValue {
 
-	private AnnotationAJ value;
+  private final AnnotationAJ value;
 
-	public AnnotationAnnotationValue(AnnotationAJ value) {
-		super(AnnotationValue.ANNOTATION);
-		this.value = value;
-	}
+  public AnnotationAnnotationValue(AnnotationAJ value) {
+    super(AnnotationValue.ANNOTATION);
+    this.value = value;
+  }
 
-	public AnnotationAJ getAnnotation() {
-		return value;
-	}
+  public AnnotationAJ getAnnotation() {
+    return value;
+  }
 
-	public String stringify() {
-		return value.stringify();
-	}
+  @Override
+  public String stringify() {
+    return value.stringify();
+  }
 
-	public String toString() {
-		return value.toString();
-	}
+  public String toString() {
+    return value.toString();
+  }
 
 }

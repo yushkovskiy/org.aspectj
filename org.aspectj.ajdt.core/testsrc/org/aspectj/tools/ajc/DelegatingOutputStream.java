@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Matthew Webster - initial implementation
  *******************************************************************************/
@@ -18,74 +18,79 @@ import java.util.List;
 
 public class DelegatingOutputStream extends OutputStream {
 
-	private boolean verbose = true;
-	private OutputStream target;
-	private List delegates;
-	
-	public DelegatingOutputStream (OutputStream os) {
-		this.target = os;
-		this.delegates = new LinkedList();
-	}
-	
-	public void close() throws IOException {
-		target.close();
-		
-		for (Iterator i = delegates.iterator(); i.hasNext();) {
-			OutputStream delegate = (OutputStream)i.next();
-			delegate.close();
-		}
-	}
+  private boolean verbose = true;
+  private OutputStream target;
+  private List delegates;
 
-	public void flush() throws IOException {
-		target.flush();
-		
-		for (Iterator i = delegates.iterator(); i.hasNext();) {
-			OutputStream delegate = (OutputStream)i.next();
-			delegate.flush();
-		}
-	}
+  public DelegatingOutputStream(OutputStream os) {
+    this.target = os;
+    this.delegates = new LinkedList();
+  }
 
-	public void write(byte[] b, int off, int len) throws IOException {
-		if (verbose) target.write(b, off, len);
-		
-		for (Iterator i = delegates.iterator(); i.hasNext();) {
-			OutputStream delegate = (OutputStream)i.next();
-			delegate.write(b,off,len);
-		}
-	}
+  @Override
+  public void close() throws IOException {
+    target.close();
 
-	public void write(byte[] b) throws IOException {
-		if (verbose) target.write(b);
-		
-		for (Iterator i = delegates.iterator(); i.hasNext();) {
-			OutputStream delegate = (OutputStream)i.next();
-			delegate.write(b);
-		}
-	}
+    for (final Iterator i = delegates.iterator(); i.hasNext(); ) {
+      final OutputStream delegate = (OutputStream) i.next();
+      delegate.close();
+    }
+  }
 
-	public void write(int b) throws IOException {
-		if (verbose) target.write(b);
-		
-		for (Iterator i = delegates.iterator(); i.hasNext();) {
-			OutputStream delegate = (OutputStream)i.next();
-			delegate.write(b);
-		}
-	}
-	
-	public boolean add (OutputStream delegate) {
-		return delegates.add(delegate);
-	}
-	
-	public boolean remove (OutputStream delegate) {
-		return delegates.remove(delegate);
-	}
+  @Override
+  public void flush() throws IOException {
+    target.flush();
 
-	public boolean isVerbose() {
-		return verbose;
-	}
+    for (final Iterator i = delegates.iterator(); i.hasNext(); ) {
+      final OutputStream delegate = (OutputStream) i.next();
+      delegate.flush();
+    }
+  }
 
-	public void setVerbose(boolean verbose) {
-		this.verbose = verbose;
-	}
-	
+  @Override
+  public void write(byte[] b, int off, int len) throws IOException {
+    if (verbose) target.write(b, off, len);
+
+    for (final Iterator i = delegates.iterator(); i.hasNext(); ) {
+      final OutputStream delegate = (OutputStream) i.next();
+      delegate.write(b, off, len);
+    }
+  }
+
+  @Override
+  public void write(byte[] b) throws IOException {
+    if (verbose) target.write(b);
+
+    for (final Iterator i = delegates.iterator(); i.hasNext(); ) {
+      final OutputStream delegate = (OutputStream) i.next();
+      delegate.write(b);
+    }
+  }
+
+  @Override
+  public void write(int b) throws IOException {
+    if (verbose) target.write(b);
+
+    for (final Iterator i = delegates.iterator(); i.hasNext(); ) {
+      final OutputStream delegate = (OutputStream) i.next();
+      delegate.write(b);
+    }
+  }
+
+  public boolean add(OutputStream delegate) {
+    return delegates.add(delegate);
+  }
+
+  public boolean remove(OutputStream delegate) {
+    return delegates.remove(delegate);
+  }
+
+  public boolean isVerbose() {
+    return verbose;
+  }
+
+  public void setVerbose(boolean verbose) {
+    this.verbose = verbose;
+  }
+
 }

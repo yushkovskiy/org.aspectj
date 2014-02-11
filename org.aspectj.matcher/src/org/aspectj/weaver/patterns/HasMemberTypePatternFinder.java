@@ -13,21 +13,24 @@ package org.aspectj.weaver.patterns;
 
 /**
  * @author colyer
- * usage : new HasMemberTypePatternFinder(pattern).hasMemberTypePattern()
+ *         usage : new HasMemberTypePatternFinder(pattern).hasMemberTypePattern()
  */
 public class HasMemberTypePatternFinder extends AbstractPatternNodeVisitor {
-	
-	private boolean hasMemberTypePattern = false;
-	
-	public HasMemberTypePatternFinder(TypePattern aPattern) {
-		aPattern.traverse(this, null);
-	}
-	
-	public Object visit(HasMemberTypePattern node, Object data) {
-		hasMemberTypePattern = true;
-		return null;
-	}
-	
-	public boolean hasMemberTypePattern() { return hasMemberTypePattern; }
+
+  private boolean hasMemberTypePattern = false;
+
+  public HasMemberTypePatternFinder(TypePattern aPattern) {
+    aPattern.traverse(this, null);
+  }
+
+  @Override
+  public Object visit(HasMemberTypePattern node, Object data) {
+    hasMemberTypePattern = true;
+    return null;
+  }
+
+  public boolean hasMemberTypePattern() {
+    return hasMemberTypePattern;
+  }
 
 }

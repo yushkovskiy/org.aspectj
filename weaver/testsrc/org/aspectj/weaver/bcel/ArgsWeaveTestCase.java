@@ -28,91 +28,93 @@ import org.aspectj.weaver.ResolvedType;
 import org.aspectj.weaver.Shadow;
 import org.aspectj.weaver.UnresolvedType;
 
-/**.
+/**
+ * .
  */
 public class ArgsWeaveTestCase extends WeaveTestCase {
-	{
-		regenerate = false;
-	}
+  {
+    regenerate = false;
+  }
 
-	public ArgsWeaveTestCase(String name) {
-		super(name);
-	}
-    
-
-    public void testAfterReturningArgs() throws IOException {
-        weaveTest("HelloWorld", "ArgsAfterReturningHelloWorld", makeArgsMunger("afterReturning"));
-    }  
+  public ArgsWeaveTestCase(String name) {
+    super(name);
+  }
 
 
-    public void testFancyAfterReturningArgs() throws IOException {
-        weaveTest("FancyHelloWorld", "ArgsAfterReturningFancyHelloWorld", makeArgsMunger("afterReturning"));
-    }
-
-    public void testThrowing() throws IOException {
-        weaveTest("HelloWorld", "ArgsAfterThrowingHelloWorld", makeArgsMunger("afterThrowing"));
-    }  
-
-    public void testLots() throws IOException {
-        List l = new ArrayList();
-        
-        
-        BcelAdvice p1 = 
-            makeArgsMunger("before");
-
-        BcelAdvice p2 = 
-            makeArgsMunger("afterThrowing");
-        
-        BcelAdvice p3 = 
-            makeArgsMunger("afterReturning");
-
-        l.add(p1);        
-        l.add(p2);
-        l.add(p3);
+  public void testAfterReturningArgs() throws IOException {
+    weaveTest("HelloWorld", "ArgsAfterReturningHelloWorld", makeArgsMunger("afterReturning"));
+  }
 
 
-        weaveTest("HelloWorld", "ArgsBeforeAfterHelloWorld", addLexicalOrder(l));        
-    }    
+  public void testFancyAfterReturningArgs() throws IOException {
+    weaveTest("FancyHelloWorld", "ArgsAfterReturningFancyHelloWorld", makeArgsMunger("afterReturning"));
+  }
 
-	/* private */ InstructionList getArgsAdviceTag(BcelShadow shadow, String where) {
-		String methodName =
-			"ajc_" + where + "_" + shadow.getKind().toLegalJavaIdentifier();
-		InstructionFactory fact = shadow.getFactory();
-		InstructionList il = new InstructionList();
-        
+  public void testThrowing() throws IOException {
+    weaveTest("HelloWorld", "ArgsAfterThrowingHelloWorld", makeArgsMunger("afterThrowing"));
+  }
 
-        il.append(
-            BcelRenderer.renderExpr(
-                fact, 
-                new BcelWorld(), 
-                shadow.getArgVar(0),
-                Type.OBJECT));
-        
-        il.append(
-            fact.createInvoke(
-                "Aspect", 
-                methodName, 
-                Type.VOID, 
-                new Type[] { Type.OBJECT }, 
-                Constants.INVOKESTATIC));
-                
-		return il;
-	}
-    
-    private BcelAdvice makeArgsMunger(final String kindx) {
-    	ResolvedType rtx = world.resolve(UnresolvedType.forName("Aspect"),true);
-    	assertTrue("Cant find required type Aspect",!rtx.isMissing());
-        return new BcelAdvice(AdviceKind.stringToKind(kindx), makePointcutNoZeroArg(),
-        			MemberImpl.method(UnresolvedType.forName("Aspect"), 0, "foo", "()V"), 0, -1, -1, null,
-        			rtx) {
-            public void specializeOn(Shadow shadow) {
-                super.specializeOn(shadow);
-                shadow.getArgVar(0);
-            }
-            public InstructionList getAdviceInstructions(BcelShadow shadow, BcelVar extraVar, InstructionHandle fk) {
-                return getArgsAdviceTag(shadow, kindx);
-            }
-        };    	
-    } 
+  public void testLots() throws IOException {
+    final List l = new ArrayList();
+
+
+    final BcelAdvice p1 =
+        makeArgsMunger("before");
+
+    final BcelAdvice p2 =
+        makeArgsMunger("afterThrowing");
+
+    final BcelAdvice p3 =
+        makeArgsMunger("afterReturning");
+
+    l.add(p1);
+    l.add(p2);
+    l.add(p3);
+
+
+    weaveTest("HelloWorld", "ArgsBeforeAfterHelloWorld", addLexicalOrder(l));
+  }
+
+  /* private */ InstructionList getArgsAdviceTag(BcelShadow shadow, String where) {
+    final String methodName =
+        "ajc_" + where + "_" + shadow.getKind().toLegalJavaIdentifier();
+    final InstructionFactory fact = shadow.getFactory();
+    final InstructionList il = new InstructionList();
+
+
+    il.append(
+        BcelRenderer.renderExpr(
+            fact,
+            new BcelWorld(),
+            shadow.getArgVar(0),
+            Type.OBJECT));
+
+    il.append(
+        fact.createInvoke(
+            "Aspect",
+            methodName,
+            Type.VOID,
+            new Type[]{Type.OBJECT},
+            Constants.INVOKESTATIC));
+
+    return il;
+  }
+
+  private BcelAdvice makeArgsMunger(final String kindx) {
+    final ResolvedType rtx = world.resolve(UnresolvedType.forName("Aspect"), true);
+    assertTrue("Cant find required type Aspect", !rtx.isMissing());
+    return new BcelAdvice(AdviceKind.stringToKind(kindx), makePointcutNoZeroArg(),
+        MemberImpl.method(UnresolvedType.forName("Aspect"), 0, "foo", "()V"), 0, -1, -1, null,
+        rtx) {
+      public void specializeOn(Shadow shadow) {
+        super.specializeOn(shadow);
+        shadow.getArgVar(0);
+      }
+
+      public InstructionList getAdviceInstructions(BcelShadow shadow, BcelVar extraVar, InstructionHandle fk) {
+        return getArgsAdviceTag(shadow, kindx);
+      }
+    };
+  }
 
 }

@@ -10,34 +10,32 @@
 package org.aspectj.weaver;
 
 /**
- * 
  * @author Andy Clement
  */
 public class Utils {
 
-	/**
-	 * Check if the annotations contain a SuppressAjWarnings annotation and if that annotation specifies that the given lint message
-	 * (identified by its key) should be ignored.
-	 * 
-	 */
-	public static boolean isSuppressing(AnnotationAJ[] anns, String lintkey) {
-		if (anns == null) {
-			return false;
-		}
-		// Go through the annotation types on the advice
-		for (int i = 0; i < anns.length; i++) {
-			if (UnresolvedType.SUPPRESS_AJ_WARNINGS.getSignature().equals(anns[i].getTypeSignature())) {
-				// Two possibilities:
-				// 1. there are no values specified (i.e. @SuppressAjWarnings)
-				// 2. there are values specified (i.e. @SuppressAjWarnings("A") or @SuppressAjWarnings({"A","B"})
-				String value = anns[i].getStringFormOfValue("value");
-				// Slightly lazy, just doing a string indexof
-				if (value == null || value.indexOf(lintkey) != -1) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
+  /**
+   * Check if the annotations contain a SuppressAjWarnings annotation and if that annotation specifies that the given lint message
+   * (identified by its key) should be ignored.
+   */
+  public static boolean isSuppressing(AnnotationAJ[] anns, String lintkey) {
+    if (anns == null) {
+      return false;
+    }
+    // Go through the annotation types on the advice
+    for (int i = 0; i < anns.length; i++) {
+      if (UnresolvedType.SUPPRESS_AJ_WARNINGS.getSignature().equals(anns[i].getTypeSignature())) {
+        // Two possibilities:
+        // 1. there are no values specified (i.e. @SuppressAjWarnings)
+        // 2. there are values specified (i.e. @SuppressAjWarnings("A") or @SuppressAjWarnings({"A","B"})
+        final String value = anns[i].getStringFormOfValue("value");
+        // Slightly lazy, just doing a string indexof
+        if (value == null || value.indexOf(lintkey) != -1) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
 
 }

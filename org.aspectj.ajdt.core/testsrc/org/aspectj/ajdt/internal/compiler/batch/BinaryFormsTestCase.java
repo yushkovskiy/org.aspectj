@@ -24,106 +24,106 @@ import org.aspectj.tools.ajc.AjcTests;
 
 public class BinaryFormsTestCase extends CommandTestCase {
 
-	public BinaryFormsTestCase(String name) {
-		super(name);
-	}
-	
+  public BinaryFormsTestCase(String name) {
+    super(name);
+  }
 
-	public void testJar1() throws IOException {
-		String library = getSandboxName() + "/lib.jar";
-		
-		List args = new ArrayList();
-		args.add("-outjar");
-		args.add(library);
 
-		args.add("-classpath");
-        args.add(AjcTests.aspectjrtClasspath());
-		
-		args.add("-d");
-		args.add(getSandboxName());
-		args.add("-XnotReweavable");
-		
-		args.add(AjdtAjcTests.TESTDATA_PATH + "/src1/binary/lib/ConcreteA.aj");
-		args.add(AjdtAjcTests.TESTDATA_PATH + "/src1/binary/lib/AbstractA.aj");
-		
-		CommandTestCase.runCompiler(args, CommandTestCase.NO_ERRORS);
-		
-		args = new ArrayList();
-		args.add("-aspectpath");
-		args.add(library);
+  public void testJar1() throws IOException {
+    final String library = getSandboxName() + "/lib.jar";
 
-		args.add("-classpath");
-        args.add(AjcTests.aspectjrtClasspath());
-		
-		args.add("-d");
-		args.add(getSandboxName());
-		args.add("-XnotReweavable");
-		
-		args.add(AjdtAjcTests.TESTDATA_PATH + "/src1/binary/client/Client.java");
-		args.add(AjdtAjcTests.TESTDATA_PATH + "/src1/binary/client/Client1.java");
-		
-		CommandTestCase.runCompiler(args, CommandTestCase.NO_ERRORS);
-		
-		TestUtil.runMain(getSandboxName() + File.pathSeparator + library, "client.Client");
-		TestUtil.runMain(getSandboxName() + File.pathSeparator + library, "client.Client1");
-		
-		args = new ArrayList();
-		args.add("-aspectpath");
-		args.add(library);
+    List args = new ArrayList();
+    args.add("-outjar");
+    args.add(library);
 
-		args.add("-classpath");
-        args.add(AjcTests.aspectjrtClasspath());
-		args.add("-XnotReweavable");
-		
-		args.add("-d");
-		args.add(getSandboxName());
-		
-		args.add(AjdtAjcTests.TESTDATA_PATH + "/src1/binary/client/MyAspect.aj");
-		args.add(AjdtAjcTests.TESTDATA_PATH + "/src1/binary/client/Client1.java");
-		
-		CommandTestCase.runCompiler(args, CommandTestCase.NO_ERRORS);
-		
-		TestUtil.runMain(getSandboxName() + File.pathSeparator + library, "client.Client1");
+    args.add("-classpath");
+    args.add(AjcTests.aspectjrtClasspath());
 
-		args = new ArrayList();
-		args.add("-aspectpath");
-		args.add(library);
+    args.add("-d");
+    args.add(getSandboxName());
+    args.add("-XnotReweavable");
 
-		args.add("-classpath");
-        args.add(AjcTests.aspectjrtClasspath());
-		
-		args.add("-d");
-		args.add(getSandboxName());
-		args.add("-XnotReweavable");
-		
-		args.add(AjdtAjcTests.TESTDATA_PATH + "/src1/binary/client/MyAspect1.aj");
-		args.add(AjdtAjcTests.TESTDATA_PATH + "/src1/binary/client/Client1.java");
-		
-		CommandTestCase.runCompiler(args, new int[] {24, 30});
+    args.add(AjdtAjcTests.TESTDATA_PATH + "/src1/binary/lib/ConcreteA.aj");
+    args.add(AjdtAjcTests.TESTDATA_PATH + "/src1/binary/lib/AbstractA.aj");
 
-		args = new ArrayList();
-		args.add("-classpath");
-        args.add(library + File.pathSeparator + AjcTests.aspectjrtClasspath());
-		
-		args.add("-d");
-		args.add(getSandboxName());
-		args.add("-XnotReweavable");
-		
-		args.add(AjdtAjcTests.TESTDATA_PATH + "/src1/binary/client/Client1.java");
-		
-		CommandTestCase.runCompiler(args, new int[] {15, 17, 22});
-		
-		args = new ArrayList();
-		args.add("-classpath");
-        args.add(AjcTests.aspectjrtClasspath() + File.pathSeparator + library);
-		args.add("-Xlint:error");
-		
-		args.add("-d");
-		args.add(getSandboxName());
-		
-		args.add(AjdtAjcTests.TESTDATA_PATH + "/src1/binary/client/MyAspect.aj");
-		args.add(AjdtAjcTests.TESTDATA_PATH + "/src1/binary/client/Client1.java");
-		
-		CommandTestCase.runCompiler(args, CommandTestCase.NO_ERRORS);
-	}
+    CommandTestCase.runCompiler(args, CommandTestCase.NO_ERRORS);
+
+    args = new ArrayList();
+    args.add("-aspectpath");
+    args.add(library);
+
+    args.add("-classpath");
+    args.add(AjcTests.aspectjrtClasspath());
+
+    args.add("-d");
+    args.add(getSandboxName());
+    args.add("-XnotReweavable");
+
+    args.add(AjdtAjcTests.TESTDATA_PATH + "/src1/binary/client/Client.java");
+    args.add(AjdtAjcTests.TESTDATA_PATH + "/src1/binary/client/Client1.java");
+
+    CommandTestCase.runCompiler(args, CommandTestCase.NO_ERRORS);
+
+    TestUtil.runMain(getSandboxName() + File.pathSeparator + library, "client.Client");
+    TestUtil.runMain(getSandboxName() + File.pathSeparator + library, "client.Client1");
+
+    args = new ArrayList();
+    args.add("-aspectpath");
+    args.add(library);
+
+    args.add("-classpath");
+    args.add(AjcTests.aspectjrtClasspath());
+    args.add("-XnotReweavable");
+
+    args.add("-d");
+    args.add(getSandboxName());
+
+    args.add(AjdtAjcTests.TESTDATA_PATH + "/src1/binary/client/MyAspect.aj");
+    args.add(AjdtAjcTests.TESTDATA_PATH + "/src1/binary/client/Client1.java");
+
+    CommandTestCase.runCompiler(args, CommandTestCase.NO_ERRORS);
+
+    TestUtil.runMain(getSandboxName() + File.pathSeparator + library, "client.Client1");
+
+    args = new ArrayList();
+    args.add("-aspectpath");
+    args.add(library);
+
+    args.add("-classpath");
+    args.add(AjcTests.aspectjrtClasspath());
+
+    args.add("-d");
+    args.add(getSandboxName());
+    args.add("-XnotReweavable");
+
+    args.add(AjdtAjcTests.TESTDATA_PATH + "/src1/binary/client/MyAspect1.aj");
+    args.add(AjdtAjcTests.TESTDATA_PATH + "/src1/binary/client/Client1.java");
+
+    CommandTestCase.runCompiler(args, new int[]{24, 30});
+
+    args = new ArrayList();
+    args.add("-classpath");
+    args.add(library + File.pathSeparator + AjcTests.aspectjrtClasspath());
+
+    args.add("-d");
+    args.add(getSandboxName());
+    args.add("-XnotReweavable");
+
+    args.add(AjdtAjcTests.TESTDATA_PATH + "/src1/binary/client/Client1.java");
+
+    CommandTestCase.runCompiler(args, new int[]{15, 17, 22});
+
+    args = new ArrayList();
+    args.add("-classpath");
+    args.add(AjcTests.aspectjrtClasspath() + File.pathSeparator + library);
+    args.add("-Xlint:error");
+
+    args.add("-d");
+    args.add(getSandboxName());
+
+    args.add(AjdtAjcTests.TESTDATA_PATH + "/src1/binary/client/MyAspect.aj");
+    args.add(AjdtAjcTests.TESTDATA_PATH + "/src1/binary/client/Client1.java");
+
+    CommandTestCase.runCompiler(args, CommandTestCase.NO_ERRORS);
+  }
 }

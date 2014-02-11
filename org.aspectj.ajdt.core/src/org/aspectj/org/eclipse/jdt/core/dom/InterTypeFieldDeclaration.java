@@ -14,63 +14,66 @@ package org.aspectj.org.eclipse.jdt.core.dom;
 /**
  * InterTypeFieldDeclaration DOM AST node.
  * has:
- *   everything FieldDeclarations have
- *   
+ * everything FieldDeclarations have
+ * <p/>
  * Refused Bequest:
- *   has the variableDeclarationFragments list
- *   it redundantly inherits from FieldDeclaration
- *   as fields can be declared like "int b; int a = b = 5;"
- *   but ITD fields can't.
+ * has the variableDeclarationFragments list
+ * it redundantly inherits from FieldDeclaration
+ * as fields can be declared like "int b; int a = b = 5;"
+ * but ITD fields can't.
  * Note:
- *   should also have the name of the type it was declared on!
+ * should also have the name of the type it was declared on!
+ *
  * @author ajh02
  */
 
 public class InterTypeFieldDeclaration extends FieldDeclaration {
-	private String onType;
+  private String onType;
 
-	InterTypeFieldDeclaration(AST ast) {
-		super(ast);
-	}
+  InterTypeFieldDeclaration(AST ast) {
+    super(ast);
+  }
 
-	public String getOnType() { 
-		return onType;
-	}
-	
-	public void setOnType(String onType) {
-		this.onType = onType;
-	}
-	
-	ASTNode clone0(AST target) {
-		InterTypeFieldDeclaration result = new InterTypeFieldDeclaration(target);
-		result.setSourceRange(this.getStartPosition(), this.getLength());
-		result.setJavadoc(
-			(Javadoc) ASTNode.copySubtree(target, getJavadoc()));
-		if (this.ast.apiLevel == AST.JLS2_INTERNAL) {
-			result.internalSetModifiers(getModifiers());
-		}
-		if (this.ast.apiLevel >= AST.JLS3) {
-			result.modifiers().addAll(ASTNode.copySubtrees(target, modifiers()));
-		}
-		result.setType((Type) getType().clone(target));
-		result.fragments().addAll(
-			ASTNode.copySubtrees(target, fragments()));
-		return result;
-	}
-	
-	void accept0(ASTVisitor visitor) {
-		if (visitor instanceof AjASTVisitor) {
-			boolean visitChildren = ((AjASTVisitor)visitor).visit(this);
-			if (visitChildren) {
-				// visit children in normal left to right reading order
-				acceptChild(visitor, getJavadoc());
-				if (this.ast.apiLevel >= AST.JLS3) {
-					acceptChildren(visitor, this.modifiers);
-				}
-				acceptChild(visitor, getType());
-				acceptChildren(visitor, this.variableDeclarationFragments);
-			}
-			((AjASTVisitor)visitor).endVisit(this);
-		}
-	}
+  public String getOnType() {
+    return onType;
+  }
+
+  public void setOnType(String onType) {
+    this.onType = onType;
+  }
+
+  @Override
+  ASTNode clone0(AST target) {
+    final InterTypeFieldDeclaration result = new InterTypeFieldDeclaration(target);
+    result.setSourceRange(this.getStartPosition(), this.getLength());
+    result.setJavadoc(
+        (Javadoc) ASTNode.copySubtree(target, getJavadoc()));
+    if (this.ast.apiLevel == AST.JLS2_INTERNAL) {
+      result.internalSetModifiers(getModifiers());
+    }
+    if (this.ast.apiLevel >= AST.JLS3) {
+      result.modifiers().addAll(ASTNode.copySubtrees(target, modifiers()));
+    }
+    result.setType((Type) getType().clone(target));
+    result.fragments().addAll(
+        ASTNode.copySubtrees(target, fragments()));
+    return result;
+  }
+
+  @Override
+  void accept0(ASTVisitor visitor) {
+    if (visitor instanceof AjASTVisitor) {
+      final boolean visitChildren = ((AjASTVisitor) visitor).visit(this);
+      if (visitChildren) {
+        // visit children in normal left to right reading order
+        acceptChild(visitor, getJavadoc());
+        if (this.ast.apiLevel >= AST.JLS3) {
+          acceptChildren(visitor, this.modifiers);
+        }
+        acceptChild(visitor, getType());
+        acceptChildren(visitor, this.variableDeclarationFragments);
+      }
+      ((AjASTVisitor) visitor).endVisit(this);
+    }
+  }
 }

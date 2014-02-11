@@ -54,76 +54,76 @@
 
 package org.aspectj.apache.bcel.generic;
 
-import java.io.DataOutputStream;
-import java.io.IOException;
-
 import org.aspectj.apache.bcel.Constants;
 import org.aspectj.apache.bcel.classfile.ConstantInvokeDynamic;
 import org.aspectj.apache.bcel.classfile.ConstantNameAndType;
 import org.aspectj.apache.bcel.classfile.ConstantPool;
 
+import java.io.DataOutputStream;
+import java.io.IOException;
+
 /**
  * INVOKEDYNAMIC
- * 
+ *
  * @author Andy Clement
  */
 public final class InvokeDynamic extends InvokeInstruction {
 
-	public InvokeDynamic(int index, int zeroes) {
-		super(Constants.INVOKEDYNAMIC, index);
-	}
+  public InvokeDynamic(int index, int zeroes) {
+    super(Constants.INVOKEDYNAMIC, index);
+  }
 
-	public void dump(DataOutputStream out) throws IOException {
-		out.writeByte(opcode);
-		out.writeShort(index);
-		out.writeShort(0);
-	}
-	
-	public String toString(ConstantPool cp) {
-		return super.toString(cp) + " " + index;
-	}
+  public void dump(DataOutputStream out) throws IOException {
+    out.writeByte(opcode);
+    out.writeShort(index);
+    out.writeShort(0);
+  }
 
-	public boolean equals(Object other) {
-		if (!(other instanceof InvokeDynamic)) {
-			return false;
-		}
-		InvokeDynamic o = (InvokeDynamic) other;
-		return o.opcode == opcode && o.index == index;
-	}
+  public String toString(ConstantPool cp) {
+    return super.toString(cp) + " " + index;
+  }
 
-	public int hashCode() {
-		return opcode * 37 + index;
-	}
-	
-	public Type getReturnType(ConstantPool cp) {
-		return Type.getReturnType(getSignature(cp));
-	}
+  public boolean equals(Object other) {
+    if (!(other instanceof InvokeDynamic)) {
+      return false;
+    }
+    final InvokeDynamic o = (InvokeDynamic) other;
+    return o.opcode == opcode && o.index == index;
+  }
 
-	public Type[] getArgumentTypes(ConstantPool cp) {
-		return Type.getArgumentTypes(getSignature(cp));
-	}
-	
-	public String getSignature(ConstantPool cp) {
-		if (signature == null) {
-			ConstantInvokeDynamic cid = (ConstantInvokeDynamic)cp.getConstant(index);
-			ConstantNameAndType cnat = (ConstantNameAndType) cp.getConstant(cid.getNameAndTypeIndex());
-			signature = cp.getConstantUtf8(cnat.getSignatureIndex()).getValue();
-		}
-		return signature;
-	}
-	
-	@Override
-	public String getName(ConstantPool cp) {
-		if (name == null) {
-			ConstantInvokeDynamic cid = (ConstantInvokeDynamic) cp.getConstant(index);
-			ConstantNameAndType cnat = (ConstantNameAndType) cp.getConstant(cid.getNameAndTypeIndex());
-			name = cp.getConstantUtf8(cnat.getNameIndex()).getValue();
-		}
-		return name;
-	}
-	
-	public String getClassName(ConstantPool cp) {
-		throw new IllegalStateException("there is no classname for invokedynamic");
-	}
+  public int hashCode() {
+    return opcode * 37 + index;
+  }
+
+  public Type getReturnType(ConstantPool cp) {
+    return Type.getReturnType(getSignature(cp));
+  }
+
+  public Type[] getArgumentTypes(ConstantPool cp) {
+    return Type.getArgumentTypes(getSignature(cp));
+  }
+
+  public String getSignature(ConstantPool cp) {
+    if (signature == null) {
+      final ConstantInvokeDynamic cid = (ConstantInvokeDynamic) cp.getConstant(index);
+      final ConstantNameAndType cnat = (ConstantNameAndType) cp.getConstant(cid.getNameAndTypeIndex());
+      signature = cp.getConstantUtf8(cnat.getSignatureIndex()).getValue();
+    }
+    return signature;
+  }
+
+  @Override
+  public String getName(ConstantPool cp) {
+    if (name == null) {
+      final ConstantInvokeDynamic cid = (ConstantInvokeDynamic) cp.getConstant(index);
+      final ConstantNameAndType cnat = (ConstantNameAndType) cp.getConstant(cid.getNameAndTypeIndex());
+      name = cp.getConstantUtf8(cnat.getNameIndex()).getValue();
+    }
+    return name;
+  }
+
+  public String getClassName(ConstantPool cp) {
+    throw new IllegalStateException("there is no classname for invokedynamic");
+  }
 
 }

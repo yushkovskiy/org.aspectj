@@ -17,10 +17,15 @@ import org.aspectj.weaver.ISourceContext;
 
 
 public interface ITokenSource {
-	public IToken next();
-	public IToken peek();
-	public IToken peek(int offset);
-	public int getIndex();
-	public void setIndex(int newIndex);
-	public ISourceContext getSourceContext();
+  public IToken next();
+
+  public IToken peek();
+
+  public IToken peek(int offset);
+
+  public int getIndex();
+
+  public void setIndex(int newIndex);
+
+  public ISourceContext getSourceContext();
 }

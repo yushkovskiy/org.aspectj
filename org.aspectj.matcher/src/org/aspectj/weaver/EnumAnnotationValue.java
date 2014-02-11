@@ -13,29 +13,30 @@ package org.aspectj.weaver;
 
 public class EnumAnnotationValue extends AnnotationValue {
 
-	private String typeSignature;
-	private String value;
+  private final String typeSignature;
+  private final String value;
 
-	public EnumAnnotationValue(String typeSignature, String value) {
-		super(AnnotationValue.ENUM_CONSTANT);
-		this.typeSignature = typeSignature;
-		this.value = value;
-	}
+  public EnumAnnotationValue(String typeSignature, String value) {
+    super(AnnotationValue.ENUM_CONSTANT);
+    this.typeSignature = typeSignature;
+    this.value = value;
+  }
 
-	public String getType() {
-		return typeSignature;
-	}
+  public String getType() {
+    return typeSignature;
+  }
 
-	public String stringify() {
-		return typeSignature+value;
-	}
-	
-	public String getValue() {
-		return value;
-	}
+  @Override
+  public String stringify() {
+    return typeSignature + value;
+  }
 
-	public String toString() {
-		return "E(" + typeSignature + " " + value + ")";
-	}
+  public String getValue() {
+    return value;
+  }
+
+  public String toString() {
+    return "E(" + typeSignature + " " + value + ")";
+  }
 
 }

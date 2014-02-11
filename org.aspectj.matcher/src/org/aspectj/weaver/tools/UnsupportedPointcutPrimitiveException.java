@@ -15,30 +15,29 @@ import org.aspectj.weaver.WeaverMessages;
 
 /**
  * @author colyer
- *
  */
 public class UnsupportedPointcutPrimitiveException extends RuntimeException {
 
-	private static final long serialVersionUID = 3258689888517043251L;
+  private static final long serialVersionUID = 3258689888517043251L;
 
-	private PointcutPrimitive unsupportedPrimitive; 
-	private String pointcutExpression;
-	
-	public UnsupportedPointcutPrimitiveException(String pcExpression, PointcutPrimitive primitive) {
-		super(WeaverMessages.format(WeaverMessages.UNSUPPORTED_POINTCUT_PRIMITIVE,pcExpression,primitive.getName()));
-		this.pointcutExpression = pcExpression;
-		this.unsupportedPrimitive = primitive;
-	}
+  private final PointcutPrimitive unsupportedPrimitive;
+  private final String pointcutExpression;
 
-	/**
-	 * @return Returns the unsupportedPrimitive.
-	 */
-	public PointcutPrimitive getUnsupportedPrimitive() {
-		return unsupportedPrimitive;
-	}
-	
-	public String getInvalidPointcutExpression() {
-		return pointcutExpression;
-	}
-	
+  public UnsupportedPointcutPrimitiveException(String pcExpression, PointcutPrimitive primitive) {
+    super(WeaverMessages.format(WeaverMessages.UNSUPPORTED_POINTCUT_PRIMITIVE, pcExpression, primitive.getName()));
+    this.pointcutExpression = pcExpression;
+    this.unsupportedPrimitive = primitive;
+  }
+
+  /**
+   * @return Returns the unsupportedPrimitive.
+   */
+  public PointcutPrimitive getUnsupportedPrimitive() {
+    return unsupportedPrimitive;
+  }
+
+  public String getInvalidPointcutExpression() {
+    return pointcutExpression;
+  }
+
 }

@@ -16,26 +16,27 @@ package org.aspectj.weaver.ast;
 import org.aspectj.weaver.Member;
 
 public class Call extends Test {
-	// assert m.return value is boolean
-	private final Member method;
-	private final Expr[] args;
+  // assert m.return value is boolean
+  private final Member method;
+  private final Expr[] args;
 
-	public Call(Member m, Expr[] args) {
-		super();
-		this.method = m;
-		this.args = args;
-	}
+  public Call(Member m, Expr[] args) {
+    super();
+    this.method = m;
+    this.args = args;
+  }
 
-	public void accept(ITestVisitor v) {
-		v.visit(this);
-	}
+  @Override
+  public void accept(ITestVisitor v) {
+    v.visit(this);
+  }
 
-	public Expr[] getArgs() {
-		return args;
-	}
+  public Expr[] getArgs() {
+    return args;
+  }
 
-	public Member getMethod() {
-		return method;
-	}
+  public Member getMethod() {
+    return method;
+  }
 
 }

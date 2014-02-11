@@ -11,29 +11,29 @@
  *     Xerox/PARC     initial implementation 
  * ******************************************************************/
 
-
 package org.aspectj.bridge;
 
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Command wrapper with collecting parameter for messages.
  */
 public interface ICommand {
-    /**
-     * Run command with the given options.
-     * @param args the String[] options for the command
-     * @param handler the IMessageHandler for all output from
-     * the command
-     * @return true if the command completed successfully
-     */
-    boolean runCommand(String[] args, IMessageHandler handler);
-    
-    /**
-     * Rerun the command.
-     * 
-     * @param handler the IMessageHandler for all output from the command
-     * 
-     * @return true if the command completed successfully
-     */
-	boolean repeatCommand(IMessageHandler handler);   
+  /**
+   * Run command with the given options.
+   *
+   * @param args    the String[] options for the command
+   * @param handler the IMessageHandler for all output from
+   *                the command
+   * @return true if the command completed successfully
+   */
+  boolean runCommand(@NotNull String[] args, @NotNull IMessageHandler handler);
+
+  /**
+   * Rerun the command.
+   *
+   * @param handler the IMessageHandler for all output from the command
+   * @return true if the command completed successfully
+   */
+  boolean repeatCommand(@NotNull IMessageHandler handler);
 }

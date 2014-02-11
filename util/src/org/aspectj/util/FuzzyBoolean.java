@@ -12,164 +12,221 @@
  * ******************************************************************/
 package org.aspectj.util;
 
-/** 
+import org.jetbrains.annotations.NotNull;
+
+/**
  * This class implements boolean that include a "maybe"
  */
 public abstract class FuzzyBoolean {
-    public abstract boolean alwaysTrue();
-    public abstract boolean alwaysFalse();
-    public abstract boolean maybeTrue();
-    public abstract boolean maybeFalse();
-    
-    public abstract FuzzyBoolean and(FuzzyBoolean other);
-    public abstract FuzzyBoolean or(FuzzyBoolean other);
-    public abstract FuzzyBoolean not();
-    
-    private static class YesFuzzyBoolean extends FuzzyBoolean {
-        public boolean alwaysFalse() {
-            return false;
-        }
 
-        public boolean alwaysTrue() {
-            return true;
-        }
+  @NotNull
+  public static final FuzzyBoolean YES = new YesFuzzyBoolean();
+  @NotNull
+  public static final FuzzyBoolean NO = new NoFuzzyBoolean();
+  @NotNull
+  public static final FuzzyBoolean MAYBE = new MaybeFuzzyBoolean();
+  @NotNull
+  public static final FuzzyBoolean NEVER = new NeverFuzzyBoolean();
 
+  @NotNull
+  public static final FuzzyBoolean fromBoolean(boolean b) {
+    return b ? YES : NO;
+  }
 
-        public boolean maybeFalse() {
-            return false;
-        }
+  public abstract boolean alwaysTrue();
 
-        public boolean maybeTrue() {
-            return true;
-        }
-        
-        public FuzzyBoolean and(FuzzyBoolean other) {
-            return other;
-        }
+  public abstract boolean alwaysFalse();
 
-        public FuzzyBoolean not() {
-            return FuzzyBoolean.NO;
-        }
+  public abstract boolean maybeTrue();
 
-        public FuzzyBoolean or(FuzzyBoolean other) {
-            return this;
-        }
+  public abstract boolean maybeFalse();
 
-        public String toString() {
-            return "YES";
-        }
-    }    
-    private static class NoFuzzyBoolean extends FuzzyBoolean {
-        public boolean alwaysFalse() {
-            return true;
-        }
+  @NotNull
+  public abstract FuzzyBoolean and(@NotNull FuzzyBoolean other);
 
-        public boolean alwaysTrue() {
-            return false;
-        }
+  @NotNull
+  public abstract FuzzyBoolean or(@NotNull FuzzyBoolean other);
 
+  @NotNull
+  public abstract FuzzyBoolean not();
 
-        public boolean maybeFalse() {
-            return true;
-        }
-
-        public boolean maybeTrue() {
-            return false;
-        }
-        
-        public FuzzyBoolean and(FuzzyBoolean other) {
-            return this;
-        }
-
-        public FuzzyBoolean not() {
-            return FuzzyBoolean.YES;
-        }
-
-        public FuzzyBoolean or(FuzzyBoolean other) {
-            return other;
-        }
-
-        public String toString() {
-            return "NO";
-        }
+  private static class YesFuzzyBoolean extends FuzzyBoolean {
+    @Override
+    public boolean alwaysFalse() {
+      return false;
     }
-    private static class NeverFuzzyBoolean extends FuzzyBoolean {
-        public boolean alwaysFalse() {
-            return true;
-        }
 
-        public boolean alwaysTrue() {
-            return false;
-        }
-
-
-        public boolean maybeFalse() {
-            return true;
-        }
-
-        public boolean maybeTrue() {
-            return false;
-        }
-        
-        public FuzzyBoolean and(FuzzyBoolean other) {
-            return this;
-        }
-
-        public FuzzyBoolean not() {
-            return this;
-        }
-
-        public FuzzyBoolean or(FuzzyBoolean other) {
-            return this;
-        }
-
-        public String toString() {
-            return "NEVER";
-        }
+    @Override
+    public boolean alwaysTrue() {
+      return true;
     }
-    
-    private static class MaybeFuzzyBoolean extends FuzzyBoolean {
-        public boolean alwaysFalse() {
-            return false;
-        }
 
-        public boolean alwaysTrue() {
-            return false;
-        }
-
-
-        public boolean maybeFalse() {
-            return true;
-        }
-
-        public boolean maybeTrue() {
-            return true;
-        }
-        
-        public FuzzyBoolean and(FuzzyBoolean other) {
-            return other.alwaysFalse() ? other : this;
-        }
-
-        public FuzzyBoolean not() {
-            return this;
-        }
-
-        public FuzzyBoolean or(FuzzyBoolean other) {
-            return other.alwaysTrue() ? other : this;
-        }
-
-        public String toString() {
-            return "MAYBE";
-        }
+    @Override
+    public boolean maybeFalse() {
+      return false;
     }
-    
-    public static final FuzzyBoolean YES   = new YesFuzzyBoolean();
-    public static final FuzzyBoolean NO    = new NoFuzzyBoolean();
-    public static final FuzzyBoolean MAYBE = new MaybeFuzzyBoolean();
-    public static final FuzzyBoolean NEVER = new NeverFuzzyBoolean();
 
-	public static final FuzzyBoolean fromBoolean(boolean b) {
-		return b ? YES : NO;
-	}
+    @Override
+    public boolean maybeTrue() {
+      return true;
+    }
+
+    @Override
+    @NotNull
+    public FuzzyBoolean and(@NotNull FuzzyBoolean other) {
+      return other;
+    }
+
+    @Override
+    @NotNull
+    public FuzzyBoolean not() {
+      return FuzzyBoolean.NO;
+    }
+
+    @Override
+    @NotNull
+    public FuzzyBoolean or(@NotNull FuzzyBoolean other) {
+      return this;
+    }
+
+    public String toString() {
+      return "YES";
+    }
+  }
+
+  private static class NoFuzzyBoolean extends FuzzyBoolean {
+    @Override
+    public boolean alwaysFalse() {
+      return true;
+    }
+
+    @Override
+    public boolean alwaysTrue() {
+      return false;
+    }
+
+
+    @Override
+    public boolean maybeFalse() {
+      return true;
+    }
+
+    @Override
+    public boolean maybeTrue() {
+      return false;
+    }
+
+    @NotNull
+    @Override
+    public FuzzyBoolean and(@NotNull FuzzyBoolean other) {
+      return this;
+    }
+
+    @NotNull
+    @Override
+    public FuzzyBoolean not() {
+      return FuzzyBoolean.YES;
+    }
+
+    @NotNull
+    @Override
+    public FuzzyBoolean or(@NotNull FuzzyBoolean other) {
+      return other;
+    }
+
+    public String toString() {
+      return "NO";
+    }
+  }
+
+  private static class NeverFuzzyBoolean extends FuzzyBoolean {
+    @Override
+    public boolean alwaysFalse() {
+      return true;
+    }
+
+    @Override
+    public boolean alwaysTrue() {
+      return false;
+    }
+
+
+    @Override
+    public boolean maybeFalse() {
+      return true;
+    }
+
+    @Override
+    public boolean maybeTrue() {
+      return false;
+    }
+
+    @NotNull
+    @Override
+    public FuzzyBoolean and(@NotNull FuzzyBoolean other) {
+      return this;
+    }
+
+    @NotNull
+    @Override
+    public FuzzyBoolean not() {
+      return this;
+    }
+
+    @NotNull
+    @Override
+    public FuzzyBoolean or(@NotNull FuzzyBoolean other) {
+      return this;
+    }
+
+    public String toString() {
+      return "NEVER";
+    }
+  }
+
+  private static class MaybeFuzzyBoolean extends FuzzyBoolean {
+    @Override
+    public boolean alwaysFalse() {
+      return false;
+    }
+
+    @Override
+    public boolean alwaysTrue() {
+      return false;
+    }
+
+
+    @Override
+    public boolean maybeFalse() {
+      return true;
+    }
+
+    @Override
+    public boolean maybeTrue() {
+      return true;
+    }
+
+    @NotNull
+    @Override
+    public FuzzyBoolean and(@NotNull FuzzyBoolean other) {
+      return other.alwaysFalse() ? other : this;
+    }
+
+    @NotNull
+    @Override
+    public FuzzyBoolean not() {
+      return this;
+    }
+
+    @NotNull
+    @Override
+    public FuzzyBoolean or(@NotNull FuzzyBoolean other) {
+      return other.alwaysTrue() ? other : this;
+    }
+
+    public String toString() {
+      return "MAYBE";
+    }
+  }
 
 }

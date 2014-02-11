@@ -22,35 +22,35 @@ import org.aspectj.apache.bcel.util.ClassPath;
 import org.aspectj.apache.bcel.util.SyntheticRepository;
 
 public class EnumAccessFlagTest extends TestCase {
-	
-	private boolean verbose = false;
 
-	protected void setUp() throws Exception {
-		super.setUp();
-	}
-	
-	/**
-	 * An enumerated type, once compiled, should result in a class file that
-	 * is marked such that we can determine from the access flags (through BCEL) that
-	 * it was originally an enum type declaration.
-	 */
-	public void testEnumClassSaysItIs() throws ClassNotFoundException {
-		ClassPath cp = 
-			new ClassPath("testdata"+File.separator+"testcode.jar"+File.pathSeparator+System.getProperty("java.class.path"));
-		SyntheticRepository repos = SyntheticRepository.getInstance(cp);
-		JavaClass clazz = repos.loadClass("SimpleEnum");
-		ConstantPool pool = clazz.getConstantPool();
-		assertTrue("Expected SimpleEnum class to say it was an enum - but it didn't !",
-				clazz.isEnum());
-		clazz = repos.loadClass("SimpleClass");
-		assertTrue("Expected SimpleClass class to say it was not an enum - but it didn't !",
-				!clazz.isEnum());
-	}
-	
+  private final boolean verbose = false;
 
-	protected void tearDown() throws Exception {
-		super.tearDown();
-	}
-	
+  protected void setUp() throws Exception {
+    super.setUp();
+  }
+
+  /**
+   * An enumerated type, once compiled, should result in a class file that
+   * is marked such that we can determine from the access flags (through BCEL) that
+   * it was originally an enum type declaration.
+   */
+  public void testEnumClassSaysItIs() throws ClassNotFoundException {
+    final ClassPath cp =
+        new ClassPath("testdata" + File.separator + "testcode.jar" + File.pathSeparator + System.getProperty("java.class.path"));
+    final SyntheticRepository repos = SyntheticRepository.getInstance(cp);
+    JavaClass clazz = repos.loadClass("SimpleEnum");
+    final ConstantPool pool = clazz.getConstantPool();
+    assertTrue("Expected SimpleEnum class to say it was an enum - but it didn't !",
+        clazz.isEnum());
+    clazz = repos.loadClass("SimpleClass");
+    assertTrue("Expected SimpleClass class to say it was not an enum - but it didn't !",
+        !clazz.isEnum());
+  }
+
+
+  protected void tearDown() throws Exception {
+    super.tearDown();
+  }
+
 
 }

@@ -15,35 +15,36 @@ package org.aspectj.weaver.ast;
 
 
 public class Not extends Test {
-	Test test;
+  Test test;
 
-	public Not(Test test) {
-		super();
-		this.test = test;
-	}
+  public Not(Test test) {
+    super();
+    this.test = test;
+  }
 
-	public void accept(ITestVisitor v) {
-		v.visit(this);
-	}
-	
-	public Test getBody() {
-		return test;
-	}
-	
-	public String toString() {
-		return "!" + test;
-	}
+  @Override
+  public void accept(ITestVisitor v) {
+    v.visit(this);
+  }
 
-	public boolean equals(Object other) {
-		if (other instanceof Not) {
-			Not o = (Not) other;
-			return o.test.equals(test);
-		} else {
-			return false;
-		}
-	}
-	
-	public int hashCode() {
-		return test.hashCode();
-	}
+  public Test getBody() {
+    return test;
+  }
+
+  public String toString() {
+    return "!" + test;
+  }
+
+  public boolean equals(Object other) {
+    if (other instanceof Not) {
+      final Not o = (Not) other;
+      return o.test.equals(test);
+    } else {
+      return false;
+    }
+  }
+
+  public int hashCode() {
+    return test.hashCode();
+  }
 }

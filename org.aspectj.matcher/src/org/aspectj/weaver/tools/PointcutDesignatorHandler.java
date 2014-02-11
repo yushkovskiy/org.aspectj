@@ -15,35 +15,37 @@ package org.aspectj.weaver.tools;
 /**
  * The PointcutDesignator interface allows extension of the
  * AspectJ pointcut language so that third-party tools integrating
- * with AspectJ can add easily their own custom 
+ * with AspectJ can add easily their own custom
  * domain-specific designators and have them interoperate seamlessly
  * with the standard AspectJ designators.
- *
+ * <p/>
  * A pointcut designator can only be used for matching, not for
  * binding.
  */
 public interface PointcutDesignatorHandler {
 
-	/**
-	 * The name of this pointcut designator. For example,
-	 * if this designator handles a "bean(&lt;NamePattern&gt;)
-	 * format designator, this method would return "bean".
-	 * @return
-	 */
-	String getDesignatorName() ;
-	
-	/**
-	 * Parse the given expression string
-	 * and return a ContextBasedMatcher that can be used
-	 * for matching.
-	 * @param expression  the body of the pointcut expression. 
-	 * For example, given the expression "bean(*DAO)" the parse
-	 * method will be called with the argument "*DAO".
-	 * @return a pointcut expression that can be used for
-	 * matching.
-	 * @throws IllegalArgumentException if the expression
-	 * is ill-formed.
-	 */
-	ContextBasedMatcher parse(String expression);
-	
+  /**
+   * The name of this pointcut designator. For example,
+   * if this designator handles a "bean(&lt;NamePattern&gt;)
+   * format designator, this method would return "bean".
+   *
+   * @return
+   */
+  String getDesignatorName();
+
+  /**
+   * Parse the given expression string
+   * and return a ContextBasedMatcher that can be used
+   * for matching.
+   *
+   * @param expression the body of the pointcut expression.
+   *                   For example, given the expression "bean(*DAO)" the parse
+   *                   method will be called with the argument "*DAO".
+   * @return a pointcut expression that can be used for
+   * matching.
+   * @throws IllegalArgumentException if the expression
+   *                                  is ill-formed.
+   */
+  ContextBasedMatcher parse(String expression);
+
 }

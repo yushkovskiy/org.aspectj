@@ -54,215 +54,209 @@ package org.aspectj.apache.bcel.util;
  * <http://www.apache.org/>.
  */
 
+import org.aspectj.apache.bcel.classfile.ClassParser;
+import org.aspectj.apache.bcel.classfile.JavaClass;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.AbstractMap;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-
-import org.aspectj.apache.bcel.classfile.ClassParser;
-import org.aspectj.apache.bcel.classfile.JavaClass;
+import java.util.*;
 
 /**
  * The repository maintains information about which classes have been loaded.
- * 
+ * <p/>
  * It loads its data from the ClassLoader implementation passed into its constructor.
- * 
- * @see org.aspectj.apache.bcel.Repository
- * 
- * @version $Id: NonCachingClassLoaderRepository.java,v 1.6 2009/09/09 19:56:20 aclement Exp $
+ *
  * @author <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
  * @author David Dixon-Peugh
- * 
+ * @version $Id: NonCachingClassLoaderRepository.java,v 1.6 2009/09/09 19:56:20 aclement Exp $
+ * @see org.aspectj.apache.bcel.Repository
  */
 public class NonCachingClassLoaderRepository implements Repository {
-	private static java.lang.ClassLoader bootClassLoader = null;
+  private static java.lang.ClassLoader bootClassLoader = null;
 
-	private final ClassLoaderReference loaderRef;
-	private final Map<String, JavaClass> loadedClasses = new SoftHashMap(); // CLASSNAME X JAVACLASS
+  private final ClassLoaderReference loaderRef;
+  private final Map<String, JavaClass> loadedClasses = new SoftHashMap(); // CLASSNAME X JAVACLASS
 
-	public static class SoftHashMap extends AbstractMap {
-		private Map<Object, SpecialValue> map;
-		private ReferenceQueue rq = new ReferenceQueue();
+  public static class SoftHashMap extends AbstractMap {
+    private final Map<Object, SpecialValue> map;
+    private final ReferenceQueue rq = new ReferenceQueue();
 
-		public SoftHashMap(Map<Object, SpecialValue> map) {
-			this.map = map;
-		}
+    public SoftHashMap(Map<Object, SpecialValue> map) {
+      this.map = map;
+    }
 
-		public SoftHashMap() {
-			this(new HashMap());
-		}
+    public SoftHashMap() {
+      this(new HashMap());
+    }
 
-		public SoftHashMap(Map map, boolean b) {
-			this(map);
-		}
+    public SoftHashMap(Map map, boolean b) {
+      this(map);
+    }
 
-		class SpecialValue extends SoftReference {
-			private final Object key;
+    class SpecialValue extends SoftReference {
+      private final Object key;
 
-			SpecialValue(Object k, Object v) {
-				super(v, rq);
-				this.key = k;
-			}
-		}
+      SpecialValue(Object k, Object v) {
+        super(v, rq);
+        this.key = k;
+      }
+    }
 
-		private void processQueue() {
-			SpecialValue sv = null;
-			while ((sv = (SpecialValue) rq.poll()) != null) {
-				map.remove(sv.key);
-			}
-		}
+    private void processQueue() {
+      SpecialValue sv = null;
+      while ((sv = (SpecialValue) rq.poll()) != null) {
+        map.remove(sv.key);
+      }
+    }
 
-		@Override
-		public Object get(Object key) {
-			SpecialValue value = map.get(key);
-			if (value == null)
-				return null;
-			if (value.get() == null) {
-				// it got GC'd
-				map.remove(value.key);
-				return null;
-			} else {
-				return value.get();
-			}
-		}
+    @Override
+    public Object get(Object key) {
+      final SpecialValue value = map.get(key);
+      if (value == null)
+        return null;
+      if (value.get() == null) {
+        // it got GC'd
+        map.remove(value.key);
+        return null;
+      } else {
+        return value.get();
+      }
+    }
 
-		@Override
-		public Object put(Object k, Object v) {
-			processQueue();
-			return map.put(k, new SpecialValue(k, v));
-		}
+    @Override
+    public Object put(Object k, Object v) {
+      processQueue();
+      return map.put(k, new SpecialValue(k, v));
+    }
 
-		@Override
-		public Set entrySet() {
-			return map.entrySet();
-		}
+    @Override
+    public Set entrySet() {
+      return map.entrySet();
+    }
 
-		@Override
-		public void clear() {
-			processQueue();
-			Set<Object> keys = map.keySet();
-			for (Iterator<Object> iterator = keys.iterator(); iterator.hasNext();) {
-				Object name = iterator.next();
-				map.remove(name);
-			}
-		}
+    @Override
+    public void clear() {
+      processQueue();
+      final Set<Object> keys = map.keySet();
+      for (final Iterator<Object> iterator = keys.iterator(); iterator.hasNext(); ) {
+        final Object name = iterator.next();
+        map.remove(name);
+      }
+    }
 
-		@Override
-		public int size() {
-			processQueue();
-			return map.size();
-		}
+    @Override
+    public int size() {
+      processQueue();
+      return map.size();
+    }
 
-		@Override
-		public Object remove(Object k) {
-			processQueue();
-			SpecialValue value = map.remove(k);
-			if (value == null)
-				return null;
-			if (value.get() != null) {
-				return value.get();
-			}
-			return null;
-		}
-	}
+    @Override
+    public Object remove(Object k) {
+      processQueue();
+      final SpecialValue value = map.remove(k);
+      if (value == null)
+        return null;
+      if (value.get() != null) {
+        return value.get();
+      }
+      return null;
+    }
+  }
 
-	public NonCachingClassLoaderRepository(java.lang.ClassLoader loader) {
-		this.loaderRef = new DefaultClassLoaderReference((loader != null) ? loader : getBootClassLoader());
-	}
+  public NonCachingClassLoaderRepository(java.lang.ClassLoader loader) {
+    this.loaderRef = new DefaultClassLoaderReference((loader != null) ? loader : getBootClassLoader());
+  }
 
-	public NonCachingClassLoaderRepository(ClassLoaderReference loaderRef) {
-		this.loaderRef = loaderRef;
-	}
+  public NonCachingClassLoaderRepository(ClassLoaderReference loaderRef) {
+    this.loaderRef = loaderRef;
+  }
 
-	private static synchronized java.lang.ClassLoader getBootClassLoader() {
-		if (bootClassLoader == null) {
-			bootClassLoader = new URLClassLoader(new URL[0]);
-		}
-		return bootClassLoader;
-	}
+  private static synchronized java.lang.ClassLoader getBootClassLoader() {
+    if (bootClassLoader == null) {
+      bootClassLoader = new URLClassLoader(new URL[0]);
+    }
+    return bootClassLoader;
+  }
 
-	/**
-	 * Store a new JavaClass into this Repository.
-	 */
-	public void storeClass(JavaClass clazz) {
-		synchronized (loadedClasses) {
-			loadedClasses.put(clazz.getClassName(), clazz);
-		}
-		clazz.setRepository(this);
-	}
+  /**
+   * Store a new JavaClass into this Repository.
+   */
+  public void storeClass(JavaClass clazz) {
+    synchronized (loadedClasses) {
+      loadedClasses.put(clazz.getClassName(), clazz);
+    }
+    clazz.setRepository(this);
+  }
 
-	/**
-	 * Remove class from repository
-	 */
-	public void removeClass(JavaClass clazz) {
-		synchronized (loadedClasses) {
-			loadedClasses.remove(clazz.getClassName());
-		}
-	}
+  /**
+   * Remove class from repository
+   */
+  public void removeClass(JavaClass clazz) {
+    synchronized (loadedClasses) {
+      loadedClasses.remove(clazz.getClassName());
+    }
+  }
 
-	/**
-	 * Find an already defined JavaClass.
-	 */
-	public JavaClass findClass(String className) {
-		synchronized (loadedClasses) {
-			if (loadedClasses.containsKey(className)) {
-				return loadedClasses.get(className);
-			} else {
-				return null;
-			}
-		}
-	}
+  /**
+   * Find an already defined JavaClass.
+   */
+  public JavaClass findClass(String className) {
+    synchronized (loadedClasses) {
+      if (loadedClasses.containsKey(className)) {
+        return loadedClasses.get(className);
+      } else {
+        return null;
+      }
+    }
+  }
 
-	/**
-	 * Clear all entries from cache.
-	 */
-	public void clear() {
-		synchronized (loadedClasses) {
-			loadedClasses.clear();
-		}
-	}
+  /**
+   * Clear all entries from cache.
+   */
+  public void clear() {
+    synchronized (loadedClasses) {
+      loadedClasses.clear();
+    }
+  }
 
-	/**
-	 * Lookup a JavaClass object from the Class Name provided.
-	 */
-	public JavaClass loadClass(String className) throws ClassNotFoundException {
+  /**
+   * Lookup a JavaClass object from the Class Name provided.
+   */
+  public JavaClass loadClass(String className) throws ClassNotFoundException {
 
-		JavaClass javaClass = findClass(className);
-		if (javaClass != null) {
-			return javaClass;
-		}
+    JavaClass javaClass = findClass(className);
+    if (javaClass != null) {
+      return javaClass;
+    }
 
-		javaClass = loadJavaClass(className);
-		storeClass(javaClass);
+    javaClass = loadJavaClass(className);
+    storeClass(javaClass);
 
-		return javaClass;
-	}
+    return javaClass;
+  }
 
-	public JavaClass loadClass(Class clazz) throws ClassNotFoundException {
-		return loadClass(clazz.getName());
-	}
+  public JavaClass loadClass(Class clazz) throws ClassNotFoundException {
+    return loadClass(clazz.getName());
+  }
 
-	private JavaClass loadJavaClass(String className) throws ClassNotFoundException {
-		String classFile = className.replace('.', '/');
-		try {
-			InputStream is = loaderRef.getClassLoader().getResourceAsStream(classFile + ".class");
+  private JavaClass loadJavaClass(String className) throws ClassNotFoundException {
+    final String classFile = className.replace('.', '/');
+    try {
+      final InputStream is = loaderRef.getClassLoader().getResourceAsStream(classFile + ".class");
 
-			if (is == null) {
-				throw new ClassNotFoundException(className + " not found.");
-			}
+      if (is == null) {
+        throw new ClassNotFoundException(className + " not found.");
+      }
 
-			ClassParser parser = new ClassParser(is, className);
-			return parser.parse();
-		} catch (IOException e) {
-			throw new ClassNotFoundException(e.toString());
-		}
-	}
+      final ClassParser parser = new ClassParser(is, className);
+      return parser.parse();
+    } catch (IOException e) {
+      throw new ClassNotFoundException(e.toString());
+    }
+  }
 
 }

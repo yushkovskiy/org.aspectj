@@ -21,25 +21,26 @@ import org.aspectj.weaver.tools.TraceFactory;
  * Basic &quot;common&quot; {@link CacheBacking} implementation
  */
 public abstract class AbstractCacheBacking implements CacheBacking {
-    protected final Trace  logger=TraceFactory.getTraceFactory().getTrace(getClass());
+  protected final Trace logger = TraceFactory.getTraceFactory().getTrace(getClass());
 
-	protected AbstractCacheBacking () {
-		super();
-	}
+  protected AbstractCacheBacking() {
+    super();
+  }
 
-    /**
-     * Calculates CRC32 on the provided bytes
-     * @param bytes The bytes array - ignored if <code>null</code>/empty
-     * @return Calculated CRC
-     * @see {@link CRC32}
-     */
-    public static final long crc (byte[] bytes) {
-        if ((bytes == null) || (bytes.length <= 0)) {
-            return 0L;
-        }
-
-        CRC32   crc32=new CRC32();
-        crc32.update(bytes);
-        return crc32.getValue();
+  /**
+   * Calculates CRC32 on the provided bytes
+   *
+   * @param bytes The bytes array - ignored if <code>null</code>/empty
+   * @return Calculated CRC
+   * @see {@link CRC32}
+   */
+  public static final long crc(byte[] bytes) {
+    if ((bytes == null) || (bytes.length <= 0)) {
+      return 0L;
     }
+
+    final CRC32 crc32 = new CRC32();
+    crc32.update(bytes);
+    return crc32.getValue();
+  }
 }

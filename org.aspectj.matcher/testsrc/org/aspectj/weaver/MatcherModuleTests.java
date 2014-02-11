@@ -24,17 +24,17 @@ import org.aspectj.weaver.reflect.ReflectionWorldSpecificTest;
 
 public class MatcherModuleTests extends TestCase {
 
-	public MatcherModuleTests(String name) {
-		super(name);
-	}
+  public MatcherModuleTests(String name) {
+    super(name);
+  }
 
-	public static Test suite() {
-		TestSuite suite = new TestSuite(MatcherModuleTests.class.getName());
-		suite.addTestSuite(ReflectionWorldSpecificTest.class);
-		suite.addTestSuite(ReflectionWorldBasicTest.class);
-		suite.addTestSuite(ReflectionWorldPointcutExpressionTests.class);
-		suite.addTestSuite(TypeFactoryTests.class);
-		suite.addTest(PatternsTests.suite());
-		return suite;
-	}
+  public static Test suite() {
+    final TestSuite suite = new TestSuite(MatcherModuleTests.class.getName());
+    suite.addTestSuite(ReflectionWorldSpecificTest.class);
+    suite.addTestSuite(ReflectionWorldBasicTest.class);
+    suite.addTestSuite(ReflectionWorldPointcutExpressionTests.class);
+    suite.addTestSuite(TypeFactoryTests.class);
+    suite.addTest(PatternsTests.suite());
+    return suite;
+  }
 }

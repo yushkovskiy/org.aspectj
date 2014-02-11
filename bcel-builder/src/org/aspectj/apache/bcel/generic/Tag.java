@@ -20,26 +20,26 @@ package org.aspectj.apache.bcel.generic;
  */
 public abstract class Tag implements InstructionTargeter, Cloneable {
 
-	public Tag() {
-	}
+  public Tag() {
+  }
 
-	// ---- from InstructionTargeter
-	public boolean containsTarget(InstructionHandle ih) {
-		return false;
-	}
+  // ---- from InstructionTargeter
+  public boolean containsTarget(InstructionHandle ih) {
+    return false;
+  }
 
-	public void updateTarget(InstructionHandle oldHandle, InstructionHandle newHandle) {
-		oldHandle.removeTargeter(this);
-		if (newHandle != null) {
-			newHandle.addTargeter(this);
-		}
-	}
+  public void updateTarget(InstructionHandle oldHandle, InstructionHandle newHandle) {
+    oldHandle.removeTargeter(this);
+    if (newHandle != null) {
+      newHandle.addTargeter(this);
+    }
+  }
 
-	public Tag copy() {
-		try {
-			return (Tag) clone();
-		} catch (CloneNotSupportedException e) {
-			throw new RuntimeException("Sanity check, can't clone me");
-		}
-	}
+  public Tag copy() {
+    try {
+      return (Tag) clone();
+    } catch (CloneNotSupportedException e) {
+      throw new RuntimeException("Sanity check, can't clone me");
+    }
+  }
 }

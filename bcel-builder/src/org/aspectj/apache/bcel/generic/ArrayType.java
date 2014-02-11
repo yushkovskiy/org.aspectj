@@ -53,23 +53,27 @@ package org.aspectj.apache.bcel.generic;
  * information on the Apache Software Foundation, please see
  * <http://www.apache.org/>.
  */
-import org.aspectj.apache.bcel.Constants;
 
-/** 
+import org.aspectj.apache.bcel.Constants;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+/**
  * Denotes array type, such as int[][]
  *
+ * @author <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
  * @version $Id: ArrayType.java,v 1.4 2008/08/26 15:02:04 aclement Exp $
- * @author  <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
  */
 public final class ArrayType extends ReferenceType {
-  private int  dimensions;
-  private Type basic_type;
+  private final int dimensions;
+  @NotNull
+  private final Type basic_type;
 
   /**
    * Convenience constructor for array type, e.g. int[]
    *
    * @param type array type, e.g. T_INT
-   */ 
+   */
   public ArrayType(byte type, int dimensions) {
     this(BasicType.getType(type), dimensions);
   }
@@ -78,7 +82,7 @@ public final class ArrayType extends ReferenceType {
    * Convenience constructor for reference array type, e.g. Object[]
    *
    * @param class_name complete name of class (java.lang.String, e.g.)
-   */ 
+   */
   public ArrayType(String class_name, int dimensions) {
     this(new ObjectType(class_name), dimensions);
   }
@@ -87,31 +91,31 @@ public final class ArrayType extends ReferenceType {
    * Constructor for array of given type
    *
    * @param type type of array (may be an array itself)
-   */ 
+   */
   public ArrayType(Type type, int dimensions) {
     super(Constants.T_ARRAY, "<dummy>");
 
-    if((dimensions < 1) || (dimensions > Constants.MAX_BYTE))
+    if ((dimensions < 1) || (dimensions > Constants.MAX_BYTE))
       throw new ClassGenException("Invalid number of dimensions: " + dimensions);
 
-    switch(type.getType()) {
-    case Constants.T_ARRAY:
-      ArrayType array = (ArrayType)type;
-      this.dimensions = dimensions + array.dimensions;
-      basic_type      = array.basic_type;
-      break;
-      
-    case Constants.T_VOID:
-      throw new ClassGenException("Invalid type: void[]");
+    switch (type.getType()) {
+      case Constants.T_ARRAY:
+        final ArrayType array = (ArrayType) type;
+        this.dimensions = dimensions + array.dimensions;
+        basic_type = array.basic_type;
+        break;
 
-    default: // Basic type or reference
-      this.dimensions = dimensions;
-      basic_type = type;
-      break;
+      case Constants.T_VOID:
+        throw new ClassGenException("Invalid type: void[]");
+
+      default: // Basic type or reference
+        this.dimensions = dimensions;
+        basic_type = type;
+        break;
     }
 
-    StringBuffer buf = new StringBuffer();
-    for(int i=0; i < this.dimensions; i++)
+    final StringBuilder buf = new StringBuilder();
+    for (int i = 0; i < this.dimensions; i++)
       buf.append('[');
 
     buf.append(basic_type.getSignature());
@@ -129,26 +133,34 @@ public final class ArrayType extends ReferenceType {
   /**
    * @return element type of array, i.e., for int[][][] the element type is int[][]
    */
+  @NotNull
   public Type getElementType() {
-    if(dimensions == 1)
+    if (dimensions == 1)
       return basic_type;
     else
       return new ArrayType(basic_type, dimensions - 1);
   }
 
-  /** @return number of dimensions of array
+  /**
+   * @return number of dimensions of array
    */
-  public int getDimensions() { return dimensions; }
+  public int getDimensions() {
+    return dimensions;
+  }
 
-  /** @return a hash code value for the object.
+  /**
+   * @return a hash code value for the object.
    */
-  public int hashCode() { return basic_type.hashCode() ^ dimensions; }
+  public int hashCode() {
+    return basic_type.hashCode() ^ dimensions;
+  }
 
-  /** @return true if both type objects refer to the same array type.
+  /**
+   * @return true if both type objects refer to the same array type.
    */
-  public boolean equals(Object type) {
-    if(type instanceof ArrayType) {
-      ArrayType array = (ArrayType)type;
+  public boolean equals(@Nullable Object type) {
+    if (type instanceof ArrayType) {
+      final ArrayType array = (ArrayType) type;
       return (array.dimensions == dimensions) && array.basic_type.equals(basic_type);
     } else
       return false;

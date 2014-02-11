@@ -20,24 +20,26 @@ package org.aspectj.weaver.tools;
  * interface provides an extension point for the specification
  * of additional shadow and join point context that can be
  * taken into account during the matching process.
- * 
- *  @see DefaultMatchingContext
+ *
+ * @see DefaultMatchingContext
  */
 public interface MatchingContext {
 
-	/**
-	 * Returns true iff this matching context has a defined
-	 * binding for the given context parameter.
-	 * @param contextParameterName
-	 */
-	boolean hasContextBinding(String contextParameterName);
-	
-	/**
-	 * returns the binding associated with the 
-	 * given context parameter name (or null if
-	 * there is no such context). 
-	 * @param contextParameterName
-	 * @return
-	 */
-	Object getBinding(String contextParameterName);
+  /**
+   * Returns true iff this matching context has a defined
+   * binding for the given context parameter.
+   *
+   * @param contextParameterName
+   */
+  boolean hasContextBinding(String contextParameterName);
+
+  /**
+   * returns the binding associated with the
+   * given context parameter name (or null if
+   * there is no such context).
+   *
+   * @param contextParameterName
+   * @return
+   */
+  Object getBinding(String contextParameterName);
 }

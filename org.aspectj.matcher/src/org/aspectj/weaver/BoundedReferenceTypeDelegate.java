@@ -1,134 +1,163 @@
 /**
- * 
+ *
  */
 package org.aspectj.weaver;
-
-import java.util.Collection;
-import java.util.Collections;
 
 import org.aspectj.weaver.patterns.Declare;
 import org.aspectj.weaver.patterns.PerClause;
 
+import java.util.Collection;
+import java.util.Collections;
+
 class BoundedReferenceTypeDelegate extends AbstractReferenceTypeDelegate {
 
-	public BoundedReferenceTypeDelegate(ReferenceType backing) {
-		super(backing, false);
-	}
+  public BoundedReferenceTypeDelegate(ReferenceType backing) {
+    super(backing, false);
+  }
 
-	public boolean isAspect() {
-		return resolvedTypeX.isAspect();
-	}
+  @Override
+  public boolean isAspect() {
+    return resolvedTypeX.isAspect();
+  }
 
-	public boolean isAnnotationStyleAspect() {
-		return resolvedTypeX.isAnnotationStyleAspect();
-	}
+  @Override
+  public boolean isAnnotationStyleAspect() {
+    return resolvedTypeX.isAnnotationStyleAspect();
+  }
 
-	public boolean isInterface() {
-		return resolvedTypeX.isInterface();
-	}
+  @Override
+  public boolean isInterface() {
+    return resolvedTypeX.isInterface();
+  }
 
-	public boolean isEnum() {
-		return resolvedTypeX.isEnum();
-	}
+  @Override
+  public boolean isEnum() {
+    return resolvedTypeX.isEnum();
+  }
 
-	public boolean isAnnotation() {
-		return resolvedTypeX.isAnnotation();
-	}
+  @Override
+  public boolean isAnnotation() {
+    return resolvedTypeX.isAnnotation();
+  }
 
-	public boolean isAnnotationWithRuntimeRetention() {
-		return resolvedTypeX.isAnnotationWithRuntimeRetention();
-	}
+  @Override
+  public boolean isAnnotationWithRuntimeRetention() {
+    return resolvedTypeX.isAnnotationWithRuntimeRetention();
+  }
 
-	public boolean isAnonymous() {
-		return resolvedTypeX.isAnonymous();
-	}
+  @Override
+  public boolean isAnonymous() {
+    return resolvedTypeX.isAnonymous();
+  }
 
-	public boolean isNested() {
-		return resolvedTypeX.isNested();
-	}
+  @Override
+  public boolean isNested() {
+    return resolvedTypeX.isNested();
+  }
 
-	public ResolvedType getOuterClass() {
-		return resolvedTypeX.getOuterClass();
-	}
+  @Override
+  public ResolvedType getOuterClass() {
+    return resolvedTypeX.getOuterClass();
+  }
 
-	public String getRetentionPolicy() {
-		return resolvedTypeX.getRetentionPolicy();
-	}
+  @Override
+  public String getRetentionPolicy() {
+    return resolvedTypeX.getRetentionPolicy();
+  }
 
-	public boolean canAnnotationTargetType() {
-		return resolvedTypeX.canAnnotationTargetType();
-	}
+  @Override
+  public boolean canAnnotationTargetType() {
+    return resolvedTypeX.canAnnotationTargetType();
+  }
 
-	public AnnotationTargetKind[] getAnnotationTargetKinds() {
-		return resolvedTypeX.getAnnotationTargetKinds();
-	}
+  @Override
+  public AnnotationTargetKind[] getAnnotationTargetKinds() {
+    return resolvedTypeX.getAnnotationTargetKinds();
+  }
 
-	public boolean isGeneric() {
-		return resolvedTypeX.isGenericType();
-	}
+  @Override
+  public boolean isGeneric() {
+    return resolvedTypeX.isGenericType();
+  }
 
-	public String getDeclaredGenericSignature() {
-		return resolvedTypeX.getDeclaredGenericSignature();
-	}
+  @Override
+  public String getDeclaredGenericSignature() {
+    return resolvedTypeX.getDeclaredGenericSignature();
+  }
 
-	public boolean hasAnnotation(UnresolvedType ofType) {
-		return resolvedTypeX.hasAnnotation(ofType);
-	}
+  @Override
+  public boolean hasAnnotation(UnresolvedType ofType) {
+    return resolvedTypeX.hasAnnotation(ofType);
+  }
 
-	public AnnotationAJ[] getAnnotations() {
-		return resolvedTypeX.getAnnotations();
-	}
+  @Override
+  public AnnotationAJ[] getAnnotations() {
+    return resolvedTypeX.getAnnotations();
+  }
 
-	public ResolvedType[] getAnnotationTypes() {
-		return resolvedTypeX.getAnnotationTypes();
-	}
+  @Override
+  public ResolvedType[] getAnnotationTypes() {
+    return resolvedTypeX.getAnnotationTypes();
+  }
 
-	public ResolvedMember[] getDeclaredFields() {
-		return resolvedTypeX.getDeclaredFields();
-	}
+  @Override
+  public ResolvedMember[] getDeclaredFields() {
+    return resolvedTypeX.getDeclaredFields();
+  }
 
-	public ResolvedType[] getDeclaredInterfaces() {
-		return resolvedTypeX.getDeclaredInterfaces();
-	}
+  @Override
+  public ResolvedType[] getDeclaredInterfaces() {
+    return resolvedTypeX.getDeclaredInterfaces();
+  }
 
-	public ResolvedMember[] getDeclaredMethods() {
-		return resolvedTypeX.getDeclaredMethods();
-	}
+  @Override
+  public ResolvedMember[] getDeclaredMethods() {
+    return resolvedTypeX.getDeclaredMethods();
+  }
 
-	public ResolvedMember[] getDeclaredPointcuts() {
-		return resolvedTypeX.getDeclaredPointcuts();
-	}
+  @Override
+  public ResolvedMember[] getDeclaredPointcuts() {
+    return resolvedTypeX.getDeclaredPointcuts();
+  }
 
-	public PerClause getPerClause() {
-		return resolvedTypeX.getPerClause();
-	}
+  @Override
+  public PerClause getPerClause() {
+    return resolvedTypeX.getPerClause();
+  }
 
-	public Collection<Declare> getDeclares() {
-		return resolvedTypeX.getDeclares();
-	}
+  @Override
+  public Collection<Declare> getDeclares() {
+    return resolvedTypeX.getDeclares();
+  }
 
-	public Collection<ConcreteTypeMunger> getTypeMungers() {
-		return resolvedTypeX.getTypeMungers();
-	}
+  @Override
+  public Collection<ConcreteTypeMunger> getTypeMungers() {
+    return resolvedTypeX.getTypeMungers();
+  }
 
-	public Collection<ResolvedMember> getPrivilegedAccesses() {
-		return Collections.emptyList();
-	}
+  @Override
+  public Collection<ResolvedMember> getPrivilegedAccesses() {
+    return Collections.emptyList();
+  }
 
-	public int getModifiers() {
-		return resolvedTypeX.getModifiers();
-	}
+  @Override
+  public int getModifiers() {
+    return resolvedTypeX.getModifiers();
+  }
 
-	public ResolvedType getSuperclass() {
-		return resolvedTypeX.getSuperclass();
-	}
+  @Override
+  public ResolvedType getSuperclass() {
+    return resolvedTypeX.getSuperclass();
+  }
 
-	public WeaverStateInfo getWeaverState() {
-		return null;
-	}
+  @Override
+  public WeaverStateInfo getWeaverState() {
+    return null;
+  }
 
-	public TypeVariable[] getTypeVariables() {
-		return resolvedTypeX.getTypeVariables();
-	}
+  @Override
+  public TypeVariable[] getTypeVariables() {
+    return resolvedTypeX.getTypeVariables();
+  }
 
 }

@@ -13,9 +13,8 @@ package org.aspectj.util;
 
 /**
  * Abstraction of a structure model
- * 
+ *
  * @author Andy Clement
  */
 public interface IStructureModel {
-
 }

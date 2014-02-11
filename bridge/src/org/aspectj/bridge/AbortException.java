@@ -13,6 +13,9 @@
 
 package org.aspectj.bridge;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -23,7 +26,7 @@ import java.util.ArrayList;
  * normally (e.g., a test failure causes the test to abort but the reporting and testing continues normally), use the static methods
  * to borrow and return a "porter" to avoid the expense of constructing a stack trace each time. A porter stack trace is invalid,
  * and it should only be used to convey a message. E.g., to print the stack of the AbortException and any contained message:
- * 
+ * <p/>
  * <pre>
  * catch (AbortException ae) {
  *     IMessage m = ae.getMessage();
@@ -32,197 +35,223 @@ import java.util.ArrayList;
  *     if (null != thrown) thrown.printStackTrace(System.err);
  * }
  * </pre>
- * 
+ *
  * @author PARC
  * @author Andy Clement
  */
-public class AbortException extends RuntimeException { // XXX move porters out, handle proxy better
+public final class AbortException extends RuntimeException { // XXX move porters out, handle proxy better
 
-	private static final long serialVersionUID = -7211791639898586417L;
+  private static final long serialVersionUID = -7211791639898586417L;
 
-	private boolean isSilent = false;
+  /**
+   * used when message text is null
+   */
+  @NotNull
+  public static final String NO_MESSAGE_TEXT = "AbortException (no message)";
+  @NotNull
+  private static final ArrayList<AbortException> porters = new ArrayList<AbortException>();
 
-	/** used when message text is null */
-	public static final String NO_MESSAGE_TEXT = "AbortException (no message)";
+  private boolean isSilent = false;
 
-	private static final ArrayList<AbortException> porters = new ArrayList<AbortException>();
+  /**
+   * structured message abort
+   */
+  @Nullable
+  protected IMessage message;
 
-	/**
-	 * Get a porter exception from the pool. Porter exceptions do <b>not</b> have valid stack traces. They are used only to avoid
-	 * generating stack traces when using throw/catch to abruptly complete but continue.
-	 */
-	public static AbortException borrowPorter(IMessage message) {
-		AbortException result;
-		synchronized (porters) {
-			if (porters.size() > 0) {
-				result = porters.get(0);
-			} else {
-				result = new AbortException();
-				result.setIsSilent(false);
-			}
-		}
-		result.setIMessage(message);
-		result.isPorter = true;
-		return result;
-	}
+  /**
+   * true if this is a porter exception - only used to hold message
+   */
+  protected boolean isPorter;
 
-	/**
-	 * Return (or add) a porter exception to the pool.
-	 */
-	public static void returnPorter(AbortException porter) {
-		synchronized (porters) {
-			if (porters.contains(porter)) {
-				throw new IllegalStateException("already have " + porter);
-			} else {
-				porters.add(porter);
-			}
-		}
-	}
+  /**
+   * Get a porter exception from the pool. Porter exceptions do <b>not</b> have valid stack traces. They are used only to avoid
+   * generating stack traces when using throw/catch to abruptly complete but continue.
+   */
+  @NotNull
+  public static AbortException borrowPorter(@NotNull IMessage message) {
+    final AbortException result;
+    synchronized (porters) {
+      if (porters.size() > 0) {
+        result = porters.get(0);
+      } else {
+        result = new AbortException();
+        result.setIsSilent(false);
+      }
+    }
+    result.message = message;
+    result.isPorter = true;
+    return result;
+  }
 
-	/** @return NO_MESSAGE_TEXT or message.getMessage() if not null */
-	private static String extractMessage(IMessage message) {
-		if (null == message) {
-			return NO_MESSAGE_TEXT;
-		} else {
-			String m = message.getMessage();
-			if (null == m) {
-				return NO_MESSAGE_TEXT;
-			} else {
-				return m;
-			}
-		}
-	}
+  /**
+   * Return (or add) a porter exception to the pool.
+   */
+  public static void returnPorter(@NotNull AbortException porter) {
+    synchronized (porters) {
+      if (porters.contains(porter)) {
+        throw new IllegalStateException("already have " + porter);
+      } else {
+        porters.add(porter);
+      }
+    }
+  }
 
-	/** structured message abort */
-	protected IMessage message;
+  /**
+   * abort with default String message
+   */
+  public AbortException() {
+    this("ABORT");
+    isSilent = true;
+  }
 
-	/** true if this is a porter exception - only used to hold message */
-	protected boolean isPorter;
+  /**
+   * abort with message
+   */
+  public AbortException(@Nullable String s) {
+    super(null != s ? s : NO_MESSAGE_TEXT);
+    this.message = null;
+  }
 
-	/** abort with default String message */
-	public AbortException() {
-		this("ABORT");
-		isSilent = true;
-	}
+  /**
+   * abort with structured message
+   */
+  public AbortException(@NotNull IMessage message) {
+    super(extractMessage(message));
+    this.message = message;
+  }
 
-	/** abort with message */
-	public AbortException(String s) {
-		super(null != s ? s : NO_MESSAGE_TEXT);
-		this.message = null;
-	}
+  /**
+   * @return IMessage structured message, if set
+   */
+  @Nullable
+  public IMessage getIMessage() {
+    return message;
+  }
 
-	/** abort with structured message */
-	public AbortException(IMessage message) {
-		super(extractMessage(message));
-		this.message = message;
-	}
+  /**
+   * The stack trace of a porter is invalid; it is only used to carry a message (which may itself have a wrapped exception).
+   *
+   * @return true if this exception is only to carry exception
+   */
+  public boolean isPorter() {
+    return isPorter;
+  }
 
-	/** @return IMessage structured message, if set */
-	public IMessage getIMessage() {
-		return message;
-	}
+  /**
+   * @return Throwable at bottom of IMessage chain, if any
+   */
+  @Nullable
+  public Throwable getThrown() {
+    Throwable result = null;
+    final IMessage m = getIMessage();
+    if (null != m) {
+      result = m.getThrown();
+      if (result instanceof AbortException) {
+        return ((AbortException) result).getThrown();
+      }
+    }
+    return result;
+  }
 
-	/**
-	 * The stack trace of a porter is invalid; it is only used to carry a message (which may itself have a wrapped exception).
-	 * 
-	 * @return true if this exception is only to carry exception
-	 */
-	public boolean isPorter() {
-		return isPorter;
-	}
+  // ----------- proxy attempts
 
-	/** @return Throwable at bottom of IMessage chain, if any */
-	public Throwable getThrown() {
-		Throwable result = null;
-		IMessage m = getIMessage();
-		if (null != m) {
-			result = m.getThrown();
-			if (result instanceof AbortException) {
-				return ((AbortException) result).getThrown();
-			}
-		}
-		return result;
-	}
+  /**
+   * Get message for this AbortException, either associated explicitly as message or implicitly as IMessage message or its thrown
+   * message.
+   *
+   * @see java.lang.Throwable#getMessage()
+   */
+  @Override
+  @NotNull
+  public String getMessage() {
+    String message = super.getMessage();
+    if ((null == message) || (NO_MESSAGE_TEXT == message)) {
+      final IMessage m = getIMessage();
+      if (null != m) {
+        message = m.getMessage();
+        if (null == message) {
+          final Throwable thrown = m.getThrown();
+          if (null != thrown) {
+            message = thrown.getMessage();
+          }
+        }
+      }
+      if (null == message) {
+        message = NO_MESSAGE_TEXT; // better than nothing
+      }
+    }
+    return message;
+  }
 
-	private void setIMessage(IMessage message) {
-		this.message = message;
-	}
+  /**
+   * @see java.lang.Throwable#printStackTrace()
+   */
+  @Override
+  public void printStackTrace() {
+    printStackTrace(System.out);
+  }
 
-	// ----------- proxy attempts
-	/**
-	 * Get message for this AbortException, either associated explicitly as message or implicitly as IMessage message or its thrown
-	 * message.
-	 * 
-	 * @see java.lang.Throwable#getMessage()
-	 */
-	public String getMessage() {
-		String message = super.getMessage();
-		if ((null == message) || (NO_MESSAGE_TEXT == message)) {
-			IMessage m = getIMessage();
-			if (null != m) {
-				message = m.getMessage();
-				if (null == message) {
-					Throwable thrown = m.getThrown();
-					if (null != thrown) {
-						message = thrown.getMessage();
-					}
-				}
-			}
-			if (null == message) {
-				message = NO_MESSAGE_TEXT; // better than nothing
-			}
-		}
-		return message;
-	}
+  /**
+   * Print the stack trace of any enclosed thrown or this otherwise.
+   *
+   * @see java.lang.Throwable#printStackTrace(PrintStream)
+   */
+  @Override
+  public void printStackTrace(@NotNull PrintStream s) {
+    final IMessage m = getIMessage();
+    final Throwable thrown = (null == m ? null : m.getThrown());
+    if (!isPorter() || (null == thrown)) {
+      s.println("Message: " + m);
+      super.printStackTrace(s);
+    } else {
+      thrown.printStackTrace(s);
+    }
+  }
 
-	/**
-	 * @see java.lang.Throwable#printStackTrace()
-	 */
-	public void printStackTrace() {
-		printStackTrace(System.out);
-	}
+  /**
+   * Print the stack trace of any enclosed thrown or this otherwise.
+   *
+   * @see java.lang.Throwable#printStackTrace(PrintWriter)
+   */
+  @Override
+  public void printStackTrace(@NotNull PrintWriter s) {
+    final IMessage m = getIMessage();
+    final Throwable thrown = (null == m ? null : m.getThrown());
+    if (null == thrown) { // Always print
+      if (isPorter()) {
+        s.println("(Warning porter AbortException without thrown)");
+      }
+      s.println("Message: " + m);
+      super.printStackTrace(s);
+    } else {
+      thrown.printStackTrace(s);
+    }
+  }
 
-	/**
-	 * Print the stack trace of any enclosed thrown or this otherwise.
-	 * 
-	 * @see java.lang.Throwable#printStackTrace(PrintStream)
-	 */
-	public void printStackTrace(PrintStream s) {
-		IMessage m = getIMessage();
-		Throwable thrown = (null == m ? null : m.getThrown());
-		if (!isPorter() || (null == thrown)) {
-			s.println("Message: " + m);
-			super.printStackTrace(s);
-		} else {
-			thrown.printStackTrace(s);
-		}
-	}
+  public boolean isSilent() {
+    return isSilent;
+  }
 
-	/**
-	 * Print the stack trace of any enclosed thrown or this otherwise.
-	 * 
-	 * @see java.lang.Throwable#printStackTrace(PrintWriter)
-	 */
-	public void printStackTrace(PrintWriter s) {
-		IMessage m = getIMessage();
-		Throwable thrown = (null == m ? null : m.getThrown());
-		if (null == thrown) { // Always print
-			if (isPorter()) {
-				s.println("(Warning porter AbortException without thrown)");
-			}
-			s.println("Message: " + m);
-			super.printStackTrace(s);
-		} else {
-			thrown.printStackTrace(s);
-		}
-	}
+  public void setIsSilent(boolean isSilent) {
+    this.isSilent = isSilent;
+  }
 
-	public boolean isSilent() {
-		return isSilent;
-	}
-
-	public void setIsSilent(boolean isSilent) {
-		this.isSilent = isSilent;
-	}
+  /**
+   * @return NO_MESSAGE_TEXT or message.getMessage() if not null
+   */
+  @NotNull
+  private static String extractMessage(@Nullable IMessage message) {
+    if (null == message) {
+      return NO_MESSAGE_TEXT;
+    } else {
+      final String m = message.getMessage();
+      if (null == m) {
+        return NO_MESSAGE_TEXT;
+      } else {
+        return m;
+      }
+    }
+  }
 
 }

@@ -26,118 +26,118 @@ import org.aspectj.apache.bcel.util.SyntheticRepository;
 
 
 public class RuntimeVisibleParameterAnnotationAttributeTest extends BcelTestCase {
-	
 
-	protected void setUp() throws Exception {
-		super.setUp();
-	}
-	
 
-	public void testAccessingRuntimeVisibleParameterAnnotations() throws ClassNotFoundException {
-		JavaClass clazz = getClassFromJar("AnnotatedParameters");
-		Attribute[] rvaAttr = findAttribute("RuntimeVisibleParameterAnnotations",clazz);
-		Method[] methods = clazz.getMethods();
+  protected void setUp() throws Exception {
+    super.setUp();
+  }
 
-		for (int i = 0; i < methods.length; i++) {
-			Method m = methods[i];
-			if (m.getName().equals("foo")) {
-				RuntimeVisParamAnnos paramAnns = 
-					(RuntimeVisParamAnnos) findAttribute("RuntimeVisibleParameterAnnotations",m.getAttributes());
-				assertTrue("foo takes two parameters, not "+paramAnns.getParameterAnnotations().size(),
-						paramAnns.getParameterAnnotations().size()==2);
 
-				AnnotationGen[] firstParamAnnotations = paramAnns.getAnnotationsOnParameter(0);
-				checkAnnotation(firstParamAnnotations[0],"SimpleAnnotation","id","2");
+  public void testAccessingRuntimeVisibleParameterAnnotations() throws ClassNotFoundException {
+    final JavaClass clazz = getClassFromJar("AnnotatedParameters");
+    final Attribute[] rvaAttr = findAttribute("RuntimeVisibleParameterAnnotations", clazz);
+    final Method[] methods = clazz.getMethods();
 
-				AnnotationGen[] secondParamAnnotations = paramAnns.getAnnotationsOnParameter(1);
-				checkAnnotation(secondParamAnnotations[0],"SimpleAnnotation","id","3");
-				checkAnnotation(secondParamAnnotations[1],"AnnotationEnumElement","enumval","LSimpleEnum;Red");
-				
-			}
-			if (m.getName().equals("main")) {
-				RuntimeVisParamAnnos paramAnns = 
-					(RuntimeVisParamAnnos) findAttribute("RuntimeVisibleParameterAnnotations",m.getAttributes());
-				assertTrue("main takes one parameter, not "+paramAnns.getParameterAnnotations().size(),
-						paramAnns.getParameterAnnotations().size()==1);
+    for (int i = 0; i < methods.length; i++) {
+      final Method m = methods[i];
+      if (m.getName().equals("foo")) {
+        final RuntimeVisParamAnnos paramAnns =
+            (RuntimeVisParamAnnos) findAttribute("RuntimeVisibleParameterAnnotations", m.getAttributes());
+        assertTrue("foo takes two parameters, not " + paramAnns.getParameterAnnotations().size(),
+            paramAnns.getParameterAnnotations().size() == 2);
 
-				AnnotationGen[] firstParamAnnotations = paramAnns.getAnnotationsOnParameter(0);
-				checkAnnotation(firstParamAnnotations[0],"SimpleAnnotation","id","1");
-			}
-		}
-	}
-	
-	public void testAccessingParameterAnnotationsThroughGetAnnotations() throws ClassNotFoundException {
-		JavaClass clazz = getClassFromJar("AnnotatedParameters");
-		Attribute[] rvaAttr = findAttribute("RuntimeVisibleParameterAnnotations",clazz);
-		
-		checkFooMethod(clazz);
-	}
-	
-	public void testParameterAnnotationsReadWrite() throws ClassNotFoundException,IOException {
-		JavaClass clazz = getClassFromJar("AnnotatedParameters");
-		
-		checkFooMethod(clazz);
+        final AnnotationGen[] firstParamAnnotations = paramAnns.getAnnotationsOnParameter(0);
+        checkAnnotation(firstParamAnnotations[0], "SimpleAnnotation", "id", "2");
 
-		//	 Write it out
-		File tfile = createTestdataFile("AnnotatedParameters.class");
-		clazz.dump(tfile);
-		
-		SyntheticRepository repos2 = createRepos(".");
-		JavaClass           clazz2 = repos2.loadClass("AnnotatedParameters");
-		
-		checkFooMethod(clazz);
+        final AnnotationGen[] secondParamAnnotations = paramAnns.getAnnotationsOnParameter(1);
+        checkAnnotation(secondParamAnnotations[0], "SimpleAnnotation", "id", "3");
+        checkAnnotation(secondParamAnnotations[1], "AnnotationEnumElement", "enumval", "LSimpleEnum;Red");
 
-		assertTrue(tfile.delete());
-	}
-		
-		
-	public void checkFooMethod(JavaClass clazz) {
-		Method[] methods = clazz.getMethods();
+      }
+      if (m.getName().equals("main")) {
+        final RuntimeVisParamAnnos paramAnns =
+            (RuntimeVisParamAnnos) findAttribute("RuntimeVisibleParameterAnnotations", m.getAttributes());
+        assertTrue("main takes one parameter, not " + paramAnns.getParameterAnnotations().size(),
+            paramAnns.getParameterAnnotations().size() == 1);
 
-		for (int i = 0; i < methods.length; i++) {
-			Method m = methods[i];
-			if (m.getName().equals("foo")) {
+        final AnnotationGen[] firstParamAnnotations = paramAnns.getAnnotationsOnParameter(0);
+        checkAnnotation(firstParamAnnotations[0], "SimpleAnnotation", "id", "1");
+      }
+    }
+  }
 
-				AnnotationGen[] firstParamAnnotations = m.getAnnotationsOnParameter(0);
-				checkAnnotation(firstParamAnnotations[0],"SimpleAnnotation","id","2");
+  public void testAccessingParameterAnnotationsThroughGetAnnotations() throws ClassNotFoundException {
+    final JavaClass clazz = getClassFromJar("AnnotatedParameters");
+    final Attribute[] rvaAttr = findAttribute("RuntimeVisibleParameterAnnotations", clazz);
 
-				AnnotationGen[] secondParamAnnotations = m.getAnnotationsOnParameter(1);
-				checkAnnotation(secondParamAnnotations[0],"SimpleAnnotation","id","3");
-				checkAnnotation(secondParamAnnotations[1],"AnnotationEnumElement","enumval","LSimpleEnum;Red");
-				
-			}
-		}
-	}
-	
-	private void checkAnnotation(AnnotationGen a,String name,String elementname,String elementvalue) {
-		assertTrue("Expected annotation to have name "+name+" but it had name "+a.getTypeName(),
-				a.getTypeName().equals(name));
-		assertTrue("Expected annotation to have one element but it had "+a.getValues().size(),a.getValues().size()==1);
-		NameValuePair envp = a.getValues().get(0);
-		assertTrue("Expected element name "+elementname+" but was "+envp.getNameString(),
-				elementname.equals(envp.getNameString()));
-		assertTrue("Expected element value "+elementvalue+" but was "+envp.getValue().stringifyValue(),
-				elementvalue.equals(envp.getValue().stringifyValue()));
-	}
-	
+    checkFooMethod(clazz);
+  }
 
-	// helper methods
-	
-	public void checkValue(AnnotationGen a,String name,String tostring) {
-		for (Iterator<NameValuePair> i = a.getValues().iterator(); i.hasNext();) {
-			NameValuePair element = i.next();
-			if (element.getNameString().equals(name)) {
-				if (!element.getValue().stringifyValue().equals(tostring)) {
-					fail("Expected element "+name+" to have value "+tostring+" but it had value "+element.getValue().stringifyValue());
-				}
-				return;
-			}
-		}
-		fail("Didnt find named element "+name);
-	}
+  public void testParameterAnnotationsReadWrite() throws ClassNotFoundException, IOException {
+    final JavaClass clazz = getClassFromJar("AnnotatedParameters");
 
-	protected void tearDown() throws Exception {
-		super.tearDown();
-	}
-	
+    checkFooMethod(clazz);
+
+    //	 Write it out
+    final File tfile = createTestdataFile("AnnotatedParameters.class");
+    clazz.dump(tfile);
+
+    final SyntheticRepository repos2 = createRepos(".");
+    final JavaClass clazz2 = repos2.loadClass("AnnotatedParameters");
+
+    checkFooMethod(clazz);
+
+    assertTrue(tfile.delete());
+  }
+
+
+  public void checkFooMethod(JavaClass clazz) {
+    final Method[] methods = clazz.getMethods();
+
+    for (int i = 0; i < methods.length; i++) {
+      final Method m = methods[i];
+      if (m.getName().equals("foo")) {
+
+        final AnnotationGen[] firstParamAnnotations = m.getAnnotationsOnParameter(0);
+        checkAnnotation(firstParamAnnotations[0], "SimpleAnnotation", "id", "2");
+
+        final AnnotationGen[] secondParamAnnotations = m.getAnnotationsOnParameter(1);
+        checkAnnotation(secondParamAnnotations[0], "SimpleAnnotation", "id", "3");
+        checkAnnotation(secondParamAnnotations[1], "AnnotationEnumElement", "enumval", "LSimpleEnum;Red");
+
+      }
+    }
+  }
+
+  private void checkAnnotation(AnnotationGen a, String name, String elementname, String elementvalue) {
+    assertTrue("Expected annotation to have name " + name + " but it had name " + a.getTypeName(),
+        a.getTypeName().equals(name));
+    assertTrue("Expected annotation to have one element but it had " + a.getValues().size(), a.getValues().size() == 1);
+    final NameValuePair envp = a.getValues().get(0);
+    assertTrue("Expected element name " + elementname + " but was " + envp.getNameString(),
+        elementname.equals(envp.getNameString()));
+    assertTrue("Expected element value " + elementvalue + " but was " + envp.getValue().stringifyValue(),
+        elementvalue.equals(envp.getValue().stringifyValue()));
+  }
+
+
+  // helper methods
+
+  public void checkValue(AnnotationGen a, String name, String tostring) {
+    for (final Iterator<NameValuePair> i = a.getValues().iterator(); i.hasNext(); ) {
+      final NameValuePair element = i.next();
+      if (element.getNameString().equals(name)) {
+        if (!element.getValue().stringifyValue().equals(tostring)) {
+          fail("Expected element " + name + " to have value " + tostring + " but it had value " + element.getValue().stringifyValue());
+        }
+        return;
+      }
+    }
+    fail("Didnt find named element " + name);
+  }
+
+  protected void tearDown() throws Exception {
+    super.tearDown();
+  }
+
 }

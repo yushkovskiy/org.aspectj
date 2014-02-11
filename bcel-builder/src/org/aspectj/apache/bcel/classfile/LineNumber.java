@@ -61,60 +61,60 @@ import java.io.IOException;
 /**
  * This class represents a (PC offset, line number) pair, i.e., a line number in the source that corresponds to a relative address
  * in the byte code. This is used for debugging purposes.
- * 
- * @version $Id: LineNumber.java,v 1.6 2009/09/09 21:26:54 aclement Exp $
+ *
  * @author <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
  * @author Andy Clement
+ * @version $Id: LineNumber.java,v 1.6 2009/09/09 21:26:54 aclement Exp $
  * @see LineNumberTable
  */
 public final class LineNumber implements Node {
-	private int startPC;
-	private int lineNumber;
+  private final int startPC;
+  private final int lineNumber;
 
-	public LineNumber(LineNumber c) {
-		this(c.getStartPC(), c.getLineNumber());
-	}
+  public LineNumber(LineNumber c) {
+    this(c.getStartPC(), c.getLineNumber());
+  }
 
-	LineNumber(DataInputStream file) throws IOException {
-		this(file.readUnsignedShort(), file.readUnsignedShort());
-	}
+  LineNumber(DataInputStream file) throws IOException {
+    this(file.readUnsignedShort(), file.readUnsignedShort());
+  }
 
-	public LineNumber(int startPC, int lineNumber) {
-		this.startPC = startPC;
-		this.lineNumber = lineNumber;
-	}
+  public LineNumber(int startPC, int lineNumber) {
+    this.startPC = startPC;
+    this.lineNumber = lineNumber;
+  }
 
-	public void accept(ClassVisitor v) {
-		v.visitLineNumber(this);
-	}
+  public void accept(ClassVisitor v) {
+    v.visitLineNumber(this);
+  }
 
-	public final void dump(DataOutputStream file) throws IOException {
-		file.writeShort(startPC);
-		file.writeShort(lineNumber);
-	}
+  public final void dump(DataOutputStream file) throws IOException {
+    file.writeShort(startPC);
+    file.writeShort(lineNumber);
+  }
 
-	public final int getLineNumber() {
-		return lineNumber;
-	}
+  public final int getLineNumber() {
+    return lineNumber;
+  }
 
-	public final int getStartPC() {
-		return startPC;
-	}
+  public final int getStartPC() {
+    return startPC;
+  }
 
-	// public final void setLineNumber(int line_number) {
-	// this.lineNumber = line_number;
-	// }
-	//
-	// public final void setStartPC(int start_pc) {
-	// this.startPC = start_pc;
-	// }
+  // public final void setLineNumber(int line_number) {
+  // this.lineNumber = line_number;
+  // }
+  //
+  // public final void setStartPC(int start_pc) {
+  // this.startPC = start_pc;
+  // }
 
-	@Override
-	public final String toString() {
-		return "LineNumber(" + startPC + ", " + lineNumber + ")";
-	}
+  @Override
+  public final String toString() {
+    return "LineNumber(" + startPC + ", " + lineNumber + ")";
+  }
 
-	public LineNumber copy() {
-		return new LineNumber(this);
-	}
+  public LineNumber copy() {
+    return new LineNumber(this);
+  }
 }

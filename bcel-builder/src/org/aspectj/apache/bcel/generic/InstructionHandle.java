@@ -54,136 +54,136 @@ package org.aspectj.apache.bcel.generic;
  * <http://www.apache.org/>.
  */
 
+import org.aspectj.apache.bcel.classfile.Utility;
+
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.aspectj.apache.bcel.classfile.Utility;
-
 /**
  * Instances of this class give users a handle to the instructions contained in an InstructionList. Instruction objects may be used
  * more than once within a list, this is useful because it saves memory and may be much faster.
- * 
+ * <p/>
  * Within an InstructionList an InstructionHandle object is wrapped around all instructions, i.e., it implements a cell in a
  * doubly-linked list. From the outside only the next and the previous instruction (handle) are accessible. One can traverse the
  * list via an Enumeration returned by InstructionList.elements().
- * 
- * @version $Id: InstructionHandle.java,v 1.9 2009/10/05 17:35:36 aclement Exp $
+ *
  * @author <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
+ * @version $Id: InstructionHandle.java,v 1.9 2009/10/05 17:35:36 aclement Exp $
  * @see Instruction
  * @see BranchHandle
  * @see InstructionList
  */
 public class InstructionHandle implements java.io.Serializable {
-	InstructionHandle next, prev; // Will be set from the outside
-	Instruction instruction;
-	protected int pos = -1; // byte code offset of instruction
-	private Set<InstructionTargeter> targeters = Collections.emptySet();
+  InstructionHandle next, prev; // Will be set from the outside
+  Instruction instruction;
+  protected int pos = -1; // byte code offset of instruction
+  private Set<InstructionTargeter> targeters = Collections.emptySet();
 
-	protected InstructionHandle(Instruction i) {
-		setInstruction(i);
-	}
+  protected InstructionHandle(Instruction i) {
+    setInstruction(i);
+  }
 
-	static final InstructionHandle getInstructionHandle(Instruction i) {
-		return new InstructionHandle(i);
-	}
+  static final InstructionHandle getInstructionHandle(Instruction i) {
+    return new InstructionHandle(i);
+  }
 
-	public final InstructionHandle getNext() {
-		return next;
-	}
+  public final InstructionHandle getNext() {
+    return next;
+  }
 
-	public final InstructionHandle getPrev() {
-		return prev;
-	}
+  public final InstructionHandle getPrev() {
+    return prev;
+  }
 
-	public final Instruction getInstruction() {
-		return instruction;
-	}
+  public final Instruction getInstruction() {
+    return instruction;
+  }
 
-	/**
-	 * Replace current instruction contained in this handle. Old instruction is disposed using Instruction.dispose().
-	 */
-	public void setInstruction(Instruction i) { // Overridden in BranchHandle
-		if (instruction != null) {
-			instruction.dispose();
-		}
-		instruction = i;
-	}
+  /**
+   * Replace current instruction contained in this handle. Old instruction is disposed using Instruction.dispose().
+   */
+  public void setInstruction(Instruction i) { // Overridden in BranchHandle
+    if (instruction != null) {
+      instruction.dispose();
+    }
+    instruction = i;
+  }
 
-	/**
-	 * @return the position, i.e., the byte code offset of the contained instruction. This is accurate only after
-	 *         InstructionList.setPositions() has been called.
-	 */
-	public int getPosition() {
-		return pos;
-	}
+  /**
+   * @return the position, i.e., the byte code offset of the contained instruction. This is accurate only after
+   * InstructionList.setPositions() has been called.
+   */
+  public int getPosition() {
+    return pos;
+  }
 
-	/**
-	 * Set the position, i.e., the byte code offset of the contained instruction.
-	 */
-	void setPosition(int pos) {
-		this.pos = pos;
-	}
+  /**
+   * Set the position, i.e., the byte code offset of the contained instruction.
+   */
+  void setPosition(int pos) {
+    this.pos = pos;
+  }
 
-	/**
-	 * Delete contents, i.e., remove user access and make handle reusable.
-	 */
-	// OPTIMIZE get rid of this? why do we need it
-	void dispose() {
-		next = prev = null;
-		instruction.dispose();
-		instruction = null;
-		pos = -1;
-		removeAllTargeters();
-	}
+  /**
+   * Delete contents, i.e., remove user access and make handle reusable.
+   */
+  // OPTIMIZE get rid of this? why do we need it
+  void dispose() {
+    next = prev = null;
+    instruction.dispose();
+    instruction = null;
+    pos = -1;
+    removeAllTargeters();
+  }
 
-	/**
-	 * Remove all targeters, if any.
-	 */
-	public void removeAllTargeters() {
-		targeters.clear();
-	}
+  /**
+   * Remove all targeters, if any.
+   */
+  public void removeAllTargeters() {
+    targeters.clear();
+  }
 
-	/**
-	 * Denote this handle isn't referenced anymore by t.
-	 */
-	public void removeTargeter(InstructionTargeter t) {
-		targeters.remove(t);
-	}
+  /**
+   * Denote this handle isn't referenced anymore by t.
+   */
+  public void removeTargeter(InstructionTargeter t) {
+    targeters.remove(t);
+  }
 
-	/**
-	 * Denote this handle is being referenced by t.
-	 */
-	public void addTargeter(InstructionTargeter t) {
-		if (targeters == Collections.EMPTY_SET) {
-			targeters = new HashSet<InstructionTargeter>();
-		}
-		targeters.add(t);
-	}
+  /**
+   * Denote this handle is being referenced by t.
+   */
+  public void addTargeter(InstructionTargeter t) {
+    if (targeters == Collections.EMPTY_SET) {
+      targeters = new HashSet<InstructionTargeter>();
+    }
+    targeters.add(t);
+  }
 
-	public boolean hasTargeters() {
-		return !targeters.isEmpty();
-	}
+  public boolean hasTargeters() {
+    return !targeters.isEmpty();
+  }
 
-	public Set<InstructionTargeter> getTargeters() {
-		return targeters;
-	}
+  public Set<InstructionTargeter> getTargeters() {
+    return targeters;
+  }
 
-	public Set<InstructionTargeter> getTargetersCopy() {
-		Set<InstructionTargeter> copy = new HashSet<InstructionTargeter>();
-		copy.addAll(targeters);
-		return copy;
-	}
+  public Set<InstructionTargeter> getTargetersCopy() {
+    final Set<InstructionTargeter> copy = new HashSet<InstructionTargeter>();
+    copy.addAll(targeters);
+    return copy;
+  }
 
-	/**
-	 * @return a (verbose) string representation of the contained instruction.
-	 */
-	public String toString(boolean verbose) {
-		return Utility.format(pos, 4, false, ' ') + ": " + instruction.toString(verbose);
-	}
+  /**
+   * @return a (verbose) string representation of the contained instruction.
+   */
+  public String toString(boolean verbose) {
+    return Utility.format(pos, 4, false, ' ') + ": " + instruction.toString(verbose);
+  }
 
-	public String toString() {
-		return toString(true);
-	}
+  public String toString() {
+    return toString(true);
+  }
 
 }

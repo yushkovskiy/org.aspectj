@@ -14,43 +14,44 @@
 package org.aspectj.weaver.ast;
 
 public class Or extends Test {
-	Test left, right;
+  Test left, right;
 
-	public Or(Test left, Test right) {
-		super();
-		this.left = left;
-		this.right = right;
-	}
+  public Or(Test left, Test right) {
+    super();
+    this.left = left;
+    this.right = right;
+  }
 
-	public void accept(ITestVisitor v) {
-		v.visit(this);
-	}
-	
-	public String toString() {
-		return "(" + left + " || " + right + ")";
-	}
+  @Override
+  public void accept(ITestVisitor v) {
+    v.visit(this);
+  }
 
-	public boolean equals(Object other) {
-		if (other instanceof Or) {
-			Or o = (Or) other;
-			return o.left.equals(left) && o.right.equals(right);
-		} else {
-			return false;
-		}
-	}
+  public String toString() {
+    return "(" + left + " || " + right + ")";
+  }
 
-    public int hashCode() {
-        int result = 19;
-        result = 37*result + left.hashCode();
-        result = 37*result + right.hashCode();
-        return result;
+  public boolean equals(Object other) {
+    if (other instanceof Or) {
+      final Or o = (Or) other;
+      return o.left.equals(left) && o.right.equals(right);
+    } else {
+      return false;
     }
+  }
 
-    public Test getLeft() {
-        return left;
-    }
+  public int hashCode() {
+    int result = 19;
+    result = 37 * result + left.hashCode();
+    result = 37 * result + right.hashCode();
+    return result;
+  }
 
-    public Test getRight() {
-        return right;
-    }
+  public Test getLeft() {
+    return left;
+  }
+
+  public Test getRight() {
+    return right;
+  }
 }

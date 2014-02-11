@@ -13,19 +13,19 @@ package org.aspectj.weaver.tools;
 
 /**
  * @author colyer
- * The result of asking a ShadowMatch to match at a given join point.
+ *         The result of asking a ShadowMatch to match at a given join point.
  */
 public interface JoinPointMatch {
 
-	/**
-	 * True if the pointcut expression has matched at this join point, and false 
-	 * otherwise
-	 */
-	boolean matches();
-	
-	/**
-	 * Get the parameter bindings at the matched join point. 
-	 * If the join point was not matched an empty array is returned.
-	 */
-	PointcutParameter[] getParameterBindings();
+  /**
+   * True if the pointcut expression has matched at this join point, and false
+   * otherwise
+   */
+  boolean matches();
+
+  /**
+   * Get the parameter bindings at the matched join point.
+   * If the join point was not matched an empty array is returned.
+   */
+  PointcutParameter[] getParameterBindings();
 }

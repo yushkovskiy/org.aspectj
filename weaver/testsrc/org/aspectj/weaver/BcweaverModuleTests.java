@@ -13,6 +13,7 @@ package org.aspectj.weaver;
  * ******************************************************************/
 
 // default package
+
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
@@ -22,20 +23,20 @@ import org.aspectj.weaver.tools.cache.CacheTests;
 
 public class BcweaverModuleTests extends TestCase {
 
-	public static Test suite() {
-		TestSuite suite = new TestSuite(BcweaverModuleTests.class.getName());
-		suite.addTest(org.aspectj.weaver.bcel.BcelTests.suite());
-		suite.addTest(org.aspectj.weaver.BcweaverTests.suite());
-		suite.addTest(org.aspectj.weaver.patterns.bcel.BcelPatternsTests.suite());
-		suite.addTestSuite(LocaleTest.class);
-		suite.addTestSuite(GenericSignatureParserTest.class);
-		suite.addTest(ToolsTests.suite());
-        suite.addTest(CacheTests.suite());
-		return suite;
-	}
+  public static Test suite() {
+    final TestSuite suite = new TestSuite(BcweaverModuleTests.class.getName());
+    suite.addTest(org.aspectj.weaver.bcel.BcelTests.suite());
+    suite.addTest(org.aspectj.weaver.BcweaverTests.suite());
+    suite.addTest(org.aspectj.weaver.patterns.bcel.BcelPatternsTests.suite());
+    suite.addTestSuite(LocaleTest.class);
+    suite.addTestSuite(GenericSignatureParserTest.class);
+    suite.addTest(ToolsTests.suite());
+    suite.addTest(CacheTests.suite());
+    return suite;
+  }
 
-	public BcweaverModuleTests(String name) {
-		super(name);
-	}
+  public BcweaverModuleTests(String name) {
+    super(name);
+  }
 
 }

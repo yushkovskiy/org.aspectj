@@ -29,165 +29,166 @@ import org.aspectj.weaver.tools.cache.AbstractIndexedFileCacheBacking.IndexEntry
 /**
  */
 public abstract class AsynchronousFileCacheBackingTestSupport
-		extends AbstractCacheBackingTestSupport {
-    private File  cacheDir, indexFile;
-    protected final byte[]    bytes=new byte[Byte.MAX_VALUE];
-    protected final Random    random=new Random(System.nanoTime());
+    extends AbstractCacheBackingTestSupport {
+  private File cacheDir, indexFile;
+  protected final byte[] bytes = new byte[Byte.MAX_VALUE];
+  protected final Random random = new Random(System.nanoTime());
 
-	protected AsynchronousFileCacheBackingTestSupport() {
-		super();
-	}
+  protected AsynchronousFileCacheBackingTestSupport() {
+    super();
+  }
 
-	protected AsynchronousFileCacheBackingTestSupport(String name) {
-		super(name);
-	}
+  protected AsynchronousFileCacheBackingTestSupport(String name) {
+    super(name);
+  }
 
-    @Override
-    public void setUp () throws Exception {
-    	super.setUp();
-    	cleanupCache();
-    	
-        random.nextBytes(bytes);
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    cleanupCache();
+
+    random.nextBytes(bytes);
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    cleanupCache();
+    super.tearDown();
+  }
+
+  protected void cleanupCache() {
+    if (indexFile != null) {
+      if (FileUtil.deleteContents(indexFile) > 0) {
+        System.out.println("Deleted " + indexFile);
+      }
+      indexFile = null;
     }
 
-    @Override
-    public void tearDown () throws Exception {
-    	cleanupCache();
-    	super.tearDown();
+    if (cacheDir != null) {
+      if (FileUtil.deleteContents(cacheDir) > 0) {
+        System.out.println("Deleted " + cacheDir);
+      }
+      cacheDir = null;
     }
-   
-    protected void cleanupCache() {
-    	if (indexFile != null) {
-    		if (FileUtil.deleteContents(indexFile) > 0) {
-    			System.out.println("Deleted " + indexFile);
-    		}
-    		indexFile = null;
-    	}
+  }
 
-    	if (cacheDir != null) {
-    		if (FileUtil.deleteContents(cacheDir) > 0) {
-    			System.out.println("Deleted " + cacheDir);
-    		}
-    		cacheDir = null;
-    	}
+  protected File getIndexFile() {
+    if (indexFile == null) {
+      final File parent = getCacheDir();
+      indexFile = new File(parent, AbstractIndexedFileCacheBacking.INDEX_FILE);
     }
 
-    protected File getIndexFile () {
-    	if (indexFile == null) {
-    		File	parent=getCacheDir();
-    		indexFile=new File(parent, AbstractIndexedFileCacheBacking.INDEX_FILE);
-    	}
+    return indexFile;
+  }
 
-    	return indexFile;
+  protected File getCacheDir() {
+    if (cacheDir == null) {
+      final File targetDir = detectTargetFolder();
+      cacheDir = new File(targetDir, "dir-" + String.valueOf(Math.random()));
     }
 
-    protected File getCacheDir () {
-    	if (cacheDir == null) {
-    		File	targetDir=detectTargetFolder();
-    		cacheDir = new File(targetDir, "dir-" + String.valueOf(Math.random()));
-    	}
-    	
-    	return ensureFolderExists(cacheDir);
+    return ensureFolderExists(cacheDir);
+  }
+
+  protected abstract AsynchronousFileCacheBacking createFileBacking(File dir);
+
+  public void testDeleteIndexFileOnEmptyIndex() throws Exception {
+    final IndexEntry[] entries = {
+        createIndexEntry("weaved-empty", false, false, bytes, bytes),
+        createIndexEntry("generated-empty", true, false, bytes, bytes)
+    };
+    final File cacheIndex = getIndexFile();
+    writeIndex(cacheIndex, entries);
+    assertTrue("No initial index file available: " + cacheIndex, cacheIndex.canRead());
+
+    final AsynchronousFileCacheBacking cache = createFileBacking(getCacheDir());
+    // the call should read an empty index since no data files exist
+    final Map<String, IndexEntry> indexMap = cache.getIndexMap();
+    assertEquals("Mismatched index size", 0, indexMap.size());
+
+    // no data files were created
+    final Map<String, byte[]> bytesMap = cache.getBytesMap();
+    assertEquals("Mismatched bytes size", 0, bytesMap.size());
+
+    writeIndex(cache.getIndexFile(), cache.getIndexEntries());
+
+    assertFalse("Index file still available: " + cacheIndex, cacheIndex.canRead());
+  }
+
+  protected long generateNewBytes() {
+    final long CRC = AbstractCacheBacking.crc(bytes);
+    long crc = CRC;
+    // 8 tries should be enough to find a non-matching CRC...
+    for (int index = 0; (index < Byte.SIZE) && (CRC == crc) && (crc != -1L); index++) {
+      random.nextBytes(bytes);
+      crc = AbstractCacheBacking.crc(bytes);
+    }
+    assertTrue("Could not generate different CRC for " + CRC, crc != CRC);
+
+    return crc;
+  }
+
+  protected Map<String, File> createDataFiles(IndexEntry... entries) throws IOException {
+    return createDataFiles(LangUtil.isEmpty(entries) ? Collections.<IndexEntry>emptyList() : Arrays.asList(entries));
+  }
+
+  protected Map<String, File> createDataFiles(Collection<? extends IndexEntry> entries) throws IOException {
+    if (LangUtil.isEmpty(entries)) {
+      return Collections.emptyMap();
     }
 
-    protected abstract AsynchronousFileCacheBacking createFileBacking (File dir);
-
-    public void testDeleteIndexFileOnEmptyIndex () throws Exception {
-        IndexEntry[]    entries={
-                createIndexEntry("weaved-empty", false, false, bytes, bytes),
-                createIndexEntry("generated-empty", true, false, bytes, bytes)
-            };
-        File	cacheIndex=getIndexFile();
-        writeIndex(cacheIndex, entries);
-        assertTrue("No initial index file available: " + cacheIndex, cacheIndex.canRead());
-
-        AsynchronousFileCacheBacking    cache=createFileBacking(getCacheDir());
-        // the call should read an empty index since no data files exist
-        Map<String, IndexEntry>         indexMap=cache.getIndexMap();
-        assertEquals("Mismatched index size", 0, indexMap.size());
-
-        // no data files were created
-        Map<String, byte[]> bytesMap=cache.getBytesMap(); 
-        assertEquals("Mismatched bytes size", 0, bytesMap.size());
-        
-        writeIndex(cache.getIndexFile(), cache.getIndexEntries());
-
-        assertFalse("Index file still available: " + cacheIndex, cacheIndex.canRead());
+    final Map<String, File> files = new TreeMap<String, File>();
+    for (IndexEntry entry : entries) {
+      final File file = createDataFile(entry);
+      if (file != null) {
+        files.put(entry.key, file);
+      }
     }
 
-    protected long generateNewBytes () {
-        final long          CRC=AbstractCacheBacking.crc(bytes);
-        long                crc=CRC;
-        // 8 tries should be enough to find a non-matching CRC...
-        for (int    index=0; (index < Byte.SIZE) && (CRC == crc) && (crc != -1L); index++) {
-            random.nextBytes(bytes);
-            crc = AbstractCacheBacking.crc(bytes);
-        }
-        assertTrue("Could not generate different CRC for " + CRC, crc != CRC);
+    return files;
+  }
 
-        return crc;
+  protected File createDataFile(IndexEntry entry) throws IOException {
+    return createDataFile(entry, entry.ignored ? null : bytes);
+  }
+
+  protected File createDataFile(IndexEntry entry, byte[] dataBytes) throws IOException {
+    return createDataFile(entry.key, dataBytes);
+  }
+
+  protected File createDataFile(String key, byte[] dataBytes) throws IOException {
+    if (LangUtil.isEmpty(dataBytes)) {
+      return null;
     }
 
-    protected Map<String, File> createDataFiles (IndexEntry ... entries) throws IOException {
-        return createDataFiles(LangUtil.isEmpty(entries) ? Collections.<IndexEntry>emptyList() : Arrays.asList(entries));
+    final File parent = getCacheDir();
+    final File file = new File(parent, key);
+    final OutputStream out = new FileOutputStream(file);
+    try {
+      out.write(dataBytes);
+    } finally {
+      out.close();
     }
 
-    protected Map<String, File> createDataFiles (Collection<? extends IndexEntry> entries) throws IOException {
-        if (LangUtil.isEmpty(entries)) {
-            return Collections.emptyMap();
-        }
+    return file;
+  }
 
-        Map<String, File>  files=new TreeMap<String, File>();
-        for (IndexEntry entry : entries) {
-            File    file=createDataFile(entry);
-            if (file != null) {
-                files.put(entry.key, file);
-            }
-        }
+  protected static final IndexEntry createIgnoredEntry(String key) {
+    return createIndexEntry(key, false, true, null, null);
+  }
 
-        return files;
+  protected static final IndexEntry createIndexEntry(String key, boolean generated, boolean ignored, byte[] bytes, byte[] originalBytes) {
+    final IndexEntry entry = new IndexEntry();
+    entry.key = key;
+    entry.generated = generated;
+    entry.ignored = ignored;
+    if (ignored) {
+      assertFalse(key + " ignored cannot be generated", generated);
+    } else {
+      entry.crcClass = AbstractCacheBacking.crc(originalBytes);
+      entry.crcWeaved = AbstractCacheBacking.crc(bytes);
     }
 
-    protected File createDataFile (IndexEntry entry) throws IOException {
-        return createDataFile(entry, entry.ignored ? null : bytes);
-    }
-
-    protected File createDataFile (IndexEntry entry, byte[] dataBytes) throws IOException {
-        return createDataFile(entry.key, dataBytes);
-    }
-
-    protected File createDataFile (String key, byte[] dataBytes) throws IOException {
-        if (LangUtil.isEmpty(dataBytes)) {
-            return null;
-        }
-        
-        File    		parent=getCacheDir(), file=new File(parent, key);
-        OutputStream    out=new FileOutputStream(file);
-        try {
-            out.write(dataBytes);
-        } finally { 
-            out.close();
-        }
-
-        return file;
-    }
-
-    protected static final IndexEntry createIgnoredEntry (String key) {
-        return createIndexEntry(key, false, true, null, null);
-    }
-
-    protected static final IndexEntry createIndexEntry (String key, boolean generated, boolean ignored, byte[] bytes, byte[] originalBytes) {
-        IndexEntry  entry=new IndexEntry();
-        entry.key = key;
-        entry.generated = generated;
-        entry.ignored = ignored;
-        if (ignored) {
-            assertFalse(key + " ignored cannot be generated", generated);
-        } else {
-        	entry.crcClass = AbstractCacheBacking.crc(originalBytes);
-            entry.crcWeaved = AbstractCacheBacking.crc(bytes);
-        }
-        
-        return entry;
-    }
+    return entry;
+  }
 }

@@ -23,77 +23,77 @@ import org.aspectj.weaver.TestUtils;
 import org.aspectj.weaver.UnresolvedType;
 
 public class TjpWeaveTestCase extends WeaveTestCase {
-	{
-		regenerate = false;
-	}
+  {
+    regenerate = false;
+  }
 
-	public TjpWeaveTestCase(String name) {
-		super(name);
-	}
+  public TjpWeaveTestCase(String name) {
+    super(name);
+  }
 
-	public void setUp() throws Exception {
-		super.setUp();
-		behave15 = true;
-	}
+  public void setUp() throws Exception {
+    super.setUp();
+    behave15 = true;
+  }
 
-	public void tearDown() throws Exception {
-		super.tearDown();
-		behave15 = false;
-	}
+  public void tearDown() throws Exception {
+    super.tearDown();
+    behave15 = false;
+  }
 
-	public void testStaticTjp() throws IOException {
-		BcelAdvice munger = new BcelAdvice(AdviceKind.stringToKind("before"), makePointcutAll(),
-				TestUtils.methodFromString("static void Aspect.ajc_before(org.aspectj.lang.JoinPoint$StaticPart)"),
-				Advice.ThisJoinPointStaticPart, -1, -1, null, null);
+  public void testStaticTjp() throws IOException {
+    final BcelAdvice munger = new BcelAdvice(AdviceKind.stringToKind("before"), makePointcutAll(),
+        TestUtils.methodFromString("static void Aspect.ajc_before(org.aspectj.lang.JoinPoint$StaticPart)"),
+        Advice.ThisJoinPointStaticPart, -1, -1, null, null);
 
-		weaveTest("HelloWorld", "StaticTjpBeforeHelloWorld", munger);
-	}
+    weaveTest("HelloWorld", "StaticTjpBeforeHelloWorld", munger);
+  }
 
-	public void testEnclosingStaticTjp() throws IOException {
-		BcelAdvice munger = new BcelAdvice(AdviceKind.stringToKind("before"), makePointcutAll(),
-				TestUtils.methodFromString("static void Aspect.ajc_before(org.aspectj.lang.JoinPoint$StaticPart)"),
-				Advice.ThisEnclosingJoinPointStaticPart, -1, -1, null, null);
+  public void testEnclosingStaticTjp() throws IOException {
+    final BcelAdvice munger = new BcelAdvice(AdviceKind.stringToKind("before"), makePointcutAll(),
+        TestUtils.methodFromString("static void Aspect.ajc_before(org.aspectj.lang.JoinPoint$StaticPart)"),
+        Advice.ThisEnclosingJoinPointStaticPart, -1, -1, null, null);
 
-		weaveTest("HelloWorld", "StaticEnclosingTjpBeforeHelloWorld", munger);
-	}
+    weaveTest("HelloWorld", "StaticEnclosingTjpBeforeHelloWorld", munger);
+  }
 
-	public void testTjp() throws IOException {
-		BcelAdvice munger = new BcelAdvice(AdviceKind.stringToKind("before"), makePointcutAll(),
-				TestUtils.methodFromString("static void Aspect.ajc_before(org.aspectj.lang.JoinPoint)"), Advice.ThisJoinPoint, -1,
-				-1, null, null);
+  public void testTjp() throws IOException {
+    final BcelAdvice munger = new BcelAdvice(AdviceKind.stringToKind("before"), makePointcutAll(),
+        TestUtils.methodFromString("static void Aspect.ajc_before(org.aspectj.lang.JoinPoint)"), Advice.ThisJoinPoint, -1,
+        -1, null, null);
 
-		weaveTest("HelloWorld", "TjpBeforeHelloWorld", munger);
-	}
+    weaveTest("HelloWorld", "TjpBeforeHelloWorld", munger);
+  }
 
-	public void testAroundTjp() throws IOException {
-		BcelAdvice munger = new BcelAdvice(
-				AdviceKind.stringToKind("around"),
-				makePointcutAll(),
-				TestUtils
-						.methodFromString("static java.lang.Object Aspect.ajc_around(org.aspectj.runtime.internal.AroundClosure, org.aspectj.lang.JoinPoint)"),
-				Advice.ThisJoinPoint | Advice.ExtraArgument, -1, -1, null, null);
+  public void testAroundTjp() throws IOException {
+    final BcelAdvice munger = new BcelAdvice(
+        AdviceKind.stringToKind("around"),
+        makePointcutAll(),
+        TestUtils
+            .methodFromString("static java.lang.Object Aspect.ajc_around(org.aspectj.runtime.internal.AroundClosure, org.aspectj.lang.JoinPoint)"),
+        Advice.ThisJoinPoint | Advice.ExtraArgument, -1, -1, null, null);
 
-		weaveTest("HelloWorld", "TjpAroundHelloWorld", munger);
-	}
+    weaveTest("HelloWorld", "TjpAroundHelloWorld", munger);
+  }
 
-	public void testAround2Tjp() throws IOException {
-		ResolvedType rtx = world.resolve(UnresolvedType.forName("Aspect"), true);
-		assertTrue("Couldnt find type Aspect", !rtx.isMissing());
-		BcelAdvice munger1 = new BcelAdvice(
-				AdviceKind.stringToKind("around"),
-				makePointcutAll(),
-				TestUtils
-						.methodFromString("static java.lang.Object Aspect.ajc_around(org.aspectj.runtime.internal.AroundClosure, org.aspectj.lang.JoinPoint)"),
-				Advice.ThisJoinPoint | Advice.ExtraArgument, -1, -1, null, rtx);
+  public void testAround2Tjp() throws IOException {
+    final ResolvedType rtx = world.resolve(UnresolvedType.forName("Aspect"), true);
+    assertTrue("Couldnt find type Aspect", !rtx.isMissing());
+    final BcelAdvice munger1 = new BcelAdvice(
+        AdviceKind.stringToKind("around"),
+        makePointcutAll(),
+        TestUtils
+            .methodFromString("static java.lang.Object Aspect.ajc_around(org.aspectj.runtime.internal.AroundClosure, org.aspectj.lang.JoinPoint)"),
+        Advice.ThisJoinPoint | Advice.ExtraArgument, -1, -1, null, rtx);
 
-		BcelAdvice munger2 = new BcelAdvice(
-				AdviceKind.stringToKind("around"),
-				makePointcutAll(),
-				TestUtils
-						.methodFromString("static java.lang.Object Aspect.ajc_around(org.aspectj.runtime.internal.AroundClosure, org.aspectj.lang.JoinPoint)"),
-				Advice.ThisJoinPoint | Advice.ExtraArgument, -1, -1, null, rtx);
+    final BcelAdvice munger2 = new BcelAdvice(
+        AdviceKind.stringToKind("around"),
+        makePointcutAll(),
+        TestUtils
+            .methodFromString("static java.lang.Object Aspect.ajc_around(org.aspectj.runtime.internal.AroundClosure, org.aspectj.lang.JoinPoint)"),
+        Advice.ThisJoinPoint | Advice.ExtraArgument, -1, -1, null, rtx);
 
-		weaveTest("HelloWorld", "TjpAround2HelloWorld", Arrays.asList(new ShadowMunger[] { munger1, munger2 }));
-	}
+    weaveTest("HelloWorld", "TjpAround2HelloWorld", Arrays.asList(new ShadowMunger[]{munger1, munger2}));
+  }
 
 }

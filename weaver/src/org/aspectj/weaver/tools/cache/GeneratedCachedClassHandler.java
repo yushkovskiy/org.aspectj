@@ -20,20 +20,20 @@ import org.aspectj.weaver.tools.GeneratedClassHandler;
  * generated class handler with caching
  */
 public class GeneratedCachedClassHandler implements GeneratedClassHandler {
-	private final WeavedClassCache cache;
-	private final GeneratedClassHandler nextGeneratedClassHandler;
+  private final WeavedClassCache cache;
+  private final GeneratedClassHandler nextGeneratedClassHandler;
 
-	public GeneratedCachedClassHandler(WeavedClassCache cache, GeneratedClassHandler nextHandler) {
-		this.cache = cache;
-		this.nextGeneratedClassHandler = nextHandler;
-	}
+  public GeneratedCachedClassHandler(WeavedClassCache cache, GeneratedClassHandler nextHandler) {
+    this.cache = cache;
+    this.nextGeneratedClassHandler = nextHandler;
+  }
 
-	public void acceptClass (String name, byte[] originalBytes, byte[] wovenBytes) {
-		// The cache expects classNames in dot form
-		CachedClassReference ref = cache.createGeneratedCacheKey(name.replace('/', '.'));
-		cache.put(ref, originalBytes, wovenBytes);
-		if (nextGeneratedClassHandler != null) {
-			nextGeneratedClassHandler.acceptClass(name, originalBytes, wovenBytes);
-		}
-	}
+  public void acceptClass(String name, byte[] originalBytes, byte[] wovenBytes) {
+    // The cache expects classNames in dot form
+    final CachedClassReference ref = cache.createGeneratedCacheKey(name.replace('/', '.'));
+    cache.put(ref, originalBytes, wovenBytes);
+    if (nextGeneratedClassHandler != null) {
+      nextGeneratedClassHandler.acceptClass(name, originalBytes, wovenBytes);
+    }
+  }
 }

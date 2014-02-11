@@ -12,20 +12,23 @@
 
 package org.aspectj.weaver;
 
-public class Position implements IHasPosition {
-	private int start, end;
+public final class Position implements IHasPosition {
+  private final int start;
+  private final int end;
 
-	public Position(int start, int end) {
-		this.start = start;
-		this.end = end;
-	}
+  public Position(int start, int end) {
+    this.start = start;
+    this.end = end;
+  }
 
-	public int getEnd() {
-		return end;
-	}
+  @Override
+  public int getEnd() {
+    return end;
+  }
 
-	public int getStart() {
-		return start;
-	}
+  @Override
+  public int getStart() {
+    return start;
+  }
 
 }

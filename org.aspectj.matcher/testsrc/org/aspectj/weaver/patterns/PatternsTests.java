@@ -18,33 +18,33 @@ import junit.framework.TestSuite;
 
 public class PatternsTests extends TestCase {
 
-	public static Test suite() {
-		TestSuite suite = new TestSuite(PatternsTests.class.getName());
-		// $JUnit-BEGIN$
-		suite.addTestSuite(AndOrNotTestCase.class);
-		suite.addTestSuite(BindingTestCase.class);
-		suite.addTestSuite(DeclareErrorOrWarningTestCase.class);
-		suite.addTestSuite(ModifiersPatternTestCase.class);
-		suite.addTestSuite(NamePatternParserTestCase.class);
-		suite.addTestSuite(NamePatternTestCase.class);
-		suite.addTestSuite(ParserTestCase.class);
-		suite.addTestSuite(SignaturePatternTestCase.class);
-		suite.addTestSuite(ThisOrTargetTestCase.class);
-		suite.addTestSuite(TypePatternListTestCase.class);
-		suite.addTestSuite(TypePatternTestCase.class);
-		suite.addTestSuite(SimpleScopeTests.class);
-		suite.addTestSuite(WithinTestCase.class);
-		suite.addTestSuite(ArgsTestCase.class);
-		// suite.addTestSuite(AnnotationPatternTestCase.class);
-		// suite.addTestSuite(AnnotationPatternMatchingTestCase.class);
-		suite.addTestSuite(PointcutRewriterTest.class);
-		suite.addTestSuite(VisitorTestCase.class);
-		// $JUnit-END$
-		return suite;
-	}
+  public static Test suite() {
+    final TestSuite suite = new TestSuite(PatternsTests.class.getName());
+    // $JUnit-BEGIN$
+    suite.addTestSuite(AndOrNotTestCase.class);
+    suite.addTestSuite(BindingTestCase.class);
+    suite.addTestSuite(DeclareErrorOrWarningTestCase.class);
+    suite.addTestSuite(ModifiersPatternTestCase.class);
+    suite.addTestSuite(NamePatternParserTestCase.class);
+    suite.addTestSuite(NamePatternTestCase.class);
+    suite.addTestSuite(ParserTestCase.class);
+    suite.addTestSuite(SignaturePatternTestCase.class);
+    suite.addTestSuite(ThisOrTargetTestCase.class);
+    suite.addTestSuite(TypePatternListTestCase.class);
+    suite.addTestSuite(TypePatternTestCase.class);
+    suite.addTestSuite(SimpleScopeTests.class);
+    suite.addTestSuite(WithinTestCase.class);
+    suite.addTestSuite(ArgsTestCase.class);
+    // suite.addTestSuite(AnnotationPatternTestCase.class);
+    // suite.addTestSuite(AnnotationPatternMatchingTestCase.class);
+    suite.addTestSuite(PointcutRewriterTest.class);
+    suite.addTestSuite(VisitorTestCase.class);
+    // $JUnit-END$
+    return suite;
+  }
 
-	public PatternsTests(String name) {
-		super(name);
-	}
+  public PatternsTests(String name) {
+    super(name);
+  }
 
 }

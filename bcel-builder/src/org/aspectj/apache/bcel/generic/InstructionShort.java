@@ -61,32 +61,32 @@ import java.io.IOException;
  * Instruction that needs one short
  */
 public class InstructionShort extends Instruction {
-	private final short value;
+  private final short value;
 
-	public InstructionShort(short opcode, short value) {
-		super(opcode);
-		this.value = value;
-	}
+  public InstructionShort(short opcode, short value) {
+    super(opcode);
+    this.value = value;
+  }
 
-	public void dump(DataOutputStream out) throws IOException {
-		out.writeByte(opcode);
-		out.writeShort(value);
-	}
+  public void dump(DataOutputStream out) throws IOException {
+    out.writeByte(opcode);
+    out.writeShort(value);
+  }
 
-	public String toString(boolean verbose) {
-		return super.toString(verbose) + " " + value;
-	}
+  public String toString(boolean verbose) {
+    return super.toString(verbose) + " " + value;
+  }
 
-	public boolean equals(Object other) {
-		if (!(other instanceof InstructionShort)) {
-			return false;
-		}
-		InstructionShort o = (InstructionShort) other;
-		return o.opcode == opcode && o.value == value;
-	}
+  public boolean equals(Object other) {
+    if (!(other instanceof InstructionShort)) {
+      return false;
+    }
+    final InstructionShort o = (InstructionShort) other;
+    return o.opcode == opcode && o.value == value;
+  }
 
-	public int hashCode() {
-		return opcode * 37 + value;
-	}
+  public int hashCode() {
+    return opcode * 37 + value;
+  }
 
 }

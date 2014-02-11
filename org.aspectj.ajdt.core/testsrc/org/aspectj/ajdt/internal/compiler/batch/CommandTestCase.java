@@ -35,157 +35,164 @@ import org.aspectj.weaver.bcel.LazyClassGen;
 
 public abstract class CommandTestCase extends TestCase {
 
-	/**
-	 * Constructor for CommandTestCase.
-	 * 
-	 * @param name
-	 */
-	public CommandTestCase(String name) {
-		super(name);
-	}
+  /**
+   * Constructor for CommandTestCase.
+   *
+   * @param name
+   */
+  public CommandTestCase(String name) {
+    super(name);
+  }
 
-	public static final int[] NO_ERRORS = new int[0];
-	public static final int[] TOP_ERROR = new int[0];
+  public static final int[] NO_ERRORS = new int[0];
+  public static final int[] TOP_ERROR = new int[0];
 
-	private File sandbox;
+  private File sandbox;
 
-	public void checkCompile(String source, int[] expectedErrors) {
-		checkCompile(source, new String[0], expectedErrors, getSandboxName());
-	}
+  public void checkCompile(String source, int[] expectedErrors) {
+    checkCompile(source, new String[0], expectedErrors, getSandboxName());
+  }
 
-	protected void runMain(String className) {
-		TestUtil.runMain(getSandboxName(), className);
-	}
-	
-	public void checkCompile(String source, String[] extraArgs, int[] expectedErrors) {
-		checkCompile(source,extraArgs,expectedErrors,getSandboxName());
-	}
+  protected void runMain(String className) {
+    TestUtil.runMain(getSandboxName(), className);
+  }
 
-	public static void checkCompile(String source, String[] extraArgs, int[] expectedErrors, String sandboxName) {
-		List<String> args = new ArrayList<String>();
-		args.add("-verbose");
+  public void checkCompile(String source, String[] extraArgs, int[] expectedErrors) {
+    checkCompile(source, extraArgs, expectedErrors, getSandboxName());
+  }
 
-		args.add("-d");
-		args.add(sandboxName);
+  public static void checkCompile(String source, String[] extraArgs, int[] expectedErrors, String sandboxName) {
+    final List<String> args = new ArrayList<String>();
+    args.add("-verbose");
 
-		args.add("-classpath");
+    args.add("-d");
+    args.add(sandboxName);
 
-		args.add(getRuntimeClasspath() + File.pathSeparator + "../lib/junit/junit.jar");
+    args.add("-classpath");
 
-		args.add("-g"); // XXX need this to get sourcefile and line numbers, shouldn't
+    args.add(getRuntimeClasspath() + File.pathSeparator + "../lib/junit/junit.jar");
 
-		for (int i = 0; i < extraArgs.length; i++) {
-			args.add(extraArgs[i]);
-		}
+    args.add("-g"); // XXX need this to get sourcefile and line numbers, shouldn't
 
-		args.add(AjdtAjcTests.TESTDATA_PATH + "/" + source);
+    for (int i = 0; i < extraArgs.length; i++) {
+      args.add(extraArgs[i]);
+    }
 
-		runCompiler(args, expectedErrors);
-	}
+    args.add(AjdtAjcTests.TESTDATA_PATH + "/" + source);
 
-	public void testEmptyForAntJUnitSupport() {
-	}
+    runCompiler(args, expectedErrors);
+  }
 
-	public void checkMultipleCompile(String source) throws InterruptedException {
-		List<String> args = new ArrayList<String>();
-		args.add("-verbose");
+  public void testEmptyForAntJUnitSupport() {
+  }
 
-		args.add("-d");
-		args.add(getSandboxName());
+  public void checkMultipleCompile(String source) throws InterruptedException {
+    final List<String> args = new ArrayList<String>();
+    args.add("-verbose");
 
-		args.add("-classpath");
-		args.add(getRuntimeClasspath());
+    args.add("-d");
+    args.add(getSandboxName());
 
-		args.add(AjdtAjcTests.TESTDATA_PATH + "/" + source);
+    args.add("-classpath");
+    args.add(getRuntimeClasspath());
 
-		ICommand compiler = runCompiler(args, NO_ERRORS);
-		Thread.sleep(100);
+    args.add(AjdtAjcTests.TESTDATA_PATH + "/" + source);
 
-		rerunCompiler(compiler);
-	}
+    final ICommand compiler = runCompiler(args, NO_ERRORS);
+    Thread.sleep(100);
 
-	public void rerunCompiler(ICommand command) {
-		MessageHandler myHandler = new MessageHandler();
-		// List recompiledFiles = new ArrayList();
-		if (!command.repeatCommand(myHandler)) {
-			assertTrue("recompile failed", false);
-		}
-		assertEquals(0, myHandler.numMessages(IMessage.ERROR, true));
-	}
+    rerunCompiler(compiler);
+  }
 
-	public static ICommand runCompiler(List<String> args, int[] expectedErrors) {
-		ICommand command = new AjdtCommand();
-		MessageHandler myHandler = new MessageHandler();
-		myHandler.setInterceptor(org.aspectj.tools.ajc.Main.MessagePrinter.TERSE);
-		boolean result = command.runCommand((String[]) args.toArray(new String[args.size()]), myHandler);
-		System.out.println("result: " + result);
-		// System.out.println("errors: " + Arrays.asList(myHandler.getErrors()));
-		// System.out.println("warnings: " + Arrays.asList(myHandler.getWarnings()));
+  public void rerunCompiler(ICommand command) {
+    final MessageHandler myHandler = new MessageHandler();
+    // List recompiledFiles = new ArrayList();
+    if (!command.repeatCommand(myHandler)) {
+      assertTrue("recompile failed", false);
+    }
+    assertEquals(0, myHandler.numMessages(IMessage.ERROR, true));
+  }
 
-		int nErrors = myHandler.numMessages(IMessage.ERROR, IMessageHolder.EQUAL);
-		if (expectedErrors == NO_ERRORS) {
-			if (0 != nErrors) {
-				String s = "" + Arrays.asList(myHandler.getErrors());
-				assertTrue("unexpected errors: " + s, false);
-			}
-		} else if (expectedErrors == TOP_ERROR) { // ?? what is this?
-			assertTrue("expected error", nErrors > 0);
-		} else {
-			List errors = new ArrayList(Arrays.asList(myHandler.getErrors()));
-			for (int i = 0, len = expectedErrors.length; i < len; i++) {
-				int line = expectedErrors[i];
-				boolean found = false;
-				for (Iterator iter = errors.iterator(); iter.hasNext();) {
-					IMessage m = (IMessage) iter.next();
-					if (m.getSourceLocation() != null && m.getSourceLocation().getLine() == line) {
-						found = true;
-						iter.remove();
-					}
-				}
-				assertTrue("didn't find error on line " + line, found);
-			}
-			if (errors.size() > 0) {
-				assertTrue("didn't expect errors: " + errors, false);
-			}
-		}
-		return command;
-	}
+  public static ICommand runCompiler(List<String> args, int[] expectedErrors) {
+    final ICommand command = new AjdtCommand();
+    final MessageHandler myHandler = new MessageHandler();
+    myHandler.setInterceptor(org.aspectj.tools.ajc.Main.MessagePrinter.TERSE);
+    final boolean result = command.runCommand((String[]) args.toArray(new String[args.size()]), myHandler);
+    System.out.println("result: " + result);
+    // System.out.println("errors: " + Arrays.asList(myHandler.getErrors()));
+    // System.out.println("warnings: " + Arrays.asList(myHandler.getWarnings()));
 
-	public static void printGenerated(String path, String name) throws IOException {
-		String fullpath = AjdtAjcTests.TESTDATA_PATH + "/" + path;
-		LazyClassGen.disassemble(fullpath, name, System.out);
-	}
+    final int nErrors = myHandler.numMessages(IMessage.ERROR, IMessageHolder.EQUAL);
+    if (expectedErrors == NO_ERRORS) {
+      if (0 != nErrors) {
+        final String s = "" + Arrays.asList(myHandler.getErrors());
+        assertTrue("unexpected errors: " + s, false);
+      }
+    } else if (expectedErrors == TOP_ERROR) { // ?? what is this?
+      assertTrue("expected error", nErrors > 0);
+    } else {
+      final List errors = new ArrayList(Arrays.asList(myHandler.getErrors()));
+      for (int i = 0, len = expectedErrors.length; i < len; i++) {
+        final int line = expectedErrors[i];
+        boolean found = false;
+        for (final Iterator iter = errors.iterator(); iter.hasNext(); ) {
+          final IMessage m = (IMessage) iter.next();
+          if (m.getSourceLocation() != null && m.getSourceLocation().getLine() == line) {
+            found = true;
+            iter.remove();
+          }
+        }
+        assertTrue("didn't find error on line " + line, found);
+      }
+      if (errors.size() > 0) {
+        assertTrue("didn't expect errors: " + errors, false);
+      }
+    }
+    return command;
+  }
 
-	/** incremental test case adapter to JUnit */
-	public class IncCase extends IncrementalCase {
-		protected void fail(IMessageHandler handler, String mssg) {
-			assertTrue(mssg, false);
-		}
+  public static void printGenerated(String path, String name) throws IOException {
+    final String fullpath = AjdtAjcTests.TESTDATA_PATH + "/" + path;
+    LazyClassGen.disassemble(fullpath, name, System.out);
+  }
 
-		protected void message(IMessage.Kind kind, String mssg, IMessageHandler handler) {
-			if ((kind == IMessage.FAIL) || (kind == IMessage.ABORT)) {
-				assertTrue(mssg, false);
-			} else {
-				System.err.println("IncCase " + kind + ": " + mssg); // XXX
-			}
-			super.message(kind, mssg, handler);
-		}
+  /**
+   * incremental test case adapter to JUnit
+   */
+  public class IncCase extends IncrementalCase {
+    @Override
+    protected void fail(IMessageHandler handler, String mssg) {
+      assertTrue(mssg, false);
+    }
 
-	}
+    @Override
+    protected void message(IMessage.Kind kind, String mssg, IMessageHandler handler) {
+      if ((kind == IMessage.FAIL) || (kind == IMessage.ABORT)) {
+        assertTrue(mssg, false);
+      } else {
+        System.err.println("IncCase " + kind + ": " + mssg); // XXX
+      }
+      super.message(kind, mssg, handler);
+    }
 
-	/** get the location of the org.aspectj.lang & runtime classes */
-	protected static String getRuntimeClasspath() {
-		return AjcTests.aspectjrtClasspath();
-	}
+  }
 
-	protected String getSandboxName() {
-		return sandbox.getAbsolutePath();
-	}
+  /**
+   * get the location of the org.aspectj.lang & runtime classes
+   */
+  protected static String getRuntimeClasspath() {
+    return AjcTests.aspectjrtClasspath();
+  }
 
-	protected void setUp() throws Exception {
-		super.setUp();
+  protected String getSandboxName() {
+    return sandbox.getAbsolutePath();
+  }
 
-		sandbox = Ajc.createEmptySandbox();
-	}
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+
+    sandbox = Ajc.createEmptySandbox();
+  }
 
 }

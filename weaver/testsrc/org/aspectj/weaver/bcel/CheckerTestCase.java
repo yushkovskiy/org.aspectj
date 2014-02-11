@@ -21,28 +21,28 @@ import org.aspectj.bridge.*;
 import org.aspectj.bridge.MessageHandler;
 
 public class CheckerTestCase extends WeaveTestCase {
-	{
-		regenerate = false;
-	}
+  {
+    regenerate = false;
+  }
 
-	public CheckerTestCase(String name) {
-		super(name);
-	}
-    
+  public CheckerTestCase(String name) {
+    super(name);
+  }
 
-    public void testStaticTjp() throws IOException {
-    	Checker checker = new Checker(
-    		new DeclareErrorOrWarning(true, makePointcutPrintln(), "hey, we found a println"));
-    	
-    	MessageHandler handler = new MessageHandler();
-    	world.setMessageHandler(handler);
-    	
-        weaveTest("HelloWorld", "IdHelloWorld", checker);
-        assertEquals(1, handler.numMessages(IMessage.ERROR, false));
-        
-        handler = new MessageHandler();
-    	world.setMessageHandler(handler);
-        weaveTest("FancyHelloWorld", "IdFancyHelloWorld", checker);
-        assertEquals(3, handler.numMessages(IMessage.ERROR, false));
-    } 
+
+  public void testStaticTjp() throws IOException {
+    final Checker checker = new Checker(
+        new DeclareErrorOrWarning(true, makePointcutPrintln(), "hey, we found a println"));
+
+    MessageHandler handler = new MessageHandler();
+    world.setMessageHandler(handler);
+
+    weaveTest("HelloWorld", "IdHelloWorld", checker);
+    assertEquals(1, handler.numMessages(IMessage.ERROR, false));
+
+    handler = new MessageHandler();
+    world.setMessageHandler(handler);
+    weaveTest("FancyHelloWorld", "IdFancyHelloWorld", checker);
+    assertEquals(3, handler.numMessages(IMessage.ERROR, false));
+  }
 }

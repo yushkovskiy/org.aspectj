@@ -19,65 +19,64 @@ import org.aspectj.weaver.*;
 import org.aspectj.weaver.patterns.*;
 
 public class NonstaticWeaveTestCase extends WeaveTestCase {
-	{
-		regenerate = false;
-	}
+  {
+    regenerate = false;
+  }
 
-	public NonstaticWeaveTestCase(String name) {
-		super(name);
-	}
-	
-	
-	public void testBefore() throws IOException {
-		String s = "before(): get(* *.*) -> void Aspect.ajc_before()";
-		PerClause per = new PerSingleton();
-		per = per.concretize(world.resolve("Aspect"));
+  public NonstaticWeaveTestCase(String name) {
+    super(name);
+  }
 
-        ShadowMunger myMunger = this.makeConcreteAdvice(s, 0, per);
-		
-		weaveTest(getStandardTargets(), "NonStaticBefore", myMunger);
-	}
-	
-	public void testBeforeCflow() throws IOException {
-		String s = "before(): get(* *.*) -> void Aspect.ajc_before()";
-		PerClause per = new PatternParser("percflow(execution(void main(..)))").maybeParsePerClause();
-		per.resolve(new TestScope(new String[0], new String[0], world));
-		
-		ResolvedType onAspect = world.resolve("Aspect");
-		CrosscuttingMembers xcut = new CrosscuttingMembers(onAspect,true);
-		onAspect.crosscuttingMembers = xcut;
-		
-		per = per.concretize(onAspect);
 
-        ShadowMunger myMunger = this.makeConcreteAdvice(s, 0, per);
-		
-		xcut.addConcreteShadowMunger(myMunger);		
-		
-		
-		weaveTest(getStandardTargets(), "CflowNonStaticBefore", xcut.getShadowMungers());
-	}
-	
-	public void testBeforePerThis() throws IOException {
-		String s = "before(): call(* println(..)) -> void Aspect.ajc_before()";
-		PerClause per = new PatternParser("pertarget(call(* println(..)))").maybeParsePerClause();
-		per.resolve(new TestScope(new String[0], new String[0], world));
-		
-		ResolvedType onAspect = world.resolve("Aspect");
-		CrosscuttingMembers xcut = new CrosscuttingMembers(onAspect,true);
-		onAspect.crosscuttingMembers = xcut;
-		per = per.concretize(onAspect);
+  public void testBefore() throws IOException {
+    final String s = "before(): get(* *.*) -> void Aspect.ajc_before()";
+    PerClause per = new PerSingleton();
+    per = per.concretize(world.resolve("Aspect"));
 
-        ShadowMunger myMunger = this.makeConcreteAdvice(s, 0, per);
-		xcut.addConcreteShadowMunger(myMunger);
-		
+    final ShadowMunger myMunger = this.makeConcreteAdvice(s, 0, per);
+
+    weaveTest(getStandardTargets(), "NonStaticBefore", myMunger);
+  }
+
+  public void testBeforeCflow() throws IOException {
+    final String s = "before(): get(* *.*) -> void Aspect.ajc_before()";
+    PerClause per = new PatternParser("percflow(execution(void main(..)))").maybeParsePerClause();
+    per.resolve(new TestScope(new String[0], new String[0], world));
+
+    final ResolvedType onAspect = world.resolve("Aspect");
+    final CrosscuttingMembers xcut = new CrosscuttingMembers(onAspect, true);
+    onAspect.crosscuttingMembers = xcut;
+
+    per = per.concretize(onAspect);
+
+    final ShadowMunger myMunger = this.makeConcreteAdvice(s, 0, per);
+
+    xcut.addConcreteShadowMunger(myMunger);
+
+
+    weaveTest(getStandardTargets(), "CflowNonStaticBefore", xcut.getShadowMungers());
+  }
+
+  public void testBeforePerThis() throws IOException {
+    final String s = "before(): call(* println(..)) -> void Aspect.ajc_before()";
+    PerClause per = new PatternParser("pertarget(call(* println(..)))").maybeParsePerClause();
+    per.resolve(new TestScope(new String[0], new String[0], world));
+
+    final ResolvedType onAspect = world.resolve("Aspect");
+    final CrosscuttingMembers xcut = new CrosscuttingMembers(onAspect, true);
+    onAspect.crosscuttingMembers = xcut;
+    per = per.concretize(onAspect);
+
+    final ShadowMunger myMunger = this.makeConcreteAdvice(s, 0, per);
+    xcut.addConcreteShadowMunger(myMunger);
+
 //		List mungers = new ArrayList();
 //		mungers.add(myMunger);
 //		mungers.addAll(onAspect.getExtraConcreteShadowMungers());		
-		
-		
-		weaveTest(getStandardTargets(), "PerThisNonStaticBefore", xcut.getShadowMungers());
-	}
-	
-	
-	
+
+
+    weaveTest(getStandardTargets(), "PerThisNonStaticBefore", xcut.getShadowMungers());
+  }
+
+
 }

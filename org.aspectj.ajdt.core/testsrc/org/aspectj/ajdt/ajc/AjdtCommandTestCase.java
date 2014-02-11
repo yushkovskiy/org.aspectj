@@ -13,6 +13,7 @@
 package org.aspectj.ajdt.ajc;
 
 //import org.aspectj.ajdt.internal.core.builder.AjBuildConfig;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -38,184 +39,186 @@ import org.aspectj.util.FileUtil;
  */
 public class AjdtCommandTestCase extends TestCase {
 
-	private ArrayList tempFiles = new ArrayList();
-	private StreamPrintWriter outputWriter = new StreamPrintWriter(new PrintWriter(System.out));
-	// private AjdtCommand command = new AjdtCommand();
-	private MessageWriter messageWriter = new MessageWriter(outputWriter, false);
-	private CountingMessageHandler counter = new CountingMessageHandler(messageWriter);
+  private ArrayList tempFiles = new ArrayList();
+  private StreamPrintWriter outputWriter = new StreamPrintWriter(new PrintWriter(System.out));
+  // private AjdtCommand command = new AjdtCommand();
+  private MessageWriter messageWriter = new MessageWriter(outputWriter, false);
+  private CountingMessageHandler counter = new CountingMessageHandler(messageWriter);
 
-	public AjdtCommandTestCase(String name) {
-		super(name);
-		// command.buildArgParser.out = outputWriter;
-	}
+  public AjdtCommandTestCase(String name) {
+    super(name);
+    // command.buildArgParser.out = outputWriter;
+  }
 
-	private static boolean delete(File file) {
-		if ((null == file) || !file.exists()) {
-			return true;
-		} else if (!file.canWrite()) {
-			return false;
-		}
-		if (file.isDirectory()) {
-			FileUtil.deleteContents(file);
-		}
-		return file.delete();
-	}
+  private static boolean delete(File file) {
+    if ((null == file) || !file.exists()) {
+      return true;
+    } else if (!file.canWrite()) {
+      return false;
+    }
+    if (file.isDirectory()) {
+      FileUtil.deleteContents(file);
+    }
+    return file.delete();
+  }
 
-	public void testIncrementalHandler() throws IOException {
-		// verify that AjdtCommand respects handler parm
-		// in runCommand and repeatCommand
-		final String sig = getClass().getName() + ".testIncrementalHandler";
-		boolean runTest = false;
-		try {
-			runTest = null != System.getProperty(sig);
-		} catch (Throwable t) {
-		}
-		if (!runTest) {
-			System.out.println("warning: to run " + sig + "(), set system property " + sig);
-			return;
-		}
-		// setup initial compile
-		File testBase = new File("testdata/ajdtCommand");
-		assertTrue(testBase.isDirectory());
-		assertTrue(testBase.canWrite());
-		File genBase = new File(testBase, "genBase");
-		tempFiles.add(genBase);
-		if (genBase.exists()) {
-			FileUtil.deleteContents(genBase);
-		} else {
-			genBase.mkdirs();
-		}
-		assertTrue(genBase.canWrite());
-		File classesDir = new File(testBase, "classes");
-		tempFiles.add(classesDir);
-		assertTrue(classesDir.mkdirs());
-		File mainSrc = new File(testBase, "Main-1.java");
-		File main = new File(genBase, "Main.java");
-		FileUtil.copyFile(mainSrc, main);
-		assertTrue(main.canRead());
-		long initialSize = main.length();
+  public void testIncrementalHandler() throws IOException {
+    // verify that AjdtCommand respects handler parm
+    // in runCommand and repeatCommand
+    final String sig = getClass().getName() + ".testIncrementalHandler";
+    boolean runTest = false;
+    try {
+      runTest = null != System.getProperty(sig);
+    } catch (Throwable t) {
+    }
+    if (!runTest) {
+      System.out.println("warning: to run " + sig + "(), set system property " + sig);
+      return;
+    }
+    // setup initial compile
+    final File testBase = new File("testdata/ajdtCommand");
+    assertTrue(testBase.isDirectory());
+    assertTrue(testBase.canWrite());
+    final File genBase = new File(testBase, "genBase");
+    tempFiles.add(genBase);
+    if (genBase.exists()) {
+      FileUtil.deleteContents(genBase);
+    } else {
+      genBase.mkdirs();
+    }
+    assertTrue(genBase.canWrite());
+    final File classesDir = new File(testBase, "classes");
+    tempFiles.add(classesDir);
+    assertTrue(classesDir.mkdirs());
+    File mainSrc = new File(testBase, "Main-1.java");
+    final File main = new File(genBase, "Main.java");
+    FileUtil.copyFile(mainSrc, main);
+    assertTrue(main.canRead());
+    final long initialSize = main.length();
 
-		// do initial compile
-		String[] args = new String[] { "-d", classesDir.getPath(), "-classpath", "../lib/test/aspectjrt.jar", main.getPath() };
-		AjdtCommand command = new AjdtCommand();
-		IMessageHolder holder = new MessageHandler();
-		boolean result = command.runCommand(args, holder);
-		assertTrue(result);
-		assertTrue(!holder.hasAnyMessage(IMessage.WARNING, true));
-		int initialMessages = holder.numMessages(null, true);
+    // do initial compile
+    final String[] args = new String[]{"-d", classesDir.getPath(), "-classpath", "../lib/test/aspectjrt.jar", main.getPath()};
+    final AjdtCommand command = new AjdtCommand();
+    final IMessageHolder holder = new MessageHandler();
+    boolean result = command.runCommand(args, holder);
+    assertTrue(result);
+    assertTrue(!holder.hasAnyMessage(IMessage.WARNING, true));
+    final int initialMessages = holder.numMessages(null, true);
 
-		// do repeat compile, introducing an error
-		mainSrc = new File(testBase, "Main-2.java");
-		FileUtil.copyFile(mainSrc, main);
-		assertTrue(main.canRead());
-		long nextSize = main.length();
-		assertTrue(nextSize > initialSize);
-		IMessageHolder newHolder = new MessageHandler();
-		result = command.repeatCommand(newHolder);
+    // do repeat compile, introducing an error
+    mainSrc = new File(testBase, "Main-2.java");
+    FileUtil.copyFile(mainSrc, main);
+    assertTrue(main.canRead());
+    final long nextSize = main.length();
+    assertTrue(nextSize > initialSize);
+    final IMessageHolder newHolder = new MessageHandler();
+    result = command.repeatCommand(newHolder);
 
-		// verify failed, no effect on first holder, error in second
-		assertFalse(result);
-		assertEquals(1, newHolder.numMessages(IMessage.ERROR, false));
-		assertEquals(initialMessages, holder.numMessages(null, true));
-	}
+    // verify failed, no effect on first holder, error in second
+    assertFalse(result);
+    assertEquals(1, newHolder.numMessages(IMessage.ERROR, false));
+    assertEquals(initialMessages, holder.numMessages(null, true));
+  }
 
-	public void testIncrementalOption() throws InvalidInputException {
-		AjdtCommand.genBuildConfig(new String[] { "-incremental" }, counter);
+  public void testIncrementalOption() throws InvalidInputException {
+    AjdtCommand.genBuildConfig(new String[]{"-incremental"}, counter);
 
-		assertTrue("didn't specify source root", outputWriter.getContents().indexOf("specify a source root") != -1);
+    assertTrue("didn't specify source root", outputWriter.getContents().indexOf("specify a source root") != -1);
 
-		outputWriter.flushBuffer();
-		AjdtCommand.genBuildConfig(new String[] { "-incremental", "-sourceroots", AjdtAjcTests.TESTDATA_PATH + "/src1" }, counter);
+    outputWriter.flushBuffer();
+    AjdtCommand.genBuildConfig(new String[]{"-incremental", "-sourceroots", AjdtAjcTests.TESTDATA_PATH + "/src1"}, counter);
 
-		assertTrue(outputWriter.getContents(), outputWriter.getContents().equals(""));
+    assertTrue(outputWriter.getContents(), outputWriter.getContents().equals(""));
 
-		outputWriter.flushBuffer();
-		AjdtCommand.genBuildConfig(new String[] { "-incremental", "testdata/src1/Hello.java" }, counter);
+    outputWriter.flushBuffer();
+    AjdtCommand.genBuildConfig(new String[]{"-incremental", "testdata/src1/Hello.java"}, counter);
 
-		assertTrue("specified a file", outputWriter.getContents().indexOf(
-				"incremental mode only handles source files using -sourceroots") != -1);
-	}
+    assertTrue("specified a file", outputWriter.getContents().indexOf(
+        "incremental mode only handles source files using -sourceroots") != -1);
+  }
 
-	public void testBadOptionAndUsagePrinting() throws InvalidInputException {
-		try {
-			AjdtCommand.genBuildConfig(new String[] { "-mubleBadOption" }, counter);
-		} catch (AbortException ae) {
-		}
-		// usage printed by caller to genBuildConfig now...
-		assertTrue(outputWriter.getContents() + " contains? " + "Usage",
-				outputWriter.getContents().indexOf("-mubleBadOption") != -1);
+  public void testBadOptionAndUsagePrinting() throws InvalidInputException {
+    try {
+      AjdtCommand.genBuildConfig(new String[]{"-mubleBadOption"}, counter);
+    } catch (AbortException ae) {
+    }
+    // usage printed by caller to genBuildConfig now...
+    assertTrue(outputWriter.getContents() + " contains? " + "Usage",
+        outputWriter.getContents().indexOf("-mubleBadOption") != -1);
 
-	}
+  }
 
-	public void testHelpUsagePrinting() {
-		String[] args = new String[] { "-help" };
+  public void testHelpUsagePrinting() {
+    final String[] args = new String[]{"-help"};
 
-		PrintStream saveOut = System.out;
-		ByteArrayOutputStream byteArrayOut = new ByteArrayOutputStream();
-		PrintStream newOut = new PrintStream(byteArrayOut);
-		System.setOut(newOut);
+    final PrintStream saveOut = System.out;
+    final ByteArrayOutputStream byteArrayOut = new ByteArrayOutputStream();
+    final PrintStream newOut = new PrintStream(byteArrayOut);
+    System.setOut(newOut);
 
-		try {
-			try {
+    try {
+      try {
 
-				AjdtCommand.genBuildConfig(args, counter);
-			} catch (AbortException ae) {
-			}
-		} finally {
-			System.setOut(saveOut);
-		}
+        AjdtCommand.genBuildConfig(args, counter);
+      } catch (AbortException ae) {
+      }
+    } finally {
+      System.setOut(saveOut);
+    }
 
-		String text = byteArrayOut.toString();
-		assertTrue(text + " contains? " + "Usage", text.indexOf("Usage") != -1);
-	}
+    final String text = byteArrayOut.toString();
+    assertTrue(text + " contains? " + "Usage", text.indexOf("Usage") != -1);
+  }
 
-	public void q() throws InvalidInputException {
-		String[] args = new String[] { "-version" };
+  public void q() throws InvalidInputException {
+    final String[] args = new String[]{"-version"};
 
-		PrintStream saveOut = System.out;
-		PrintStream saveErr = System.err;
-		ByteArrayOutputStream byteArrayOut = new ByteArrayOutputStream();
-		ByteArrayOutputStream byteArrayErr = new ByteArrayOutputStream();
-		PrintStream newOut = new PrintStream(byteArrayOut);
-		PrintStream newErr = new PrintStream(byteArrayErr);
-		System.setOut(newOut);
-		System.setErr(newErr);
+    final PrintStream saveOut = System.out;
+    final PrintStream saveErr = System.err;
+    final ByteArrayOutputStream byteArrayOut = new ByteArrayOutputStream();
+    final ByteArrayOutputStream byteArrayErr = new ByteArrayOutputStream();
+    final PrintStream newOut = new PrintStream(byteArrayOut);
+    final PrintStream newErr = new PrintStream(byteArrayErr);
+    System.setOut(newOut);
+    System.setErr(newErr);
 
-		try {
-			try {
+    try {
+      try {
 
-				AjdtCommand.genBuildConfig(args, counter);
-			} catch (AbortException ae) {
-			}
-		} finally {
-			System.setOut(saveOut);
-			System.setErr(saveErr);
-		}
+        AjdtCommand.genBuildConfig(args, counter);
+      } catch (AbortException ae) {
+      }
+    } finally {
+      System.setOut(saveOut);
+      System.setErr(saveErr);
+    }
 
-		String text = byteArrayOut.toString();
-		// String text2 = byteArrayErr.toString();
-		assertTrue("version output does not include 'AspectJ Compiler', output was:\n'" + text + "'", text
-				.indexOf("AspectJ Compiler") != -1);
-	}
+    final String text = byteArrayOut.toString();
+    // String text2 = byteArrayErr.toString();
+    assertTrue("version output does not include 'AspectJ Compiler', output was:\n'" + text + "'", text
+        .indexOf("AspectJ Compiler") != -1);
+  }
 
-	public void testNonExistingLstFile() {
-		AjdtCommand.genBuildConfig(new String[] { "@mumbleDoesNotExist" }, counter);
+  public void testNonExistingLstFile() {
+    AjdtCommand.genBuildConfig(new String[]{"@mumbleDoesNotExist"}, counter);
 
-		assertTrue(outputWriter.getContents(), outputWriter.getContents().indexOf("file does not exist") != -1);
-	}
+    assertTrue(outputWriter.getContents(), outputWriter.getContents().indexOf("file does not exist") != -1);
+  }
 
-	protected void setUp() throws Exception {
-		super.setUp();
-	}
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+  }
 
-	protected void tearDown() throws Exception {
-		super.tearDown();
-		outputWriter.flushBuffer();
-		for (ListIterator iter = tempFiles.listIterator(); iter.hasNext();) {
-			File file = (File) iter.next();
-			if (delete(file)) {
-				iter.remove();
-			}
-		}
-	}
+  @Override
+  protected void tearDown() throws Exception {
+    super.tearDown();
+    outputWriter.flushBuffer();
+    for (final ListIterator iter = tempFiles.listIterator(); iter.hasNext(); ) {
+      final File file = (File) iter.next();
+      if (delete(file)) {
+        iter.remove();
+      }
+    }
+  }
 }

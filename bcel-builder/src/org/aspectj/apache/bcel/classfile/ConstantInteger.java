@@ -54,58 +54,59 @@ package org.aspectj.apache.bcel.classfile;
  * <http://www.apache.org/>.
  */
 
+import org.aspectj.apache.bcel.Constants;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import org.aspectj.apache.bcel.Constants;
-
 /**
  * This class is derived from the abstract <A HREF="org.aspectj.apache.bcel.classfile.Constant.html">Constant</A> class and
  * represents a reference to an int object.
- * 
- * @version $Id: ConstantInteger.java,v 1.5 2009/09/16 00:43:49 aclement Exp $
+ *
  * @author <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
+ * @version $Id: ConstantInteger.java,v 1.5 2009/09/16 00:43:49 aclement Exp $
  * @see Constant
  */
 public final class ConstantInteger extends Constant implements SimpleConstant {
-	private int intValue;
+  private final int intValue;
 
-	public ConstantInteger(int intValue) {
-		super(Constants.CONSTANT_Integer);
-		this.intValue = intValue;
-	}
+  public ConstantInteger(int intValue) {
+    super(Constants.CONSTANT_Integer);
+    this.intValue = intValue;
+  }
 
-	ConstantInteger(DataInputStream file) throws IOException {
-		this(file.readInt());
-	}
+  ConstantInteger(DataInputStream file) throws IOException {
+    this(file.readInt());
+  }
 
-	@Override
-	public void accept(ClassVisitor v) {
-		v.visitConstantInteger(this);
-	}
+  @Override
+  public void accept(@NotNull ClassVisitor v) {
+    v.visitConstantInteger(this);
+  }
 
-	@Override
-	public final void dump(DataOutputStream file) throws IOException {
-		file.writeByte(tag);
-		file.writeInt(intValue);
-	}
+  @Override
+  public final void dump(@NotNull DataOutputStream file) throws IOException {
+    file.writeByte(tag);
+    file.writeInt(intValue);
+  }
 
-	@Override
-	public final String toString() {
-		return super.toString() + "(bytes = " + intValue + ")";
-	}
+  @Override
+  public final String toString() {
+    return super.toString() + "(bytes = " + intValue + ")";
+  }
 
-	@Override
-	public Integer getValue() {
-		return intValue;
-	}
+  @Override
+  public Integer getValue() {
+    return intValue;
+  }
 
-	public int getIntValue() {
-		return intValue;
-	}
+  public int getIntValue() {
+    return intValue;
+  }
 
-	public String getStringValue() {
-		return Integer.toString(intValue);
-	}
+  public String getStringValue() {
+    return Integer.toString(intValue);
+  }
 }

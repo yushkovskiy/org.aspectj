@@ -18,28 +18,30 @@ import junit.framework.*;
 
 public class AjdtBatchTests extends TestCase {
 
-    public static Test suite() { 
-        TestSuite suite = new TestSuite(AjdtBatchTests.class.getName());
-        // Abstract superclass
-        //suite.addTestSuite(CommandTestCase.class); 
-        //$JUnit-BEGIN$
-        suite.addTestSuite(BasicCommandTestCase.class); 
-        suite.addTestSuite(BinaryFormsTestCase.class); 
-		suite.addTestSuite(CompileAndRunTestCase.class); 
-		suite.addTestSuite(PerformanceTestCase.class); 
-        suite.addTestSuite(ImageTestCase.class); 
-        suite.addTestSuite(MultipleCompileTestCase.class); 
-        suite.addTestSuite(JavadocTest.class);
-        suite.addTestSuite(PartiallyExposedHierarchyTestCase.class);
-        suite.addTestSuite(CompilerDumpTestCase.class); 
-        suite.addTestSuite(ProceedOnErrorTestCase.class);
-        suite.addTestSuite(DeclareParents.class);
-        // XXX suite.addTestSuite(VerifyWeaveTestCase.class); 
-        //suite.addTestSuite(WorkingCommandTestCase.class); 
-        //$JUnit-END$
-        return suite;
-    }
+  public static Test suite() {
+    final TestSuite suite = new TestSuite(AjdtBatchTests.class.getName());
+    // Abstract superclass
+    //suite.addTestSuite(CommandTestCase.class);
+    //$JUnit-BEGIN$
+    suite.addTestSuite(BasicCommandTestCase.class);
+    suite.addTestSuite(BinaryFormsTestCase.class);
+    suite.addTestSuite(CompileAndRunTestCase.class);
+    suite.addTestSuite(PerformanceTestCase.class);
+    suite.addTestSuite(ImageTestCase.class);
+    suite.addTestSuite(MultipleCompileTestCase.class);
+    suite.addTestSuite(JavadocTest.class);
+    suite.addTestSuite(PartiallyExposedHierarchyTestCase.class);
+    suite.addTestSuite(CompilerDumpTestCase.class);
+    suite.addTestSuite(ProceedOnErrorTestCase.class);
+    suite.addTestSuite(DeclareParents.class);
+    // XXX suite.addTestSuite(VerifyWeaveTestCase.class);
+    //suite.addTestSuite(WorkingCommandTestCase.class);
+    //$JUnit-END$
+    return suite;
+  }
 
-    public AjdtBatchTests(String name) { super(name); }
+  public AjdtBatchTests(String name) {
+    super(name);
+  }
 
 }  

@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Matthew Webster - initial implementation
  *******************************************************************************/
@@ -17,10 +17,10 @@ import org.aspectj.weaver.tools.Trace;
 
 public class CommonsTraceFactoryTest extends TestCase {
 
-	public void testGetTraceFactory() {
-		CommonsTraceFactory factory = new CommonsTraceFactory();
-		Trace trace = factory.getTrace(getClass());
-		assertFalse("Tracing should be disbled by default",trace.isTraceEnabled());
-	}
+  public void testGetTraceFactory() {
+    final CommonsTraceFactory factory = new CommonsTraceFactory();
+    final Trace trace = factory.getTrace(getClass());
+    assertFalse("Tracing should be disbled by default", trace.isTraceEnabled());
+  }
 
 }

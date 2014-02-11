@@ -13,20 +13,20 @@
 package org.aspectj.weaver;
 
 public interface IHasPosition {
-	/**
-	 * The starting index of this location in the character stream.
-	 */
-	int getStart();
+  /**
+   * The starting index of this location in the character stream.
+   */
+  int getStart();
 
-	/**
-	 * The ending index of this location in the character stream
-	 * 
-	 * This points to the last character in this token.
-	 * 
-	 * If a location truly had no contents, then start == end + 1. We don't recommend this.
-	 */
-	int getEnd();
-	//
-	// String getFileName();
+  /**
+   * The ending index of this location in the character stream
+   * <p/>
+   * This points to the last character in this token.
+   * <p/>
+   * If a location truly had no contents, then start == end + 1. We don't recommend this.
+   */
+  int getEnd();
+  //
+  // String getFileName();
 
 }

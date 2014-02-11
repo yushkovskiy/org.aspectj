@@ -11,102 +11,103 @@
  * ******************************************************************/
 package org.aspectj.weaver.patterns;
 
-import java.io.IOException;
-import java.util.Map;
-
 import org.aspectj.util.FuzzyBoolean;
 import org.aspectj.weaver.CompressingDataOutputStream;
 import org.aspectj.weaver.ResolvedType;
 import org.aspectj.weaver.World;
 
+import java.io.IOException;
+import java.util.Map;
+
 public class AnyTypePattern extends TypePattern {
 
-	/**
-	 * Constructor for EllipsisTypePattern.
-	 * 
-	 * @param includeSubtypes
-	 */
-	public AnyTypePattern() {
-		super(false, false, new TypePatternList());
-	}
+  /**
+   * Constructor for EllipsisTypePattern.
+   *
+   * @param includeSubtypes
+   */
+  public AnyTypePattern() {
+    super(false, false, new TypePatternList());
+  }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.aspectj.weaver.patterns.TypePattern#couldEverMatchSameTypesAs(org.aspectj.weaver.patterns.TypePattern)
-	 */
-	@Override
-	protected boolean couldEverMatchSameTypesAs(TypePattern other) {
-		return true;
-	}
+  /*
+   * (non-Javadoc)
+   *
+   * @see org.aspectj.weaver.patterns.TypePattern#couldEverMatchSameTypesAs(org.aspectj.weaver.patterns.TypePattern)
+   */
+  @Override
+  protected boolean couldEverMatchSameTypesAs(TypePattern other) {
+    return true;
+  }
 
-	/**
-	 * @see org.aspectj.weaver.patterns.TypePattern#matchesExactly(IType)
-	 */
-	@Override
-	protected boolean matchesExactly(ResolvedType type) {
-		return true;
-	}
+  /**
+   * @see org.aspectj.weaver.patterns.TypePattern#matchesExactly(IType)
+   */
+  @Override
+  protected boolean matchesExactly(ResolvedType type) {
+    return true;
+  }
 
-	@Override
-	protected boolean matchesExactly(ResolvedType type, ResolvedType annotatedType) {
-		return true;
-	}
+  @Override
+  protected boolean matchesExactly(ResolvedType type, ResolvedType annotatedType) {
+    return true;
+  }
 
-	/**
-	 * @see org.aspectj.weaver.patterns.TypePattern#matchesInstanceof(IType)
-	 */
-	@Override
-	public FuzzyBoolean matchesInstanceof(ResolvedType type) {
-		return FuzzyBoolean.YES;
-	}
+  /**
+   * @see org.aspectj.weaver.patterns.TypePattern#matchesInstanceof(IType)
+   */
+  @Override
+  public FuzzyBoolean matchesInstanceof(ResolvedType type) {
+    return FuzzyBoolean.YES;
+  }
 
-	@Override
-	public void write(CompressingDataOutputStream s) throws IOException {
-		s.writeByte(ANY_KEY);
-	}
+  @Override
+  public void write(CompressingDataOutputStream s) throws IOException {
+    s.writeByte(ANY_KEY);
+  }
 
-	/**
-	 * @see org.aspectj.weaver.patterns.TypePattern#matches(IType, MatchKind)
-	 */
-	// public FuzzyBoolean matches(IType type, MatchKind kind) {
-	// return FuzzyBoolean.YES;
-	// }
-	/**
-	 * @see org.aspectj.weaver.patterns.TypePattern#matchesSubtypes(IType)
-	 */
-	@Override
-	protected boolean matchesSubtypes(ResolvedType type) {
-		return true;
-	}
+  /**
+   * @see org.aspectj.weaver.patterns.TypePattern#matches(IType, MatchKind)
+   */
+  // public FuzzyBoolean matches(IType type, MatchKind kind) {
+  // return FuzzyBoolean.YES;
+  // }
 
-	@Override
-	public boolean isStar() {
-		return true;
-	}
+  /**
+   * @see org.aspectj.weaver.patterns.TypePattern#matchesSubtypes(IType)
+   */
+  @Override
+  protected boolean matchesSubtypes(ResolvedType type) {
+    return true;
+  }
 
-	@Override
-	public String toString() {
-		return "*";
-	}
+  @Override
+  public boolean isStar() {
+    return true;
+  }
 
-	@Override
-	public boolean equals(Object obj) {
-		return (obj instanceof AnyTypePattern);
-	}
+  @Override
+  public String toString() {
+    return "*";
+  }
 
-	@Override
-	public int hashCode() {
-		return 37;
-	}
+  @Override
+  public boolean equals(Object obj) {
+    return (obj instanceof AnyTypePattern);
+  }
 
-	@Override
-	public Object accept(PatternNodeVisitor visitor, Object data) {
-		return visitor.visit(this, data);
-	}
+  @Override
+  public int hashCode() {
+    return 37;
+  }
 
-	@Override
-	public TypePattern parameterizeWith(Map arg0, World w) {
-		return this;
-	}
+  @Override
+  public Object accept(PatternNodeVisitor visitor, Object data) {
+    return visitor.visit(this, data);
+  }
+
+  @Override
+  public TypePattern parameterizeWith(Map arg0, World w) {
+    return this;
+  }
 }

@@ -19,24 +19,24 @@ import org.aspectj.weaver.World;
 
 public class ReflectionWorldSpecificTest extends TestCase {
 
-	public void testDelegateCreation() {
-		World world = new ReflectionWorld(true, getClass().getClassLoader());
-		ResolvedType rt = world.resolve("java.lang.Object");
-		assertNotNull(rt);
-		assertEquals("Ljava/lang/Object;", rt.getSignature());
-	}
+  public void testDelegateCreation() {
+    final World world = new ReflectionWorld(true, getClass().getClassLoader());
+    final ResolvedType rt = world.resolve("java.lang.Object");
+    assertNotNull(rt);
+    assertEquals("Ljava/lang/Object;", rt.getSignature());
+  }
 
-	public void testArrayTypes() {
-		IReflectionWorld world = new ReflectionWorld(true, getClass().getClassLoader());
-		String[] strArray = new String[1];
-		ResolvedType rt = world.resolve(strArray.getClass());
-		assertTrue(rt.isArray());
-	}
+  public void testArrayTypes() {
+    final IReflectionWorld world = new ReflectionWorld(true, getClass().getClassLoader());
+    final String[] strArray = new String[1];
+    final ResolvedType rt = world.resolve(strArray.getClass());
+    assertTrue(rt.isArray());
+  }
 
-	public void testPrimitiveTypes() {
-		IReflectionWorld world = new ReflectionWorld(true, getClass().getClassLoader());
-		assertEquals("int", UnresolvedType.INT, world.resolve(int.class));
-		assertEquals("void", UnresolvedType.VOID, world.resolve(void.class));
-	}
+  public void testPrimitiveTypes() {
+    final IReflectionWorld world = new ReflectionWorld(true, getClass().getClassLoader());
+    assertEquals("int", UnresolvedType.INT, world.resolve(int.class));
+    assertEquals("void", UnresolvedType.VOID, world.resolve(void.class));
+  }
 
 }

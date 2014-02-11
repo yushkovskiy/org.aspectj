@@ -16,75 +16,75 @@ package org.aspectj.weaver.tools.cache;
  * Represents a class which has been cached
  */
 public class CachedClassEntry {
-    static enum EntryType {
-        GENERATED,
-        WEAVED,
-        IGNORED,
+  static enum EntryType {
+    GENERATED,
+    WEAVED,
+    IGNORED,
+  }
+
+  private final CachedClassReference ref;
+  private final byte[] weavedBytes;
+  private final EntryType type;
+
+  public CachedClassEntry(CachedClassReference ref, byte[] weavedBytes, EntryType type) {
+    this.weavedBytes = weavedBytes;
+    this.ref = ref;
+    this.type = type;
+  }
+
+  public String getClassName() {
+    return ref.getClassName();
+  }
+
+  public byte[] getBytes() {
+    return weavedBytes;
+  }
+
+  public String getKey() {
+    return ref.getKey();
+  }
+
+  public boolean isGenerated() {
+    return type == EntryType.GENERATED;
+  }
+
+  public boolean isWeaved() {
+    return type == EntryType.WEAVED;
+  }
+
+  public boolean isIgnored() {
+    return type == EntryType.IGNORED;
+  }
+
+  @Override
+  public int hashCode() {
+    return getClassName().hashCode()
+        + getKey().hashCode()
+        + type.hashCode()
+        ;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == null)
+      return false;
+    if (this == obj)
+      return true;
+    if (getClass() != obj.getClass())
+      return false;
+
+    final CachedClassEntry other = (CachedClassEntry) obj;
+    if (getClassName().equals(other.getClassName())
+        && getKey().equals(other.getKey())
+        && (type == other.type)) {
+      return true;
+    } else {
+      return false;
     }
+  }
 
-    private final CachedClassReference ref;
-    private final byte[] weavedBytes;
-    private final EntryType type;
-
-    public CachedClassEntry(CachedClassReference ref, byte[] weavedBytes, EntryType type) {
-        this.weavedBytes = weavedBytes;
-        this.ref = ref;
-        this.type = type;
-    }
-
-    public String getClassName() {
-        return ref.getClassName();
-    }
-
-    public byte[] getBytes() {
-        return weavedBytes;
-    }
-
-    public String getKey() {
-        return ref.getKey();
-    }
-
-    public boolean isGenerated() {
-        return type == EntryType.GENERATED;
-    }
-
-    public boolean isWeaved() {
-        return type == EntryType.WEAVED;
-    }
-
-    public boolean isIgnored() {
-        return type == EntryType.IGNORED;
-    }
-
-    @Override
-    public int hashCode() {
-        return getClassName().hashCode()
-             + getKey().hashCode()
-             + type.hashCode()
-             ;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null)
-            return false;
-        if (this == obj)
-            return true;
-        if (getClass() != obj.getClass())
-            return false;
-
-        CachedClassEntry    other=(CachedClassEntry) obj;
-        if (getClassName().equals(other.getClassName())
-         && getKey().equals(other.getKey())
-         && (type == other.type)) {
-             return true;
-        } else {
-            return false;
-        }
-    }
-
-    @Override
-    public String toString() {
-        return getClassName() + "[" + type + "]";
-    }
+  @Override
+  public String toString() {
+    return getClassName() + "[" + type + "]";
+  }
 }

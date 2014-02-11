@@ -54,90 +54,96 @@ package org.aspectj.apache.bcel.classfile;
  * <http://www.apache.org/>.
  */
 
+import org.aspectj.apache.bcel.Constants;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import org.aspectj.apache.bcel.Constants;
-
 /**
  * Abstract superclass for classes to represent the different constant types in the constant pool of a class file. The classes keep
  * closely to the JVM specification.
- * 
- * @version $Id: Constant.java,v 1.5 2009/09/10 15:35:04 aclement Exp $
+ *
  * @author <A HREF="mailto:markus.dahm@berlin.de">M. Dahm</A>
+ * @version $Id: Constant.java,v 1.5 2009/09/10 15:35:04 aclement Exp $
  */
 public abstract class Constant implements Cloneable, Node {
 
-	protected byte tag;
+  protected byte tag;
 
-	Constant(byte tag) {
-		this.tag = tag;
-	}
+  Constant(byte tag) {
+    this.tag = tag;
+  }
 
-	public final byte getTag() {
-		return tag;
-	}
+  public final byte getTag() {
+    return tag;
+  }
 
-	@Override
-	public String toString() {
-		return Constants.CONSTANT_NAMES[tag] + "[" + tag + "]";
-	}
+  @Override
+  public String toString() {
+    return Constants.CONSTANT_NAMES[tag] + "[" + tag + "]";
+  }
 
-	public abstract void accept(ClassVisitor v);
+  @Override
+  public abstract void accept(@NotNull ClassVisitor v);
 
-	public abstract void dump(DataOutputStream dataOutputStream) throws IOException;
+  public abstract void dump(@NotNull DataOutputStream dataOutputStream) throws IOException;
 
-	public abstract Object getValue();
+  public abstract Object getValue();
 
-	public Constant copy() {
-		try {
-			return (Constant) super.clone();
-		} catch (CloneNotSupportedException e) {
-		}
+  @Nullable
+  public Constant copy() {
+    try {
+      return (Constant) super.clone();
+    } catch (CloneNotSupportedException e) {
+    }
 
-		return null;
-	}
+    return null;
+  }
 
-	@Override
-	public Object clone() throws CloneNotSupportedException {
-		return super.clone();
-	}
+  @Override
+  @NotNull
+  public Object clone() throws CloneNotSupportedException {
+    return super.clone();
+  }
 
-	static final Constant readConstant(DataInputStream dis) throws IOException, ClassFormatException {
-		byte b = dis.readByte();
-		switch (b) {
-		case Constants.CONSTANT_Class:
-			return new ConstantClass(dis);
-		case Constants.CONSTANT_NameAndType:
-			return new ConstantNameAndType(dis);
-		case Constants.CONSTANT_Utf8:
-			return new ConstantUtf8(dis);
-		case Constants.CONSTANT_Fieldref:
-			return new ConstantFieldref(dis);
-		case Constants.CONSTANT_Methodref:
-			return new ConstantMethodref(dis);
-		case Constants.CONSTANT_InterfaceMethodref:
-			return new ConstantInterfaceMethodref(dis);
-		case Constants.CONSTANT_String:
-			return new ConstantString(dis);
-		case Constants.CONSTANT_Integer:
-			return new ConstantInteger(dis);
-		case Constants.CONSTANT_Float:
-			return new ConstantFloat(dis);
-		case Constants.CONSTANT_Long:
-			return new ConstantLong(dis);
-		case Constants.CONSTANT_Double:
-			return new ConstantDouble(dis);
-		case Constants.CONSTANT_MethodHandle:
-			return new ConstantMethodHandle(dis);
-		case Constants.CONSTANT_MethodType:
-			return new ConstantMethodType(dis);
-		case Constants.CONSTANT_InvokeDynamic:
-			return new ConstantInvokeDynamic(dis);
-		default:
-			throw new ClassFormatException("Invalid byte tag in constant pool: " + b);
-		}
-	}
+  @NotNull
+  static final Constant readConstant(@NotNull DataInputStream dis) throws IOException, ClassFormatException {
+    final byte b = dis.readByte();
+    switch (b) {
+      case Constants.CONSTANT_Class:
+        return new ConstantClass(dis);
+      case Constants.CONSTANT_NameAndType:
+        return new ConstantNameAndType(dis);
+      case Constants.CONSTANT_Utf8:
+        return new ConstantUtf8(dis);
+      case Constants.CONSTANT_Fieldref:
+        return new ConstantFieldref(dis);
+      case Constants.CONSTANT_Methodref:
+        return new ConstantMethodref(dis);
+      case Constants.CONSTANT_InterfaceMethodref:
+        return new ConstantInterfaceMethodref(dis);
+      case Constants.CONSTANT_String:
+        return new ConstantString(dis);
+      case Constants.CONSTANT_Integer:
+        return new ConstantInteger(dis);
+      case Constants.CONSTANT_Float:
+        return new ConstantFloat(dis);
+      case Constants.CONSTANT_Long:
+        return new ConstantLong(dis);
+      case Constants.CONSTANT_Double:
+        return new ConstantDouble(dis);
+      case Constants.CONSTANT_MethodHandle:
+        return new ConstantMethodHandle(dis);
+      case Constants.CONSTANT_MethodType:
+        return new ConstantMethodType(dis);
+      case Constants.CONSTANT_InvokeDynamic:
+        return new ConstantInvokeDynamic(dis);
+      default:
+        throw new ClassFormatException("Invalid byte tag in constant pool: " + b);
+    }
+  }
 
 }

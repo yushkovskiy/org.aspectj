@@ -16,19 +16,20 @@ import org.aspectj.weaver.ConstantPoolWriter;
 
 /**
  * An implementation of the constant pool writer that speaks Eclipse.
- * 
+ *
  * @author Andy Clement
  */
 public class EclipseConstantPoolWriter implements ConstantPoolWriter {
 
-	private ConstantPool constantPool;
+  private ConstantPool constantPool;
 
-	public EclipseConstantPoolWriter(ConstantPool constantPool) {
-		this.constantPool = constantPool;
-	}
+  public EclipseConstantPoolWriter(ConstantPool constantPool) {
+    this.constantPool = constantPool;
+  }
 
-	public int writeUtf8(String name) {
-		return constantPool.literalIndex(name.toCharArray());
-	}
+  @Override
+  public int writeUtf8(String name) {
+    return constantPool.literalIndex(name.toCharArray());
+  }
 
 }

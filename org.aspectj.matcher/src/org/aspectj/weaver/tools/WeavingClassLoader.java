@@ -20,12 +20,13 @@ import java.net.URL;
  * WeavingAdaptor.
  */
 public interface WeavingClassLoader extends GeneratedClassHandler {
-	
-	/**
-	 * Returns the aspects to be used by a WeavingAdaptor to weave classes
-	 * defined by the class loader.
-	 * @return the aspects used for weaving classes.
-	 */
-	public URL[] getAspectURLs ();
+
+  /**
+   * Returns the aspects to be used by a WeavingAdaptor to weave classes
+   * defined by the class loader.
+   *
+   * @return the aspects used for weaving classes.
+   */
+  public URL[] getAspectURLs();
 
 }

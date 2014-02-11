@@ -18,39 +18,40 @@ import java.io.IOException;
  * Represents adding an annotation to a type
  */
 public class AnnotationOnTypeMunger extends ResolvedTypeMunger {
-	AnnotationAJ newAnnotation;
+  AnnotationAJ newAnnotation;
 
-	public AnnotationOnTypeMunger(AnnotationAJ anno) {
-		super(AnnotationOnType, null);
-		newAnnotation = anno;
-	}
+  public AnnotationOnTypeMunger(AnnotationAJ anno) {
+    super(AnnotationOnType, null);
+    newAnnotation = anno;
+  }
 
-	public void write(CompressingDataOutputStream s) throws IOException {
-		throw new RuntimeException("unimplemented");
-	}
+  @Override
+  public void write(CompressingDataOutputStream s) throws IOException {
+    throw new RuntimeException("unimplemented");
+  }
 
-	public AnnotationAJ getNewAnnotation() {
-		return newAnnotation;
-	}
+  public AnnotationAJ getNewAnnotation() {
+    return newAnnotation;
+  }
 
-	public boolean equals(Object other) {
-		if (!(other instanceof AnnotationOnTypeMunger)) {
-			return false;
-		}
-		AnnotationOnTypeMunger o = (AnnotationOnTypeMunger) other;
-		// TODO does not check equality of annotation values
-		return newAnnotation.getTypeSignature().equals(o.newAnnotation.getTypeSignature());
-	}
+  public boolean equals(Object other) {
+    if (!(other instanceof AnnotationOnTypeMunger)) {
+      return false;
+    }
+    final AnnotationOnTypeMunger o = (AnnotationOnTypeMunger) other;
+    // TODO does not check equality of annotation values
+    return newAnnotation.getTypeSignature().equals(o.newAnnotation.getTypeSignature());
+  }
 
-	private volatile int hashCode = 0;
+  private volatile int hashCode = 0;
 
-	public int hashCode() {
-		if (hashCode == 0) {
-			int result = 17;
-			result = 37 * result + newAnnotation.getTypeSignature().hashCode();
-			hashCode = result;
-		}
-		return hashCode;
-	}
+  public int hashCode() {
+    if (hashCode == 0) {
+      int result = 17;
+      result = 37 * result + newAnnotation.getTypeSignature().hashCode();
+      hashCode = result;
+    }
+    return hashCode;
+  }
 
 }
