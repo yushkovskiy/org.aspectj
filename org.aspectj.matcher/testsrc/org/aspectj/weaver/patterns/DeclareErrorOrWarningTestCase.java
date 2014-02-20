@@ -44,11 +44,11 @@ public class DeclareErrorOrWarningTestCase extends TestCase {
     assertEquals("end position should be 46", 46, d.getEnd());
   }
 
-  private DeclareErrorOrWarning parse(String string) {
+  private static DeclareErrorOrWarning parse(String string) {
     return (DeclareErrorOrWarning) new PatternParser(string).parseDeclare();
   }
 
-  private void checkSerialization(Declare declare) throws IOException {
+  private static void checkSerialization(Declare declare) throws IOException {
     final ByteArrayOutputStream bo = new ByteArrayOutputStream();
     final ConstantPoolSimulator cps = new ConstantPoolSimulator();
     final CompressingDataOutputStream out = new CompressingDataOutputStream(bo, cps);

@@ -19,6 +19,8 @@ import org.aspectj.weaver.patterns.Declare;
 import org.aspectj.weaver.patterns.IScope;
 import org.aspectj.weaver.patterns.PerClause;
 import org.aspectj.weaver.patterns.Pointcut;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 
@@ -35,56 +37,12 @@ import java.io.*;
  */
 public abstract class AjAttribute {
 
+  @NotNull
   public static final String AttributePrefix = "org.aspectj.weaver";
 
-  protected abstract void write(CompressingDataOutputStream s) throws IOException;
-
-  public abstract String getNameString();
-
-  public char[] getNameChars() {
-    return getNameString().toCharArray();
-  }
-
-  /**
-   * Just writes the contents
-   */
-  public byte[] getBytes(ConstantPoolWriter compressor) {
-    try {
-      final ByteArrayOutputStream b0 = new ByteArrayOutputStream();
-      final CompressingDataOutputStream s0 = new CompressingDataOutputStream(b0, compressor);
-      write(s0);
-      s0.close();
-      return b0.toByteArray();
-    } catch (IOException e) {
-      // shouldn't happen with ByteArrayOutputStreams
-      throw new RuntimeException("sanity check");
-    }
-  }
-
-  /**
-   * Writes the full attribute, i.e. name_index, length, and contents
-   *
-   * @param constantPool
-   */
-  public byte[] getAllBytes(short nameIndex, ConstantPoolWriter dataCompressor) {
-    try {
-      final byte[] bytes = getBytes(dataCompressor);
-
-      final ByteArrayOutputStream b0 = new ByteArrayOutputStream();
-      final DataOutputStream s0 = new DataOutputStream(b0);
-
-      s0.writeShort(nameIndex);
-      s0.writeInt(bytes.length);
-      s0.write(bytes);
-      s0.close();
-      return b0.toByteArray();
-    } catch (IOException e) {
-      // shouldn't happen with ByteArrayOutputStreams
-      throw new RuntimeException("sanity check");
-    }
-  }
-
-  public static AjAttribute read(AjAttribute.WeaverVersionInfo v, String name, byte[] bytes, ISourceContext context, World w,
+  @Nullable
+  public static AjAttribute read(@NotNull AjAttribute.WeaverVersionInfo v, @NotNull String name, @Nullable byte[] bytes,
+                                 ISourceContext context, World w,
                                  ConstantPoolReader dataDecompressor) {
     try {
       if (bytes == null) {
@@ -136,6 +94,54 @@ public abstract class AjAttribute {
     }
   }
 
+  public abstract String getNameString();
+
+  @NotNull
+  public char[] getNameChars() {
+    return getNameString().toCharArray();
+  }
+
+  /**
+   * Just writes the contents
+   */
+  @NotNull
+  public byte[] getBytes(@NotNull ConstantPoolWriter compressor) {
+    try {
+      final ByteArrayOutputStream b0 = new ByteArrayOutputStream();
+      final CompressingDataOutputStream s0 = new CompressingDataOutputStream(b0, compressor);
+      write(s0);
+      s0.close();
+      return b0.toByteArray();
+    } catch (IOException e) {
+      // shouldn't happen with ByteArrayOutputStreams
+      throw new RuntimeException("sanity check");
+    }
+  }
+
+  /**
+   * Writes the full attribute, i.e. name_index, length, and contents
+   */
+  @NotNull
+  public byte[] getAllBytes(short nameIndex, @NotNull ConstantPoolWriter dataCompressor) {
+    try {
+      final byte[] bytes = getBytes(dataCompressor);
+
+      final ByteArrayOutputStream b0 = new ByteArrayOutputStream();
+      final DataOutputStream s0 = new DataOutputStream(b0);
+
+      s0.writeShort(nameIndex);
+      s0.writeInt(bytes.length);
+      s0.write(bytes);
+      s0.close();
+      return b0.toByteArray();
+    } catch (IOException e) {
+      // shouldn't happen with ByteArrayOutputStreams
+      throw new RuntimeException("sanity check");
+    }
+  }
+
+  protected abstract void write(@NotNull CompressingDataOutputStream s) throws IOException;
+
   // ----
 
   /**
@@ -146,29 +152,25 @@ public abstract class AjAttribute {
    * signature of what it stands for.
    */
   public static class AjSynthetic extends AjAttribute {
+    @NotNull
     public static final String AttributeName = "org.aspectj.weaver.AjSynthetic";
-
-    @Override
-    public String getNameString() {
-      return AttributeName;
-    }
 
     // private ResolvedTypeMunger munger;
     public AjSynthetic() {
     }
 
     @Override
-    public void write(CompressingDataOutputStream s) throws IOException {
+    public String getNameString() {
+      return AttributeName;
+    }
+
+    @Override
+    public void write(@NotNull CompressingDataOutputStream s) throws IOException {
     }
   }
 
   public static class TypeMunger extends AjAttribute {
     public static final String AttributeName = "org.aspectj.weaver.TypeMunger";
-
-    @Override
-    public String getNameString() {
-      return AttributeName;
-    }
 
     private final ResolvedTypeMunger munger;
 
@@ -177,7 +179,12 @@ public abstract class AjAttribute {
     }
 
     @Override
-    public void write(CompressingDataOutputStream s) throws IOException {
+    public String getNameString() {
+      return AttributeName;
+    }
+
+    @Override
+    public void write(@NotNull CompressingDataOutputStream s) throws IOException {
       munger.write(s);
     }
 
@@ -189,11 +196,6 @@ public abstract class AjAttribute {
   public static class WeaverState extends AjAttribute {
     public static final String AttributeName = "org.aspectj.weaver.WeaverState";
 
-    @Override
-    public String getNameString() {
-      return AttributeName;
-    }
-
     private final WeaverStateInfo kind;
 
     public WeaverState(WeaverStateInfo kind) {
@@ -201,7 +203,12 @@ public abstract class AjAttribute {
     }
 
     @Override
-    public void write(CompressingDataOutputStream s) throws IOException {
+    public String getNameString() {
+      return AttributeName;
+    }
+
+    @Override
+    public void write(@NotNull CompressingDataOutputStream s) throws IOException {
       kind.write(s);
     }
 
@@ -269,30 +276,6 @@ public abstract class AjAttribute {
 
     private long buildstamp = Version.NOTIME;
 
-    @Override
-    public String getNameString() {
-      return AttributeName;
-    }
-
-    // Default ctor uses the current version numbers
-    public WeaverVersionInfo() {
-      major_version = CURRENT_VERSION_MAJOR;
-      minor_version = CURRENT_VERSION_MINOR;
-    }
-
-    public WeaverVersionInfo(short major, short minor) {
-      major_version = major;
-      minor_version = minor;
-    }
-
-    @Override
-    public void write(CompressingDataOutputStream s) throws IOException {
-      s.writeShort(CURRENT_VERSION_MAJOR);
-      s.writeShort(CURRENT_VERSION_MINOR);
-      s.writeLong(Version.getTime()); // build used to construct the
-      // class...
-    }
-
     public static WeaverVersionInfo read(VersionedDataInputStream s) throws IOException {
       final short major = s.readShort();
       final short minor = s.readShort();
@@ -310,20 +293,48 @@ public abstract class AjAttribute {
       return wvi;
     }
 
-    public short getMajorVersion() {
-      return major_version;
-    }
-
-    public short getMinorVersion() {
-      return minor_version;
-    }
-
     public static short getCurrentWeaverMajorVersion() {
       return CURRENT_VERSION_MAJOR;
     }
 
     public static short getCurrentWeaverMinorVersion() {
       return CURRENT_VERSION_MINOR;
+    }
+
+    public static String toCurrentVersionString() {
+      return CURRENT_VERSION_MAJOR + "." + CURRENT_VERSION_MINOR;
+    }
+
+    // Default ctor uses the current version numbers
+    public WeaverVersionInfo() {
+      major_version = CURRENT_VERSION_MAJOR;
+      minor_version = CURRENT_VERSION_MINOR;
+    }
+
+    public WeaverVersionInfo(short major, short minor) {
+      major_version = major;
+      minor_version = minor;
+    }
+
+    @Override
+    public String getNameString() {
+      return AttributeName;
+    }
+
+    @Override
+    public void write(@NotNull CompressingDataOutputStream s) throws IOException {
+      s.writeShort(CURRENT_VERSION_MAJOR);
+      s.writeShort(CURRENT_VERSION_MINOR);
+      s.writeLong(Version.getTime()); // build used to construct the
+      // class...
+    }
+
+    public short getMajorVersion() {
+      return major_version;
+    }
+
+    public short getMinorVersion() {
+      return minor_version;
     }
 
     public void setBuildstamp(long stamp) {
@@ -339,42 +350,13 @@ public abstract class AjAttribute {
       return major_version + "." + minor_version;
     }
 
-    public static String toCurrentVersionString() {
-      return CURRENT_VERSION_MAJOR + "." + CURRENT_VERSION_MINOR;
-    }
-
   }
 
   public static class SourceContextAttribute extends AjAttribute {
     public static final String AttributeName = "org.aspectj.weaver.SourceContext";
 
-    @Override
-    public String getNameString() {
-      return AttributeName;
-    }
-
     private final String sourceFileName;
     private final int[] lineBreaks;
-
-    public SourceContextAttribute(String sourceFileName, int[] lineBreaks) {
-      this.sourceFileName = sourceFileName;
-      this.lineBreaks = lineBreaks;
-    }
-
-    @Override
-    public void write(CompressingDataOutputStream s) throws IOException {
-      if (s.canCompress()) {
-        s.writeCompressedPath(sourceFileName);
-      } else {
-        s.writeUTF(sourceFileName);
-      }
-      s.writeInt(lineBreaks.length);
-      int previous = 0;
-      for (int i = 0, max = lineBreaks.length; i < max; i++) {
-        s.writeShort(lineBreaks[i] - previous);
-        previous = lineBreaks[i];
-      }
-    }
 
     public static SourceContextAttribute read(VersionedDataInputStream s) throws IOException {
       final String sourceFileName = s.isAtLeast169() ? s.readPath() : s.readUTF();
@@ -392,6 +374,31 @@ public abstract class AjAttribute {
       return new SourceContextAttribute(sourceFileName, lines);
     }
 
+    public SourceContextAttribute(String sourceFileName, int[] lineBreaks) {
+      this.sourceFileName = sourceFileName;
+      this.lineBreaks = lineBreaks;
+    }
+
+    @Override
+    public String getNameString() {
+      return AttributeName;
+    }
+
+    @Override
+    public void write(@NotNull CompressingDataOutputStream s) throws IOException {
+      if (s.canCompress()) {
+        s.writeCompressedPath(sourceFileName);
+      } else {
+        s.writeUTF(sourceFileName);
+      }
+      s.writeInt(lineBreaks.length);
+      int previous = 0;
+      for (int i = 0, max = lineBreaks.length; i < max; i++) {
+        s.writeShort(lineBreaks[i] - previous);
+        previous = lineBreaks[i];
+      }
+    }
+
     public int[] getLineBreaks() {
       return lineBreaks;
     }
@@ -405,20 +412,29 @@ public abstract class AjAttribute {
 
     public static final String AttributeName = "org.aspectj.weaver.MethodDeclarationLineNumber";
 
-    @Override
-    public String getNameString() {
-      return AttributeName;
-    }
-
     private final int lineNumber;
 
     // AV: added in 1.5 M3 thus handling cases where we don't have that
     // information
     private final int offset;
 
+    public static MethodDeclarationLineNumberAttribute read(VersionedDataInputStream s) throws IOException {
+      final int line = s.readInt();
+      int offset = 0;
+      if (s.available() > 0) {
+        offset = s.readInt();
+      }
+      return new MethodDeclarationLineNumberAttribute(line, offset);
+    }
+
     public MethodDeclarationLineNumberAttribute(int line, int offset) {
       lineNumber = line;
       this.offset = offset;
+    }
+
+    @Override
+    public String getNameString() {
+      return AttributeName;
     }
 
     public int getLineNumber() {
@@ -430,18 +446,9 @@ public abstract class AjAttribute {
     }
 
     @Override
-    public void write(CompressingDataOutputStream s) throws IOException {
+    public void write(@NotNull CompressingDataOutputStream s) throws IOException {
       s.writeInt(lineNumber);
       s.writeInt(offset);
-    }
-
-    public static MethodDeclarationLineNumberAttribute read(VersionedDataInputStream s) throws IOException {
-      final int line = s.readInt();
-      int offset = 0;
-      if (s.available() > 0) {
-        offset = s.readInt();
-      }
-      return new MethodDeclarationLineNumberAttribute(line, offset);
     }
 
     @Override
@@ -453,11 +460,6 @@ public abstract class AjAttribute {
   public static class PointcutDeclarationAttribute extends AjAttribute {
     public static final String AttributeName = "org.aspectj.weaver.PointcutDeclaration";
 
-    @Override
-    public String getNameString() {
-      return AttributeName;
-    }
-
     private final ResolvedPointcutDefinition pointcutDef;
 
     public PointcutDeclarationAttribute(ResolvedPointcutDefinition pointcutDef) {
@@ -465,7 +467,12 @@ public abstract class AjAttribute {
     }
 
     @Override
-    public void write(CompressingDataOutputStream s) throws IOException {
+    public String getNameString() {
+      return AttributeName;
+    }
+
+    @Override
+    public void write(@NotNull CompressingDataOutputStream s) throws IOException {
       pointcutDef.write(s);
     }
 
@@ -477,11 +484,6 @@ public abstract class AjAttribute {
   public static class DeclareAttribute extends AjAttribute {
     public static final String AttributeName = "org.aspectj.weaver.Declare";
 
-    @Override
-    public String getNameString() {
-      return AttributeName;
-    }
-
     private final Declare declare;
 
     public DeclareAttribute(Declare declare) {
@@ -489,7 +491,12 @@ public abstract class AjAttribute {
     }
 
     @Override
-    public void write(CompressingDataOutputStream s) throws IOException {
+    public String getNameString() {
+      return AttributeName;
+    }
+
+    @Override
+    public void write(@NotNull CompressingDataOutputStream s) throws IOException {
       declare.write(s);
     }
 
@@ -500,11 +507,6 @@ public abstract class AjAttribute {
 
   public static class AdviceAttribute extends AjAttribute {
     public static final String AttributeName = "org.aspectj.weaver.Advice";
-
-    @Override
-    public String getNameString() {
-      return AttributeName;
-    }
 
     private final AdviceKind kind;
     private final Pointcut pointcut;
@@ -519,6 +521,17 @@ public abstract class AjAttribute {
     // calls in body
     private boolean[] formalsUnchangedToProceed; // size == formals.size
     private UnresolvedType[] declaredExceptions;
+
+    public static AdviceAttribute read(VersionedDataInputStream s, ISourceContext context) throws IOException {
+      final AdviceKind kind = AdviceKind.read(s);
+      if (kind == AdviceKind.Around) {
+        return new AdviceAttribute(kind, Pointcut.read(s, context), s.readByte(), s.readInt(), s.readInt(), context,
+            s.readBoolean(), ResolvedMemberImpl.readResolvedMemberArray(s, context), FileUtil.readBooleanArray(s),
+            UnresolvedType.readArray(s));
+      } else {
+        return new AdviceAttribute(kind, Pointcut.read(s, context), s.readByte(), s.readInt(), s.readInt(), context);
+      }
+    }
 
     /**
      * @param lexicalPosition must be greater than the lexicalPosition of any advice declared before this one in an aspect,
@@ -558,19 +571,13 @@ public abstract class AjAttribute {
       this.declaredExceptions = declaredExceptions;
     }
 
-    public static AdviceAttribute read(VersionedDataInputStream s, ISourceContext context) throws IOException {
-      final AdviceKind kind = AdviceKind.read(s);
-      if (kind == AdviceKind.Around) {
-        return new AdviceAttribute(kind, Pointcut.read(s, context), s.readByte(), s.readInt(), s.readInt(), context,
-            s.readBoolean(), ResolvedMemberImpl.readResolvedMemberArray(s, context), FileUtil.readBooleanArray(s),
-            UnresolvedType.readArray(s));
-      } else {
-        return new AdviceAttribute(kind, Pointcut.read(s, context), s.readByte(), s.readInt(), s.readInt(), context);
-      }
+    @Override
+    public String getNameString() {
+      return AttributeName;
     }
 
     @Override
-    public void write(CompressingDataOutputStream s) throws IOException {
+    public void write(@NotNull CompressingDataOutputStream s) throws IOException {
       kind.write(s);
       pointcut.write(s);
       s.writeByte(extraParameterFlags);
@@ -639,16 +646,16 @@ public abstract class AjAttribute {
   public static class Aspect extends AjAttribute {
     public static final String AttributeName = "org.aspectj.weaver.Aspect";
 
-    @Override
-    public String getNameString() {
-      return AttributeName;
-    }
-
     private final PerClause perClause;
     private IScope resolutionScope;
 
     public Aspect(PerClause perClause) {
       this.perClause = perClause;
+    }
+
+    @Override
+    public String getNameString() {
+      return AttributeName;
     }
 
     public PerClause reify(ResolvedType inAspect) {
@@ -662,7 +669,7 @@ public abstract class AjAttribute {
     }
 
     @Override
-    public void write(CompressingDataOutputStream s) throws IOException {
+    public void write(@NotNull CompressingDataOutputStream s) throws IOException {
       perClause.write(s);
     }
 
@@ -677,22 +684,22 @@ public abstract class AjAttribute {
 
     private final ResolvedMember[] accessedMembers;
 
+    public static PrivilegedAttribute read(VersionedDataInputStream stream, ISourceContext context) throws IOException {
+      final PrivilegedAttribute pa = new PrivilegedAttribute(ResolvedMemberImpl.readResolvedMemberArray(stream, context));
+      return pa;
+    }
+
     public PrivilegedAttribute(ResolvedMember[] accessedMembers) {
       this.accessedMembers = accessedMembers;
     }
 
     @Override
-    public void write(CompressingDataOutputStream s) throws IOException {
+    public void write(@NotNull CompressingDataOutputStream s) throws IOException {
       ResolvedMemberImpl.writeArray(accessedMembers, s);
     }
 
     public ResolvedMember[] getAccessedMembers() {
       return accessedMembers;
-    }
-
-    public static PrivilegedAttribute read(VersionedDataInputStream stream, ISourceContext context) throws IOException {
-      final PrivilegedAttribute pa = new PrivilegedAttribute(ResolvedMemberImpl.readResolvedMemberArray(stream, context));
-      return pa;
     }
 
     @Override
@@ -702,16 +709,18 @@ public abstract class AjAttribute {
   }
 
   public static class EffectiveSignatureAttribute extends AjAttribute {
+    @NotNull
     public static final String AttributeName = "org.aspectj.weaver.EffectiveSignature";
-
-    @Override
-    public String getNameString() {
-      return AttributeName;
-    }
 
     private final ResolvedMember effectiveSignature;
     private final Shadow.Kind shadowKind;
     private final boolean weaveBody;
+
+    @NotNull
+    public static EffectiveSignatureAttribute read(VersionedDataInputStream s, ISourceContext context) throws IOException {
+      final ResolvedMember member = ResolvedMemberImpl.readResolvedMember(s, context);
+      return new EffectiveSignatureAttribute(member, Shadow.Kind.read(s), s.readBoolean());
+    }
 
     public EffectiveSignatureAttribute(ResolvedMember effectiveSignature, Shadow.Kind shadowKind, boolean weaveBody) {
       this.effectiveSignature = effectiveSignature;
@@ -720,15 +729,15 @@ public abstract class AjAttribute {
     }
 
     @Override
-    public void write(CompressingDataOutputStream s) throws IOException {
+    public String getNameString() {
+      return AttributeName;
+    }
+
+    @Override
+    public void write(@NotNull CompressingDataOutputStream s) throws IOException {
       effectiveSignature.write(s);
       shadowKind.write(s);
       s.writeBoolean(weaveBody);
-    }
-
-    public static EffectiveSignatureAttribute read(VersionedDataInputStream s, ISourceContext context) throws IOException {
-      final ResolvedMember member = ResolvedMemberImpl.readResolvedMember(s, context);
-      return new EffectiveSignatureAttribute(member, Shadow.Kind.read(s), s.readBoolean());
     }
 
     public ResolvedMember getEffectiveSignature() {

@@ -84,6 +84,7 @@ public class MULTIANEWARRAY extends InstructionCP {
    *
    * @param out Output stream
    */
+  @Override
   public void dump(DataOutputStream out) throws IOException {
     out.writeByte(opcode);
     out.writeShort(index);
@@ -111,6 +112,7 @@ public class MULTIANEWARRAY extends InstructionCP {
   /**
    * @return mnemonic for instruction
    */
+  @Override
   public String toString(boolean verbose) {
     return super.toString(verbose) + " " + index + " " + dimensions;
   }
@@ -118,6 +120,7 @@ public class MULTIANEWARRAY extends InstructionCP {
   /**
    * @return mnemonic for instruction with symbolic references resolved
    */
+  @Override
   public String toString(ConstantPool cp) {
     return super.toString(cp) + " " + dimensions;
   }
@@ -127,11 +130,12 @@ public class MULTIANEWARRAY extends InstructionCP {
    *
    * @return Number of words consumed from stack by this instruction
    */
+  @Override
   public int consumeStack(ConstantPool cpg) {
     return dimensions;
   }
 
-  public Class[] getExceptions() {
+  public static Class[] getExceptions() {
     final Class[] cs = new Class[2 + ExceptionConstants.EXCS_CLASS_AND_INTERFACE_RESOLUTION.length];
 
     System.arraycopy(ExceptionConstants.EXCS_CLASS_AND_INTERFACE_RESOLUTION, 0, cs, 0,
@@ -143,6 +147,7 @@ public class MULTIANEWARRAY extends InstructionCP {
     return cs;
   }
 
+  @Override
   public ObjectType getLoadClassType(ConstantPool cpg) {
     Type t = getType(cpg);
 

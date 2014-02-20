@@ -17,6 +17,7 @@ import org.aspectj.util.TypeSafeEnum;
 import org.aspectj.weaver.*;
 import org.aspectj.weaver.ast.Literal;
 import org.aspectj.weaver.ast.Test;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Map;
@@ -384,7 +385,7 @@ public abstract class Pointcut extends PatternNode {
     }
 
     @Override
-    public void write(CompressingDataOutputStream s) throws IOException {
+    public void write(@NotNull CompressingDataOutputStream s) throws IOException {
       s.writeByte(NONE);
     }
 

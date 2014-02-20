@@ -24,11 +24,11 @@ import org.aspectj.weaver.bcel.BcelObjectType;
  */
 public class EclipseResolvedMember extends ResolvedMemberImpl {
 
-  private static String[] NO_ARGS = new String[]{};
+  private static final String[] NO_ARGS = new String[]{};
 
-  private Binding realBinding;
+  private final Binding realBinding;
   private String[] argumentNames;
-  private World w;
+  private final World w;
   private ResolvedType[] cachedAnnotationTypes;
   private ResolvedType[][] cachedParameterAnnotationTypes;
   private EclipseFactory eclipseFactory;

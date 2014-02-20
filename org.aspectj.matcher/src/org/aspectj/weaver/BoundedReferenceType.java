@@ -21,7 +21,7 @@ import java.util.Map;
  * @author Adrian Colyer
  * @author Andy Clement
  */
-public class BoundedReferenceType extends ReferenceType {
+public final class BoundedReferenceType extends ReferenceType {
 
   // possible kinds of BoundedReferenceType
   public static final int UNBOUND = 0;

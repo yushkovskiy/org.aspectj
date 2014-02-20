@@ -29,7 +29,7 @@ import java.util.*;
  * All configuration information needed to run the AspectJ compiler. Compiler options (as opposed to path information) are held in
  * an AjCompilerOptions instance
  */
-public class AjBuildConfig implements CompilerConfigurationChangeFlags {
+public final class AjBuildConfig implements CompilerConfigurationChangeFlags {
   @NotNull
   public static final String AJLINT_IGNORE = "ignore";
   @NotNull
@@ -79,8 +79,8 @@ public class AjBuildConfig implements CompilerConfigurationChangeFlags {
   private File lintSpecFile = null;
 
   private int changes = EVERYTHING; // bitflags, see CompilerConfigurationChangeFlags
-
-  private AjCompilerOptions options;
+  @NotNull
+  private final AjCompilerOptions options;
 
   @NotNull
   private final BuildArgParser buildArgParser;
@@ -94,8 +94,6 @@ public class AjBuildConfig implements CompilerConfigurationChangeFlags {
    * Intialises the javaOptions Map to hold the default JDT Compiler settings. Added by AMC 01.20.2003 in reponse to bug #29768
    * and enh. 29769. The settings here are duplicated from those set in org.eclipse.jdt.internal.compiler.batch.Main, but I've
    * elected to copy them rather than refactor the JDT class since this keeps integration with future JDT releases easier (?).
-   *
-   * @param buildArgParser
    */
   public AjBuildConfig(@NotNull BuildArgParser buildArgParser) {
     this.buildArgParser = buildArgParser;
@@ -542,7 +540,7 @@ public class AjBuildConfig implements CompilerConfigurationChangeFlags {
     options.xNotReweavable = b;
   }
 
-  public void setXconfigurationInfo(String info) {
+  public void setXconfigurationInfo(@Nullable String info) {
     options.xConfigurationInfo = info;
   }
 

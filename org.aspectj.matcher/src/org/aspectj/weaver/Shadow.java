@@ -374,7 +374,7 @@ public abstract class Shadow {
     }
 
     // false for handlers
-    public boolean allowsExtraction() {
+    public static boolean allowsExtraction() {
       return true;
     }
 

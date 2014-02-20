@@ -18,6 +18,7 @@ import org.aspectj.util.FuzzyBoolean;
 import org.aspectj.weaver.*;
 import org.aspectj.weaver.ast.Literal;
 import org.aspectj.weaver.ast.Test;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Map;
@@ -77,7 +78,7 @@ public class WithinPointcut extends Pointcut {
   }
 
   @Override
-  public void write(CompressingDataOutputStream s) throws IOException {
+  public void write(@NotNull CompressingDataOutputStream s) throws IOException {
     s.writeByte(Pointcut.WITHIN);
     typePattern.write(s);
     writeLocation(s);

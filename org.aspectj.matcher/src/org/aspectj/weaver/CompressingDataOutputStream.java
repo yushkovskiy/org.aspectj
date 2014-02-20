@@ -11,6 +11,9 @@
  * ******************************************************************/
 package org.aspectj.weaver;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.FileOutputStream;
@@ -23,18 +26,20 @@ import java.io.IOException;
  *
  * @author Andy Clement
  */
-public class CompressingDataOutputStream extends DataOutputStream {
+public final class CompressingDataOutputStream extends DataOutputStream {
 
-  private ConstantPoolWriter constantPoolWriter;
+  @Nullable
+  private final ConstantPoolWriter constantPoolWriter;
   public boolean compressionEnabled = true;
 
-  public CompressingDataOutputStream(ByteArrayOutputStream baos, ConstantPoolWriter constantPoolWriter) {
+  public CompressingDataOutputStream(@NotNull ByteArrayOutputStream baos, @SuppressWarnings("NullableProblems") @NotNull ConstantPoolWriter constantPoolWriter) {
     super(baos);
     this.constantPoolWriter = constantPoolWriter;
   }
 
-  public CompressingDataOutputStream(FileOutputStream fos) {
+  public CompressingDataOutputStream(@NotNull FileOutputStream fos) {
     super(fos);
+    this.constantPoolWriter = null;
   }
 
   public boolean canCompress() {

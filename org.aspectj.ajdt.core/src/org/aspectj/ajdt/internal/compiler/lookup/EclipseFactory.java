@@ -55,7 +55,7 @@ public final class EclipseFactory {
   private final boolean xSerializableAspects;
   @NotNull
   private final World world;
-  @NotNull
+  @Nullable
   public final PushinCollector pushinCollector;
   @Nullable
   public List<ConcreteTypeMunger> finishedTypeMungers = null;
@@ -789,7 +789,7 @@ public final class EclipseFactory {
     return EclipseShadow.makeShadow(this, (ASTNode) context, context);
   }
 
-  public void addSourceTypeBinding(@NotNull SourceTypeBinding binding, @NotNull CompilationUnitDeclaration unit) {
+  public void addSourceTypeBinding(@NotNull SourceTypeBinding binding, @Nullable CompilationUnitDeclaration unit) {
     final TypeDeclaration decl = binding.scope.referenceContext;
 
     // Deal with the raw/basic type to give us an entry in the world type map

@@ -39,11 +39,11 @@ import org.aspectj.util.FileUtil;
  */
 public class AjdtCommandTestCase extends TestCase {
 
-  private ArrayList tempFiles = new ArrayList();
-  private StreamPrintWriter outputWriter = new StreamPrintWriter(new PrintWriter(System.out));
+  private final ArrayList tempFiles = new ArrayList();
+  private final StreamPrintWriter outputWriter = new StreamPrintWriter(new PrintWriter(System.out));
   // private AjdtCommand command = new AjdtCommand();
-  private MessageWriter messageWriter = new MessageWriter(outputWriter, false);
-  private CountingMessageHandler counter = new CountingMessageHandler(messageWriter);
+  private final MessageWriter messageWriter = new MessageWriter(outputWriter, false);
+  private final CountingMessageHandler counter = new CountingMessageHandler(messageWriter);
 
   public AjdtCommandTestCase(String name) {
     super(name);

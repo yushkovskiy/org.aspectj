@@ -17,7 +17,8 @@ import org.aspectj.weaver.patterns.WithinTestCase;
 
 public class BcelWithinTestCase extends WithinTestCase {
 
-	public World getWorld() {
-		return new BcelWorld();
-	}
+  @Override
+  public World getWorld() {
+    return new BcelWorld();
+  }
 }

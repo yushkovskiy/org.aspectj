@@ -206,22 +206,6 @@ public final class Main {
    *                      exceptions/error, <0 exceptions, >0 compiler errors).
    */
   public void runMain(@NotNull String[] args, boolean useSystemExit) {
-    final ArrayList<String> arguments = new ArrayList<>(args.length);
-    boolean wasCP = false;
-    for (String arg : args) {
-      if (arg.contains("-proc:"))
-        continue;
-      if (wasCP) {
-        arg = "F:\\dropbox\\Dropbox\\codereview\\tools.jar" + File.pathSeparator + arg;
-        wasCP = false;
-      }
-      if ("-classpath".equals(arg)) {
-        wasCP = true;
-      }
-      arguments.add(arg);
-    }
-    args = arguments.toArray(new String[arguments.size()]);
-    info("args: " + Arrays.toString(args) + "; useSystemExit: " + useSystemExit);
     // Urk - default no check for AJDT, enabled here for Ant, command-line
     AjBuildManager.enableRuntimeVersionCheck(this);
     final boolean verbose = flagInArgs("-verbose", args);

@@ -96,18 +96,22 @@ public class AnnotationPatternMatchingTestCase extends TestCase {
   static class MyMessageHandler implements IMessageHandler {
     public List<IMessage> messages = new ArrayList<IMessage>();
 
+    @Override
     public boolean handleMessage(@NotNull IMessage message) throws AbortException {
       messages.add(message);
       return false;
     }
 
+    @Override
     public boolean isIgnoring(Kind kind) {
       return false;
     }
 
+    @Override
     public void dontIgnore(IMessage.Kind kind) {
     }
 
+    @Override
     public void ignore(Kind kind) {
     }
   }

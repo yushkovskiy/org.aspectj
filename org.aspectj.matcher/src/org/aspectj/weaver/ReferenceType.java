@@ -16,6 +16,8 @@ import org.aspectj.bridge.ISourceLocation;
 import org.aspectj.weaver.World.TypeMap;
 import org.aspectj.weaver.patterns.Declare;
 import org.aspectj.weaver.patterns.PerClause;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -30,31 +32,38 @@ import java.util.Map;
  * a parameterized type then the generic type is also set to point to the generic form.
  */
 public class ReferenceType extends ResolvedType {
-
+  @NotNull
   public static final ReferenceType[] EMPTY_ARRAY = new ReferenceType[0];
 
   /**
    * For generic types, this list holds references to all the derived raw and parameterized versions. We need this so that if the
    * generic delegate is swapped during incremental compilation, the delegate of the derivatives is swapped also.
    */
+  @NotNull
   private final List<WeakReference<ReferenceType>> derivativeTypes = new ArrayList<WeakReference<ReferenceType>>();
 
   /**
    * For parameterized types (or the raw type) - this field points to the actual reference type from which they are derived.
    */
+  @Nullable
   ReferenceType genericType = null;
-
+  @Nullable
   ReferenceType rawType = null; // generic types have a pointer back to their raw variant (prevents GC of the raw from the typemap!)
-
+  @Nullable
   ReferenceTypeDelegate delegate = null;
   int startPos = 0;
   int endPos = 0;
 
   // cached values for members
+  @Nullable
   ResolvedMember[] parameterizedMethods = null;
+  @Nullable
   ResolvedMember[] parameterizedFields = null;
+  @Nullable
   ResolvedMember[] parameterizedPointcuts = null;
+  @NotNull
   WeakReference<ResolvedType[]> parameterizedInterfaces = new WeakReference<ResolvedType[]>(null);
+  @Nullable
   Collection<Declare> parameterizedDeclares = null;
   // Collection parameterizedTypeMungers = null;
 
@@ -62,7 +71,9 @@ public class ReferenceType extends ResolvedType {
   // a declare @type may trigger a separate declare parents to match, and so the annotation
   // is temporarily held against the referencetype, the annotation will be properly
   // added to the class during weaving.
+  @Nullable
   private ResolvedType[] annotationTypes = null;
+  @Nullable
   private AnnotationAJ[] annotations = null;
 
   // Similarly these are temporary replacements and additions for the superclass and
@@ -70,9 +81,11 @@ public class ReferenceType extends ResolvedType {
   private ResolvedType newSuperclass;
   private ResolvedType[] newInterfaces;
 
+  @NotNull
   WeakReference<ResolvedType> superclassReference = new WeakReference<ResolvedType>(null);
 
-  public static ReferenceType fromTypeX(UnresolvedType tx, World world) {
+  @NotNull
+  public static ReferenceType fromTypeX(@NotNull UnresolvedType tx, World world) {
     final ReferenceType rt = new ReferenceType(tx.getErasureSignature(), world);
     rt.typeKind = tx.typeKind;
     return rt;
@@ -192,6 +205,7 @@ public class ReferenceType extends ResolvedType {
     return false;
   }
 
+  @NotNull
   @Override
   public ResolvedType[] getAnnotationTypes() {
     if (getDelegate() == null) {
@@ -943,7 +957,7 @@ public class ReferenceType extends ResolvedType {
     }
   }
 
-  private boolean equal2(UnresolvedType[] typeParameters, UnresolvedType[] resolvedParameters) {
+  private static boolean equal2(UnresolvedType[] typeParameters, UnresolvedType[] resolvedParameters) {
     if (typeParameters.length != resolvedParameters.length) {
       return false;
     }
@@ -1145,7 +1159,7 @@ public class ReferenceType extends ResolvedType {
     return ret.toString();
   }
 
-  private boolean equal(UnresolvedType[] typeParameters, ResolvedType[] resolvedParameters) {
+  private static boolean equal(UnresolvedType[] typeParameters, ResolvedType[] resolvedParameters) {
     if (typeParameters.length != resolvedParameters.length) {
       return false;
     }

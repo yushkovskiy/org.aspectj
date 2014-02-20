@@ -177,6 +177,7 @@ public class JavaClass extends Modifiers implements Cloneable, Node {
    *
    * @param v Visitor object
    */
+  @Override
   public void accept(ClassVisitor v) {
     v.visitJavaClass(this);
   }

@@ -84,6 +84,7 @@ public final class LineNumber implements Node {
     this.lineNumber = lineNumber;
   }
 
+  @Override
   public void accept(ClassVisitor v) {
     v.visitLineNumber(this);
   }

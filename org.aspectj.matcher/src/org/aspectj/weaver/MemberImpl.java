@@ -12,6 +12,8 @@
 
 package org.aspectj.weaver;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.lang.reflect.Modifier;
 import java.util.*;
 
@@ -303,7 +305,7 @@ public class MemberImpl implements Member {
   }
 
   @Override
-  public int compareTo(Member other) {
+  public int compareTo(@NotNull Member other) {
     final Member o = other;
     final int i = getName().compareTo(o.getName());
     if (i != 0) {

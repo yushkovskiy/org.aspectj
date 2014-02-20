@@ -71,7 +71,7 @@ public class PointcutEvaluationExpenseComparator implements Comparator<Pointcut>
   }
 
   // a higher score means a more expensive evaluation
-  private int getScore(Pointcut p) {
+  private static int getScore(Pointcut p) {
     if (p.couldMatchKinds() == Shadow.NO_SHADOW_KINDS_BITS) {
       return MATCHES_NOTHING;
     }

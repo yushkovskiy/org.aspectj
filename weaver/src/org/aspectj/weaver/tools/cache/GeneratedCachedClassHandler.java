@@ -28,6 +28,7 @@ public class GeneratedCachedClassHandler implements GeneratedClassHandler {
     this.nextGeneratedClassHandler = nextHandler;
   }
 
+  @Override
   public void acceptClass(String name, byte[] originalBytes, byte[] wovenBytes) {
     // The cache expects classNames in dot form
     final CachedClassReference ref = cache.createGeneratedCacheKey(name.replace('/', '.'));

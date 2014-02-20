@@ -27,62 +27,80 @@ import org.aspectj.org.eclipse.jdt.internal.compiler.env.ICompilationUnit;
 import org.aspectj.org.eclipse.jdt.internal.compiler.problem.AbortCompilation;
 import org.aspectj.weaver.bcel.BcelWeaver;
 import org.aspectj.weaver.bcel.BcelWorld;
+import org.aspectj.weaver.bcel.UnwovenClassFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author colyer
  *         <p/>
  *         Adapts standard JDT Compiler to add in AspectJ specific behaviours.
  */
-public class AjCompilerAdapter extends AbstractCompilerAdapter {
-
-  private Compiler compiler;
-  private BcelWeaver weaver;
-  private EclipseFactory eWorld;
-  private boolean isBatchCompile;
+public final class AjCompilerAdapter extends AbstractCompilerAdapter {
+  @NotNull
+  private final Compiler compiler;
+  @NotNull
+  private final BcelWeaver weaver;
+  @NotNull
+  private final EclipseFactory eWorld;
+  private final boolean isBatchCompile;
   private boolean reportedErrors;
-  private boolean isXTerminateAfterCompilation;
-  private boolean proceedOnError;
+  private final boolean isXTerminateAfterCompilation;
+  private final boolean proceedOnError;
   private boolean inJava5Mode;
-  private boolean reflectable;
-  private boolean noAtAspectJAnnotationProcessing;
-  private IIntermediateResultsRequestor intermediateResultsRequestor;
-  private IProgressListener progressListener;
-  private IOutputClassFileNameProvider outputFileNameProvider;
-  private IBinarySourceProvider binarySourceProvider;
-  private WeaverMessageHandler weaverMessageHandler;
-  private Map /* fileName |-> List<UnwovenClassFile> */binarySourceSetForFullWeave = new HashMap();
+  private final boolean reflectable;
+  private final boolean noAtAspectJAnnotationProcessing;
+  @NotNull
+  private final IIntermediateResultsRequestor intermediateResultsRequestor;
+  @Nullable
+  private final IProgressListener progressListener;
+  @NotNull
+  private final IOutputClassFileNameProvider outputFileNameProvider;
+  @NotNull
+  private final IBinarySourceProvider binarySourceProvider;
+  @NotNull
+  private final WeaverMessageHandler weaverMessageHandler;
+  @NotNull
+  private final Map /* fileName |-> List<UnwovenClassFile> */binarySourceSetForFullWeave;
 
+  @Nullable
   private ContextToken processingToken = null;
+  @Nullable
   private ContextToken resolvingToken = null;
+  @Nullable
   private ContextToken analysingToken = null;
+  @Nullable
   private ContextToken generatingToken = null;
+  @NotNull
+  private final AjState incrementalCompilationState;
 
-  private AjState incrementalCompilationState;
-
-  List /* InterimResult */resultsPendingWeave = new ArrayList();
+  @NotNull
+  List<InterimCompilationResult> /* InterimResult */resultsPendingWeave = new ArrayList<>();
 
   /**
    * Create an adapter, and tell it everything it needs to now to drive the AspectJ parts of a compile cycle.
    *
-   * @param compiler               the JDT compiler that produces class files from source
-   * @param isBatchCompile         true if this is a full build (non-incremental)
-   * @param world                  the bcelWorld used for type resolution during weaving
-   * @param weaver                 the weaver
-   * @param intRequestor           recipient of interim compilation results from compiler (pre-weave)
-   * @param outputFileNameProvider implementor of a strategy providing output file names for results
-   * @param binarySourceEntries    binary source that we didn't compile, but that we need to weave
-   * @param resultSetForFullWeave  if we are doing an incremental build, and the weaver determines that we need to weave the world,
-   *                               this is the set of intermediate results that will be passed to the weaver.
+   * @param compiler                the JDT compiler that produces class files from source
+   * @param isBatchCompile          true if this is a full build (non-incremental)
+   * @param world                   the bcelWorld used for type resolution during weaving
+   * @param weaver                  the weaver
+   * @param intRequestor            recipient of interim compilation results from compiler (pre-weave)
+   * @param outputFileNameProvider  implementor of a strategy providing output file names for results
+   * @param fullBinarySourceEntries binary source that we didn't compile, but that we need to weave
    */
-  public AjCompilerAdapter(Compiler compiler, boolean isBatchCompile, BcelWorld world, BcelWeaver weaver,
-                           EclipseFactory eFactory, IIntermediateResultsRequestor intRequestor, IProgressListener progressListener,
-                           IOutputClassFileNameProvider outputFileNameProvider, IBinarySourceProvider binarySourceProvider,
-                           Map fullBinarySourceEntries, /* fileName |-> List<UnwovenClassFile> */
+  public AjCompilerAdapter(@NotNull Compiler compiler, boolean isBatchCompile, @NotNull BcelWorld world, @NotNull BcelWeaver weaver,
+                           @NotNull EclipseFactory eFactory, @NotNull IIntermediateResultsRequestor intRequestor,
+                           @Nullable IProgressListener progressListener, @NotNull IOutputClassFileNameProvider outputFileNameProvider,
+                           @NotNull IBinarySourceProvider binarySourceProvider,
+                           @NotNull Map fullBinarySourceEntries, /* fileName |-> List<UnwovenClassFile> */
                            boolean isXterminateAfterCompilation, boolean proceedOnError, boolean noAtAspectJProcessing, boolean reflectable,
-                           AjState incrementalCompilationState) {
+                           @NotNull AjState incrementalCompilationState) {
     this.compiler = compiler;
     this.isBatchCompile = isBatchCompile;
     this.weaver = weaver;
@@ -117,13 +135,13 @@ public class AjCompilerAdapter extends AbstractCompilerAdapter {
   // the compilation lifecycle methods below are called in order as compilation progresses...
 
   @Override
-  public void beforeCompiling(ICompilationUnit[] sourceUnits) {
-    resultsPendingWeave = new ArrayList();
+  public void beforeCompiling(@NotNull ICompilationUnit[] sourceUnits) {
+    resultsPendingWeave = new ArrayList<>();
     reportedErrors = false;
   }
 
   @Override
-  public void beforeProcessing(CompilationUnitDeclaration unit) {
+  public void beforeProcessing(@NotNull CompilationUnitDeclaration unit) {
     eWorld.showMessage(IMessage.INFO, "compiling " + new String(unit.getFileName()), null, null);
     processingToken = CompilationAndWeavingContext.enteringPhase(CompilationAndWeavingContext.PROCESSING_COMPILATION_UNIT, unit
         .getFileName());
@@ -137,7 +155,7 @@ public class AjCompilerAdapter extends AbstractCompilerAdapter {
   }
 
   @Override
-  public void beforeResolving(CompilationUnitDeclaration unit) {
+  public void beforeResolving(@NotNull CompilationUnitDeclaration unit) {
     resolvingToken = CompilationAndWeavingContext.enteringPhase(CompilationAndWeavingContext.RESOLVING_COMPILATION_UNIT, unit
         .getFileName());
   }
@@ -150,7 +168,7 @@ public class AjCompilerAdapter extends AbstractCompilerAdapter {
   }
 
   @Override
-  public void beforeAnalysing(CompilationUnitDeclaration unit) {
+  public void beforeAnalysing(@NotNull CompilationUnitDeclaration unit) {
     analysingToken = CompilationAndWeavingContext.enteringPhase(CompilationAndWeavingContext.ANALYSING_COMPILATION_UNIT, unit
         .getFileName());
     if (inJava5Mode && !noAtAspectJAnnotationProcessing) {
@@ -167,20 +185,20 @@ public class AjCompilerAdapter extends AbstractCompilerAdapter {
   }
 
   @Override
-  public void beforeGenerating(CompilationUnitDeclaration unit) {
+  public void beforeGenerating(@NotNull CompilationUnitDeclaration unit) {
     generatingToken = CompilationAndWeavingContext.enteringPhase(
         CompilationAndWeavingContext.GENERATING_UNWOVEN_CODE_FOR_COMPILATION_UNIT, unit.getFileName());
   }
 
   @Override
-  public void afterGenerating(CompilationUnitDeclaration unit) {
+  public void afterGenerating(@NotNull CompilationUnitDeclaration unit) {
     if (generatingToken != null) {
       CompilationAndWeavingContext.leavingPhase(generatingToken);
     }
   }
 
   @Override
-  public void afterCompiling(CompilationUnitDeclaration[] units) {
+  public void afterCompiling(@NotNull CompilationUnitDeclaration[] units) {
     this.eWorld.cleanup();
     try {
       // not great ... but one more check before we continue, see pr132314
@@ -215,7 +233,7 @@ public class AjCompilerAdapter extends AbstractCompilerAdapter {
   }
 
   @Override
-  public void afterProcessing(CompilationUnitDeclaration unit, int unitIndex) {
+  public void afterProcessing(@NotNull CompilationUnitDeclaration unit, int unitIndex) {
     CompilationAndWeavingContext.leavingPhase(processingToken);
     eWorld.finishedCompilationUnit(unit);
     final InterimCompilationResult intRes = new InterimCompilationResult(unit.compilationResult, outputFileNameProvider);
@@ -264,7 +282,7 @@ public class AjCompilerAdapter extends AbstractCompilerAdapter {
    * Called from the weaverAdapter once it has finished weaving the class files associated with a given compilation result.
    */
   @Override
-  public void acceptResult(CompilationResult result) {
+  public void acceptResult(@NotNull CompilationResult result) {
     compiler.requestor.acceptResult(result.tagAsAccepted());
     if (compiler.unitsToProcess != null) {
       for (int i = 0; i < compiler.unitsToProcess.length; i++) {
@@ -277,12 +295,24 @@ public class AjCompilerAdapter extends AbstractCompilerAdapter {
     }
   }
 
-  private static List getBinarySourcesFrom(Map binarySourceEntries) {
+  @Override
+  public void afterDietParsing(@NotNull CompilationUnitDeclaration[] units) {
+    // to be filled in...
+  }
+
+  @NotNull
+  @Override
+  public List<InterimCompilationResult> getResultsPendingWeave() {
+    return resultsPendingWeave;
+  }
+
+  @NotNull
+  private static List<InterimCompilationResult> getBinarySourcesFrom(@NotNull Map<String, List<UnwovenClassFile>> binarySourceEntries) {
     // Map is fileName |-> List<UnwovenClassFile>
-    final List ret = new ArrayList();
-    for (final Iterator binIter = binarySourceEntries.keySet().iterator(); binIter.hasNext(); ) {
-      final String sourceFileName = (String) binIter.next();
-      final List unwovenClassFiles = (List) binarySourceEntries.get(sourceFileName);
+    final List<InterimCompilationResult> ret = new ArrayList<>();
+    for (final Iterator<String> binIter = binarySourceEntries.keySet().iterator(); binIter.hasNext(); ) {
+      final String sourceFileName = binIter.next();
+      final List<UnwovenClassFile> unwovenClassFiles = binarySourceEntries.get(sourceFileName);
       // XXX - see bugs 57432,58679 - final parameter on next call should be "compiler.options.maxProblemsPerUnit"
       final CompilationResult result = new CompilationResult(sourceFileName.toCharArray(), 0, 0, Integer.MAX_VALUE);
       result.noSourceAvailable();
@@ -342,16 +372,6 @@ public class AjCompilerAdapter extends AbstractCompilerAdapter {
         ((WeaverMessageHandler) imh).resetCompiler(null);
       }
     }
-  }
-
-  @Override
-  public void afterDietParsing(CompilationUnitDeclaration[] units) {
-    // to be filled in...
-  }
-
-  @Override
-  public List getResultsPendingWeave() {
-    return resultsPendingWeave;
   }
 
 }

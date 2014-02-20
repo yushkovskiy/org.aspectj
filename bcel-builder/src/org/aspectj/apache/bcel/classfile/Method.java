@@ -102,6 +102,7 @@ public final class Method extends FieldOrMethod {
     parameterAnnotationsOutOfDate = true;
   }
 
+  @Override
   public void accept(ClassVisitor v) {
     v.visitMethod(this);
   }

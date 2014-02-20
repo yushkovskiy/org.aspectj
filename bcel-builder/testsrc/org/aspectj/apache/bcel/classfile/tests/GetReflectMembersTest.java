@@ -37,12 +37,14 @@ public class GetReflectMembersTest extends TestCase {
     assertNotNull(jc.getField(GetMe.class.getDeclaredField("x")));
   }
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     this.bcelRepository = new ClassLoaderRepository(getClass().getClassLoader());
     this.jc = bcelRepository.loadClass(GetMe.class);
   }
 
+  @Override
   protected void tearDown() throws Exception {
     super.tearDown();
     this.bcelRepository.clear();

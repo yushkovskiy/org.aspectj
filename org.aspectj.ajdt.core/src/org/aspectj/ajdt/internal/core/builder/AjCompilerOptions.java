@@ -105,6 +105,7 @@ public class AjCompilerOptions extends CompilerOptions {
   @NotNull
   public String targetAspectjRuntimeLevel = Constants.RUNTIME_LEVEL_DEFAULT;
 
+  @Nullable
   public String xConfigurationInfo;
   public boolean addSerialVerUID = false;
   public boolean xmlConfigured = false;

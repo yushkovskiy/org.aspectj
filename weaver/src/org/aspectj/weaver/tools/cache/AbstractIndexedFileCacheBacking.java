@@ -53,6 +53,7 @@ public abstract class AbstractIndexedFileCacheBacking extends AbstractFileCacheB
     return indexFile;
   }
 
+  @Override
   public String[] getKeys(String regex) {
     final Map<String, IndexEntry> index = getIndex();
     if ((index == null) || index.isEmpty()) {

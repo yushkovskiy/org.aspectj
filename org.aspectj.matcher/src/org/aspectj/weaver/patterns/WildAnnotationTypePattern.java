@@ -14,6 +14,7 @@ import org.aspectj.bridge.MessageUtil;
 import org.aspectj.util.FuzzyBoolean;
 import org.aspectj.weaver.AjAttribute.WeaverVersionInfo;
 import org.aspectj.weaver.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -347,7 +348,7 @@ public class WildAnnotationTypePattern extends AnnotationTypePattern {
   private static final byte VERSION = 1; // rev if ser. form changes
 
   @Override
-  public void write(CompressingDataOutputStream s) throws IOException {
+  public void write(@NotNull CompressingDataOutputStream s) throws IOException {
     s.writeByte(AnnotationTypePattern.WILD);
     s.writeByte(VERSION);
     typePattern.write(s);

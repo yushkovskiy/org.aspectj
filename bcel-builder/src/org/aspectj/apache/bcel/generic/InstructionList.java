@@ -214,7 +214,7 @@ public class InstructionList implements Serializable {
       if (ihs[i] instanceof BranchHandle) {
         final InstructionBranch bi = (InstructionBranch) ihs[i].instruction;
         int target = bi.positionOfThisInstruction + bi.getIndex(); /*
-																			 * Byte code position: relative -> absolute.
+                                       * Byte code position: relative -> absolute.
 																			 */
         // Search for target position
         InstructionHandle ih = findHandle(ihs, pos, count, target);
@@ -1051,16 +1051,19 @@ public class InstructionList implements Serializable {
     return new Iterator() {
       private InstructionHandle ih = start;
 
+      @Override
       public Object next() {
         final InstructionHandle i = ih;
         ih = ih.next;
         return i;
       }
 
+      @Override
       public void remove() {
         throw new UnsupportedOperationException();
       }
 
+      @Override
       public boolean hasNext() {
         return ih != null;
       }
@@ -1252,7 +1255,7 @@ public class InstructionList implements Serializable {
    * @param new_target the new target instruction handle
    * @see MethodGen
    */
-  public void redirectLocalVariables(LocalVariableGen[] lg, InstructionHandle old_target, InstructionHandle new_target) {
+  public static void redirectLocalVariables(LocalVariableGen[] lg, InstructionHandle old_target, InstructionHandle new_target) {
     for (int i = 0; i < lg.length; i++) {
       final InstructionHandle start = lg[i].getStart();
       final InstructionHandle end = lg[i].getEnd();
@@ -1274,7 +1277,7 @@ public class InstructionList implements Serializable {
    * @param new_target the new target instruction handle
    * @see MethodGen
    */
-  public void redirectExceptionHandlers(CodeExceptionGen[] exceptions, InstructionHandle old_target, InstructionHandle new_target) {
+  public static void redirectExceptionHandlers(CodeExceptionGen[] exceptions, InstructionHandle old_target, InstructionHandle new_target) {
     for (int i = 0; i < exceptions.length; i++) {
       if (exceptions[i].getStartPC() == old_target) {
         exceptions[i].setStartPC(new_target);

@@ -53,6 +53,8 @@
  */
 package org.aspectj.apache.bcel.generic;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.DataOutputStream;
 import java.io.IOException;
 
@@ -67,11 +69,13 @@ public class InstructionByte extends Instruction {
     this.theByte = b;
   }
 
-  public void dump(DataOutputStream out) throws IOException {
+  @Override
+  public void dump(@NotNull DataOutputStream out) throws IOException {
     out.writeByte(opcode);
     out.writeByte(theByte);
   }
 
+  @Override
   public String toString(boolean verbose) {
     return super.toString(verbose) + " " + theByte;
   }
@@ -90,6 +94,8 @@ public class InstructionByte extends Instruction {
    *
    * @return type of the array
    */
+  @Override
+  @NotNull
   public final Type getType() {
     return new ArrayType(BasicType.getType(theByte), 1);
   }

@@ -161,15 +161,15 @@ public class SignaturePatternTestCase extends PatternsTestCase {
     assertEquals(p.toString() + " matches " + member.toString(), b, matches);
   }
 
-  private SignaturePattern makeMethodPat(String pattern) {
+  private static SignaturePattern makeMethodPat(String pattern) {
     return new PatternParser(pattern).parseMethodOrConstructorSignaturePattern();
   }
 
-  private SignaturePattern makeFieldPat(String pattern) {
+  private static SignaturePattern makeFieldPat(String pattern) {
     return new PatternParser(pattern).parseFieldSignaturePattern();
   }
 
-  private void checkSerialization(SignaturePattern p) throws IOException {
+  private static void checkSerialization(SignaturePattern p) throws IOException {
     final ByteArrayOutputStream bo = new ByteArrayOutputStream();
     final ConstantPoolSimulator cps = new ConstantPoolSimulator();
     final CompressingDataOutputStream out = new CompressingDataOutputStream(bo, cps);

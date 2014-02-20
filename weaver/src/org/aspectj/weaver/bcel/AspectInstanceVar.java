@@ -29,33 +29,39 @@ public class AspectInstanceVar extends BcelVar {
   }
 
   // fact is used in the subtypes
+  @Override
   public Instruction createLoad(InstructionFactory fact) {
 
     throw new IllegalStateException();
     // return InstructionFactory.createLoad(BcelWorld.makeBcelType(getType()), slot);
   }
 
+  @Override
   public Instruction createStore(InstructionFactory fact) {
     throw new IllegalStateException();
     // return InstructionFactory.createStore(BcelWorld.makeBcelType(getType()), slot);
   }
 
+  @Override
   public void appendStore(InstructionList il, InstructionFactory fact) {
     throw new IllegalStateException();
     // il.append(createStore(fact));
   }
 
+  @Override
   public void appendLoad(InstructionList il, InstructionFactory fact) {
     throw new IllegalStateException();
     // il.append(createLoad(fact));
   }
 
+  @Override
   public void appendLoadAndConvert(InstructionList il, InstructionFactory fact, ResolvedType toType) {
     throw new IllegalStateException();
     // il.append(createLoad(fact));
     // Utility.appendConversion(il, fact, getType(), toType);
   }
 
+  @Override
   public void insertLoad(InstructionList il, InstructionFactory fact) {
     final InstructionList loadInstructions = new InstructionList();
     loadInstructions.append(fact.createInvoke(getType().getName(), "aspectOf", "()" + getType().getSignature(),
@@ -65,6 +71,7 @@ public class AspectInstanceVar extends BcelVar {
     // il.insert(createLoad(fact));
   }
 
+  @Override
   public InstructionList createCopyFrom(InstructionFactory fact, int oldSlot) {
     throw new IllegalStateException();
     // InstructionList il = new InstructionList();
@@ -74,6 +81,7 @@ public class AspectInstanceVar extends BcelVar {
   }
 
   // this is an array var
+  @Override
   void appendConvertableArrayLoad(InstructionList il, InstructionFactory fact, int index, ResolvedType convertTo) {
     throw new IllegalStateException();
     // ResolvedType convertFromType = getType().getResolvedComponentType();
@@ -83,6 +91,7 @@ public class AspectInstanceVar extends BcelVar {
     // Utility.appendConversion(il, fact, convertFromType, convertTo);
   }
 
+  @Override
   void appendConvertableArrayStore(InstructionList il, InstructionFactory fact, int index, BcelVar storee) {
     throw new IllegalStateException();
     // ResolvedType convertToType = getType().getResolvedComponentType();
@@ -93,6 +102,7 @@ public class AspectInstanceVar extends BcelVar {
     // il.append(InstructionFactory.createArrayStore(BcelWorld.makeBcelType(convertToType)));
   }
 
+  @Override
   InstructionList createConvertableArrayStore(InstructionFactory fact, int index, BcelVar storee) {
     throw new IllegalStateException();
     // InstructionList il = new InstructionList();
@@ -100,6 +110,7 @@ public class AspectInstanceVar extends BcelVar {
     // return il;
   }
 
+  @Override
   InstructionList createConvertableArrayLoad(InstructionFactory fact, int index, ResolvedType convertTo) {
     throw new IllegalStateException();
     // InstructionList il = new InstructionList();
@@ -107,11 +118,13 @@ public class AspectInstanceVar extends BcelVar {
     // return il;
   }
 
+  @Override
   public int getPositionInAroundState() {
     throw new IllegalStateException();
     // return positionInAroundState;
   }
 
+  @Override
   public void setPositionInAroundState(int positionInAroundState) {
     throw new IllegalStateException();
     // this.positionInAroundState = positionInAroundState;

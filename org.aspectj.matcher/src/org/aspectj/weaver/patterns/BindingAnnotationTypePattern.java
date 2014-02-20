@@ -12,6 +12,7 @@ package org.aspectj.weaver.patterns;
 import org.aspectj.bridge.IMessage;
 import org.aspectj.bridge.MessageUtil;
 import org.aspectj.weaver.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Map;
@@ -112,7 +113,7 @@ public class BindingAnnotationTypePattern extends ExactAnnotationTypePattern imp
   private static final byte VERSION = 1; // rev if serialised form changed
 
   @Override
-  public void write(CompressingDataOutputStream s) throws IOException {
+  public void write(@NotNull CompressingDataOutputStream s) throws IOException {
     s.writeByte(AnnotationTypePattern.BINDING);
     s.writeByte(VERSION);
     annotationType.write(s);

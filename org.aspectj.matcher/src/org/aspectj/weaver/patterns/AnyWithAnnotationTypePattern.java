@@ -14,6 +14,7 @@ package org.aspectj.weaver.patterns;
 import org.aspectj.bridge.MessageUtil;
 import org.aspectj.util.FuzzyBoolean;
 import org.aspectj.weaver.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.lang.reflect.Modifier;
@@ -85,7 +86,7 @@ public class AnyWithAnnotationTypePattern extends TypePattern {
   }
 
   @Override
-  public void write(CompressingDataOutputStream s) throws IOException {
+  public void write(@NotNull CompressingDataOutputStream s) throws IOException {
     s.writeByte(TypePattern.ANY_WITH_ANNO);
     annotationPattern.write(s);
     writeLocation(s);

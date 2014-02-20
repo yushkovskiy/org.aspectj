@@ -22,24 +22,17 @@ import org.aspectj.weaver.AjAttribute.WeaverVersionInfo;
 import org.aspectj.weaver.Iterators.Getter;
 import org.aspectj.weaver.patterns.Declare;
 import org.aspectj.weaver.patterns.PerClause;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Modifier;
 import java.util.*;
 
 public abstract class ResolvedType extends UnresolvedType implements AnnotatedElement {
-
+  @NotNull
   public static final ResolvedType[] EMPTY_RESOLVED_TYPE_ARRAY = new ResolvedType[0];
+  @NotNull
   public static final String PARAMETERIZED_TYPE_IDENTIFIER = "P";
-
-  // Set temporarily during a type pattern match call - this currently used to hold the
-  // annotations that may be attached to a type when it used as a parameter
-  public ResolvedType[] temporaryAnnotationTypes;
-  private ResolvedType[] resolvedTypeParams;
-  private String binaryPath;
-
-  protected World world;
-
-  private int bits;
 
   private static final int AnnotationBitsInitialized = 0x0001;
   private static final int AnnotationMarkedInherited = 0x0002;
@@ -49,12 +42,215 @@ public abstract class ResolvedType extends UnresolvedType implements AnnotatedEl
   private static final int GroovyObjectInitialized = 0x0020;
   private static final int IsGroovyObject = 0x0040;
 
-  protected ResolvedType(String signature, World world) {
+  // public final UnresolvedType getSuperclass(World world) {
+  // return getSuperclass();
+  // }
+
+  // This set contains pairs of types whose signatures are concatenated
+  // together, this means with a fast lookup we can tell if two types
+  // are equivalent.
+  protected static Set<String> validBoxing = new HashSet<String>();
+
+  @NotNull
+  private final static MethodGetter MethodGetterInstance = new MethodGetter();
+  @NotNull
+  private final static MethodGetterIncludingItds MethodGetterWithItdsInstance = new MethodGetterIncludingItds();
+  @NotNull
+  private final static PointcutGetter PointcutGetterInstance = new PointcutGetter();
+  @NotNull
+  private final static FieldGetter FieldGetterInstance = new FieldGetter();
+
+  // ---- fields
+  @NotNull
+  public static final ResolvedType[] NONE = new ResolvedType[0];
+  @NotNull
+  public static final ResolvedType[] EMPTY_ARRAY = NONE;
+  @NotNull
+  public static final Missing MISSING = new Missing();
+
+  // Set temporarily during a type pattern match call - this currently used to hold the
+  // annotations that may be attached to a type when it used as a parameter
+  public ResolvedType[] temporaryAnnotationTypes;
+  private ResolvedType[] resolvedTypeParams;
+  private String binaryPath;
+
+  @Nullable
+  protected World world;
+
+  private int bits;
+
+  // all about collecting CrosscuttingMembers
+
+  // ??? collecting data-structure, shouldn't really be a field
+  public CrosscuttingMembers crosscuttingMembers;
+
+  @NotNull
+  protected List<ConcreteTypeMunger> interTypeMungers = new ArrayList<ConcreteTypeMunger>();
+
+  private FuzzyBoolean parameterizedWithTypeVariable = FuzzyBoolean.MAYBE;
+
+  static {
+    validBoxing.add("Ljava/lang/Byte;B");
+    validBoxing.add("Ljava/lang/Character;C");
+    validBoxing.add("Ljava/lang/Double;D");
+    validBoxing.add("Ljava/lang/Float;F");
+    validBoxing.add("Ljava/lang/Integer;I");
+    validBoxing.add("Ljava/lang/Long;J");
+    validBoxing.add("Ljava/lang/Short;S");
+    validBoxing.add("Ljava/lang/Boolean;Z");
+    validBoxing.add("BLjava/lang/Byte;");
+    validBoxing.add("CLjava/lang/Character;");
+    validBoxing.add("DLjava/lang/Double;");
+    validBoxing.add("FLjava/lang/Float;");
+    validBoxing.add("ILjava/lang/Integer;");
+    validBoxing.add("JLjava/lang/Long;");
+    validBoxing.add("SLjava/lang/Short;");
+    validBoxing.add("ZLjava/lang/Boolean;");
+  }
+
+  // FIXME asc I wonder if in some circumstances MissingWithKnownSignature
+  // should not be considered
+  // 'really' missing as some code can continue based solely on the signature
+  public static boolean isMissing(UnresolvedType unresolved) {
+    if (unresolved instanceof ResolvedType) {
+      final ResolvedType resolved = (ResolvedType) unresolved;
+      return resolved.isMissing();
+    } else {
+      return (unresolved == MISSING);
+    }
+  }
+
+  public static boolean matches(Member m1, Member m2) {
+    if (m1 == null) {
+      return m2 == null;
+    }
+    if (m2 == null) {
+      return false;
+    }
+
+    // Check the names
+    final boolean equalNames = m1.getName().equals(m2.getName());
+    if (!equalNames) {
+      return false;
+    }
+
+    // Check the signatures
+    final boolean equalSignatures = m1.getSignature().equals(m2.getSignature());
+    if (equalSignatures) {
+      return true;
+    }
+
+    // If they aren't the same, we need to allow for covariance ... where
+    // one sig might be ()LCar; and
+    // the subsig might be ()LFastCar; - where FastCar is a subclass of Car
+    final boolean equalCovariantSignatures = m1.getParameterSignature().equals(m2.getParameterSignature());
+    if (equalCovariantSignatures) {
+      return true;
+    }
+
+    return false;
+  }
+
+  public static boolean conflictingSignature(Member m1, Member m2) {
+    return conflictingSignature(m1, m2, true);
+  }
+
+  /**
+   * Do the two members conflict?  Due to the change in 1.7.1, field itds on interfaces now act like 'default' fields - so types implementing
+   * those fields get the field if they don't have it already, otherwise they keep what they have.  The conflict detection below had to be
+   * altered.  Previously (<1.7.1) it is not a conflict if the declaring types are different.  With v2itds it may still be a conflict if the
+   * declaring types are different.
+   */
+  public static boolean conflictingSignature(Member m1, Member m2, boolean v2itds) {
+    if (m1 == null || m2 == null) {
+      return false;
+    }
+    if (!m1.getName().equals(m2.getName())) {
+      return false;
+    }
+    if (m1.getKind() != m2.getKind()) {
+      return false;
+    }
+    if (m1.getKind() == Member.FIELD) {
+      if (v2itds) {
+        if (m1.getDeclaringType().equals(m2.getDeclaringType())) {
+          return true;
+        }
+      } else {
+        return m1.getDeclaringType().equals(m2.getDeclaringType());
+      }
+    } else if (m1.getKind() == Member.POINTCUT) {
+      return true;
+    }
+
+    UnresolvedType[] p1 = m1.getGenericParameterTypes();
+    UnresolvedType[] p2 = m2.getGenericParameterTypes();
+    if (p1 == null) {
+      p1 = m1.getParameterTypes();
+    }
+    if (p2 == null) {
+      p2 = m2.getParameterTypes();
+    }
+    final int n = p1.length;
+    if (n != p2.length) {
+      return false;
+    }
+
+    for (int i = 0; i < n; i++) {
+      if (!p1[i].equals(p2[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // ---- types
+  @NotNull
+  public static ResolvedType makeArray(@NotNull ResolvedType type, int dim) {
+    if (dim == 0) {
+      return type;
+    }
+    final ResolvedType array = new ArrayReferenceType("[" + type.getSignature(), "[" + type.getErasureSignature(), type.getWorld(), type);
+    return makeArray(array, dim - 1);
+  }
+
+  public static boolean isVisible(int modifiers, ResolvedType targetType, ResolvedType fromType) {
+    // System.err.println("mod: " + modifiers + ", " + targetType + " and "
+    // + fromType);
+
+    if (Modifier.isPublic(modifiers)) {
+      return true;
+    } else if (Modifier.isPrivate(modifiers)) {
+      return targetType.getOutermostType().equals(fromType.getOutermostType());
+    } else if (Modifier.isProtected(modifiers)) {
+      return samePackage(targetType, fromType) || targetType.isAssignableFrom(fromType);
+    } else { // package-visible
+      return samePackage(targetType, fromType);
+    }
+  }
+
+  public static boolean isMoreVisible(int m1, int m2) {
+    if (Modifier.isPrivate(m1)) {
+      return false;
+    }
+    if (isPackage(m1)) {
+      return Modifier.isPrivate(m2);
+    }
+    if (Modifier.isProtected(m1)) {
+      return /* private package */(Modifier.isPrivate(m2) || isPackage(m2));
+    }
+    if (Modifier.isPublic(m1)) {
+      return /* private package protected */!Modifier.isPublic(m2);
+    }
+    throw new RuntimeException("bad modifier: " + m1);
+  }
+
+  protected ResolvedType(String signature, @Nullable World world) {
     super(signature);
     this.world = world;
   }
 
-  protected ResolvedType(String signature, String signatureErasure, World world) {
+  protected ResolvedType(String signature, String signatureErasure, @Nullable World world) {
     super(signature, signatureErasure);
     this.world = world;
   }
@@ -68,6 +264,7 @@ public abstract class ResolvedType extends UnresolvedType implements AnnotatedEl
    * Returns an iterator through ResolvedType objects representing all the direct supertypes of this type. That is, through the
    * superclass, if any, and all declared interfaces.
    */
+  @NotNull
   public final Iterator<ResolvedType> getDirectSupertypes() {
     final Iterator<ResolvedType> interfacesIterator = Iterators.array(getDeclaredInterfaces());
     final ResolvedType superclass = getSuperclass();
@@ -102,57 +299,20 @@ public abstract class ResolvedType extends UnresolvedType implements AnnotatedEl
     return false;
   }
 
-  // FIXME asc I wonder if in some circumstances MissingWithKnownSignature
-  // should not be considered
-  // 'really' missing as some code can continue based solely on the signature
-  public static boolean isMissing(UnresolvedType unresolved) {
-    if (unresolved instanceof ResolvedType) {
-      final ResolvedType resolved = (ResolvedType) unresolved;
-      return resolved.isMissing();
-    } else {
-      return (unresolved == MISSING);
-    }
-  }
-
   @Override
+  @NotNull
   public ResolvedType[] getAnnotationTypes() {
     return EMPTY_RESOLVED_TYPE_ARRAY;
   }
 
   @Override
+  @Nullable
   public AnnotationAJ getAnnotationOfType(UnresolvedType ofType) {
     return null;
   }
 
-  // public final UnresolvedType getSuperclass(World world) {
-  // return getSuperclass();
-  // }
-
-  // This set contains pairs of types whose signatures are concatenated
-  // together, this means with a fast lookup we can tell if two types
-  // are equivalent.
-  protected static Set<String> validBoxing = new HashSet<String>();
-
-  static {
-    validBoxing.add("Ljava/lang/Byte;B");
-    validBoxing.add("Ljava/lang/Character;C");
-    validBoxing.add("Ljava/lang/Double;D");
-    validBoxing.add("Ljava/lang/Float;F");
-    validBoxing.add("Ljava/lang/Integer;I");
-    validBoxing.add("Ljava/lang/Long;J");
-    validBoxing.add("Ljava/lang/Short;S");
-    validBoxing.add("Ljava/lang/Boolean;Z");
-    validBoxing.add("BLjava/lang/Byte;");
-    validBoxing.add("CLjava/lang/Character;");
-    validBoxing.add("DLjava/lang/Double;");
-    validBoxing.add("FLjava/lang/Float;");
-    validBoxing.add("ILjava/lang/Integer;");
-    validBoxing.add("JLjava/lang/Long;");
-    validBoxing.add("SLjava/lang/Short;");
-    validBoxing.add("ZLjava/lang/Boolean;");
-  }
-
   // utilities
+  @Nullable
   public ResolvedType getResolvedComponentType() {
     return null;
   }
@@ -164,7 +324,7 @@ public abstract class ResolvedType extends UnresolvedType implements AnnotatedEl
   // ---- things from object
 
   @Override
-  public boolean equals(Object other) {
+  public boolean equals(@Nullable Object other) {
     if (other instanceof ResolvedType) {
       return this == other;
     } else {
@@ -218,74 +378,6 @@ public abstract class ResolvedType extends UnresolvedType implements AnnotatedEl
   public Iterator<ResolvedMember> getMethodsIncludingIntertypeDeclarations(boolean wantGenerics, boolean wantDeclaredParents) {
     return Iterators.mapOver(getHierarchy(wantGenerics, wantDeclaredParents), MethodGetterWithItdsInstance);
   }
-
-  /**
-   * An Iterators.Getter that returns an iterator over all methods declared on some resolved type.
-   */
-  private static class MethodGetter implements Iterators.Getter<ResolvedType, ResolvedMember> {
-    @Override
-    public Iterator<ResolvedMember> get(ResolvedType type) {
-      return Iterators.array(type.getDeclaredMethods());
-    }
-  }
-
-  /**
-   * An Iterators.Getter that returns an iterator over all pointcuts declared on some resolved type.
-   */
-  private static class PointcutGetter implements Iterators.Getter<ResolvedType, ResolvedMember> {
-    @Override
-    public Iterator<ResolvedMember> get(ResolvedType o) {
-      return Iterators.array(o.getDeclaredPointcuts());
-    }
-  }
-
-  // OPTIMIZE could cache the result of discovering ITDs
-
-  // Getter that returns all declared methods for a type through an iterator - including intertype declarations
-  private static class MethodGetterIncludingItds implements Iterators.Getter<ResolvedType, ResolvedMember> {
-    @Override
-    public Iterator<ResolvedMember> get(ResolvedType type) {
-      ResolvedMember[] methods = type.getDeclaredMethods();
-      if (type.interTypeMungers != null) {
-        int additional = 0;
-        for (ConcreteTypeMunger typeTransformer : type.interTypeMungers) {
-          final ResolvedMember rm = typeTransformer.getSignature();
-          // BUG won't this include fields? When we are looking for methods
-          if (rm != null) { // new parent type munger can have null signature
-            additional++;
-          }
-        }
-        if (additional > 0) {
-          final ResolvedMember[] methods2 = new ResolvedMember[methods.length + additional];
-          System.arraycopy(methods, 0, methods2, 0, methods.length);
-          additional = methods.length;
-          for (ConcreteTypeMunger typeTransformer : type.interTypeMungers) {
-            final ResolvedMember rm = typeTransformer.getSignature();
-            if (rm != null) { // new parent type munger can have null signature
-              methods2[additional++] = typeTransformer.getSignature();
-            }
-          }
-          methods = methods2;
-        }
-      }
-      return Iterators.array(methods);
-    }
-  }
-
-  /**
-   * An Iterators.Getter that returns an iterator over all fields declared on some resolved type.
-   */
-  private static class FieldGetter implements Iterators.Getter<ResolvedType, ResolvedMember> {
-    @Override
-    public Iterator<ResolvedMember> get(ResolvedType type) {
-      return Iterators.array(type.getDeclaredFields());
-    }
-  }
-
-  private final static MethodGetter MethodGetterInstance = new MethodGetter();
-  private final static MethodGetterIncludingItds MethodGetterWithItdsInstance = new MethodGetterIncludingItds();
-  private final static PointcutGetter PointcutGetterInstance = new PointcutGetter();
-  private final static FieldGetter FieldGetterInstance = new FieldGetter();
 
   /**
    * Return an iterator over the types in this types hierarchy - starting with this type first, then all superclasses up to Object
@@ -386,114 +478,6 @@ public abstract class ResolvedType extends UnresolvedType implements AnnotatedEl
     return types;
   }
 
-  private void addAndRecurse(Set<String> knowninterfaces, List<ResolvedMember> collector, ResolvedType resolvedType,
-                             boolean includeITDs, boolean allowMissing, boolean genericsAware) {
-    // Add the methods declared on this type
-    collector.addAll(Arrays.asList(resolvedType.getDeclaredMethods()));
-    // now add all the inter-typed members too
-    if (includeITDs && resolvedType.interTypeMungers != null) {
-      for (ConcreteTypeMunger typeTransformer : interTypeMungers) {
-        final ResolvedMember rm = typeTransformer.getSignature();
-        if (rm != null) { // new parent type munger can have null signature
-          collector.add(typeTransformer.getSignature());
-        }
-      }
-    }
-    // BUG? interface type superclass is Object - is that correct?
-    if (!resolvedType.isInterface() && !resolvedType.equals(ResolvedType.OBJECT)) {
-      ResolvedType superType = resolvedType.getSuperclass();
-      if (superType != null && !superType.isMissing()) {
-        if (!genericsAware && superType.isParameterizedOrGenericType()) {
-          superType = superType.getRawType();
-        }
-        // Recurse if we are not at the top
-        addAndRecurse(knowninterfaces, collector, superType, includeITDs, allowMissing, genericsAware);
-      }
-    }
-    // Go through the interfaces on the way back down
-    final ResolvedType[] interfaces = resolvedType.getDeclaredInterfaces();
-    for (int i = 0; i < interfaces.length; i++) {
-      ResolvedType iface = interfaces[i];
-      if (!genericsAware && iface.isParameterizedOrGenericType()) {
-        iface = iface.getRawType();
-      }
-      // we need to know if it is an interface from Parent kind munger
-      // as those are used for @AJ ITD and we precisely want to skip those
-      boolean shouldSkip = false;
-      for (int j = 0; j < resolvedType.interTypeMungers.size(); j++) {
-        final ConcreteTypeMunger munger = resolvedType.interTypeMungers.get(j);
-        if (munger.getMunger() != null && munger.getMunger().getKind() == ResolvedTypeMunger.Parent
-            && ((NewParentTypeMunger) munger.getMunger()).getNewParent().equals(iface) // pr171953
-            ) {
-          shouldSkip = true;
-          break;
-        }
-      }
-
-      // Do not do interfaces more than once
-      if (!shouldSkip && !knowninterfaces.contains(iface.getSignature())) {
-        knowninterfaces.add(iface.getSignature());
-        if (allowMissing && iface.isMissing()) {
-          if (iface instanceof MissingResolvedTypeWithKnownSignature) {
-            ((MissingResolvedTypeWithKnownSignature) iface).raiseWarningOnMissingInterfaceWhilstFindingMethods();
-          }
-        } else {
-          addAndRecurse(knowninterfaces, collector, iface, includeITDs, allowMissing, genericsAware);
-        }
-      }
-    }
-  }
-
-  /**
-   * Recurse up a type hierarchy, first the superclasses then the super interfaces.
-   */
-  private void recurseHierarchy(Set<String> knowninterfaces, List<ResolvedType> collector, ResolvedType resolvedType,
-                                boolean includeITDs, boolean allowMissing, boolean genericsAware) {
-    collector.add(resolvedType);
-    if (!resolvedType.isInterface() && !resolvedType.equals(ResolvedType.OBJECT)) {
-      ResolvedType superType = resolvedType.getSuperclass();
-      if (superType != null && !superType.isMissing()) {
-        if (!genericsAware && (superType.isParameterizedType() || superType.isGenericType())) {
-          superType = superType.getRawType();
-        }
-        // Recurse if we are not at the top
-        recurseHierarchy(knowninterfaces, collector, superType, includeITDs, allowMissing, genericsAware);
-      }
-    }
-    // Go through the interfaces on the way back down
-    final ResolvedType[] interfaces = resolvedType.getDeclaredInterfaces();
-    for (int i = 0; i < interfaces.length; i++) {
-      ResolvedType iface = interfaces[i];
-      if (!genericsAware && (iface.isParameterizedType() || iface.isGenericType())) {
-        iface = iface.getRawType();
-      }
-      // we need to know if it is an interface from Parent kind munger
-      // as those are used for @AJ ITD and we precisely want to skip those
-      boolean shouldSkip = false;
-      for (int j = 0; j < resolvedType.interTypeMungers.size(); j++) {
-        final ConcreteTypeMunger munger = resolvedType.interTypeMungers.get(j);
-        if (munger.getMunger() != null && munger.getMunger().getKind() == ResolvedTypeMunger.Parent
-            && ((NewParentTypeMunger) munger.getMunger()).getNewParent().equals(iface) // pr171953
-            ) {
-          shouldSkip = true;
-          break;
-        }
-      }
-
-      // Do not do interfaces more than once
-      if (!shouldSkip && !knowninterfaces.contains(iface.getSignature())) {
-        knowninterfaces.add(iface.getSignature());
-        if (allowMissing && iface.isMissing()) {
-          if (iface instanceof MissingResolvedTypeWithKnownSignature) {
-            ((MissingResolvedTypeWithKnownSignature) iface).raiseWarningOnMissingInterfaceWhilstFindingMethods();
-          }
-        } else {
-          recurseHierarchy(knowninterfaces, collector, iface, includeITDs, allowMissing, genericsAware);
-        }
-      }
-    }
-  }
-
   public ResolvedType[] getResolvedTypeParameters() {
     if (resolvedTypeParams == null) {
       resolvedTypeParams = world.resolve(typeParameters);
@@ -504,6 +488,7 @@ public abstract class ResolvedType extends UnresolvedType implements AnnotatedEl
   /**
    * described in JVM spec 2ed 5.4.3.2
    */
+  @Nullable
   public ResolvedMember lookupField(Member field) {
     final Iterator<ResolvedMember> i = getFields();
     while (i.hasNext()) {
@@ -583,19 +568,6 @@ public abstract class ResolvedType extends UnresolvedType implements AnnotatedEl
     return null;
   }
 
-  /**
-   * return null if not found
-   */
-  private ResolvedMember lookupMember(Member m, ResolvedMember[] a) {
-    for (int i = 0; i < a.length; i++) {
-      final ResolvedMember f = a[i];
-      if (matches(f, m)) {
-        return f;
-      }
-    }
-    return null;
-  }
-
   // Bug (1) Do callers expect ITDs to be involved in the lookup? or do they do their own walk over ITDs?
 
   /**
@@ -630,90 +602,6 @@ public abstract class ResolvedType extends UnresolvedType implements AnnotatedEl
     }
 
     return found;
-  }
-
-  public static boolean matches(Member m1, Member m2) {
-    if (m1 == null) {
-      return m2 == null;
-    }
-    if (m2 == null) {
-      return false;
-    }
-
-    // Check the names
-    final boolean equalNames = m1.getName().equals(m2.getName());
-    if (!equalNames) {
-      return false;
-    }
-
-    // Check the signatures
-    final boolean equalSignatures = m1.getSignature().equals(m2.getSignature());
-    if (equalSignatures) {
-      return true;
-    }
-
-    // If they aren't the same, we need to allow for covariance ... where
-    // one sig might be ()LCar; and
-    // the subsig might be ()LFastCar; - where FastCar is a subclass of Car
-    final boolean equalCovariantSignatures = m1.getParameterSignature().equals(m2.getParameterSignature());
-    if (equalCovariantSignatures) {
-      return true;
-    }
-
-    return false;
-  }
-
-  public static boolean conflictingSignature(Member m1, Member m2) {
-    return conflictingSignature(m1, m2, true);
-  }
-
-  /**
-   * Do the two members conflict?  Due to the change in 1.7.1, field itds on interfaces now act like 'default' fields - so types implementing
-   * those fields get the field if they don't have it already, otherwise they keep what they have.  The conflict detection below had to be
-   * altered.  Previously (<1.7.1) it is not a conflict if the declaring types are different.  With v2itds it may still be a conflict if the
-   * declaring types are different.
-   */
-  public static boolean conflictingSignature(Member m1, Member m2, boolean v2itds) {
-    if (m1 == null || m2 == null) {
-      return false;
-    }
-    if (!m1.getName().equals(m2.getName())) {
-      return false;
-    }
-    if (m1.getKind() != m2.getKind()) {
-      return false;
-    }
-    if (m1.getKind() == Member.FIELD) {
-      if (v2itds) {
-        if (m1.getDeclaringType().equals(m2.getDeclaringType())) {
-          return true;
-        }
-      } else {
-        return m1.getDeclaringType().equals(m2.getDeclaringType());
-      }
-    } else if (m1.getKind() == Member.POINTCUT) {
-      return true;
-    }
-
-    UnresolvedType[] p1 = m1.getGenericParameterTypes();
-    UnresolvedType[] p2 = m2.getGenericParameterTypes();
-    if (p1 == null) {
-      p1 = m1.getParameterTypes();
-    }
-    if (p2 == null) {
-      p2 = m2.getParameterTypes();
-    }
-    final int n = p1.length;
-    if (n != p2.length) {
-      return false;
-    }
-
-    for (int i = 0; i < n; i++) {
-      if (!p1[i].equals(p2[i])) {
-        return false;
-      }
-    }
-    return true;
   }
 
   /**
@@ -756,11 +644,6 @@ public abstract class ResolvedType extends UnresolvedType implements AnnotatedEl
     }
     return null; // should we throw an exception here?
   }
-
-  // all about collecting CrosscuttingMembers
-
-  // ??? collecting data-structure, shouldn't really be a field
-  public CrosscuttingMembers crosscuttingMembers;
 
   public CrosscuttingMembers collectCrosscuttingMembers(boolean shouldConcretizeIfNeeded) {
     crosscuttingMembers = new CrosscuttingMembers(this, shouldConcretizeIfNeeded);
@@ -826,35 +709,8 @@ public abstract class ResolvedType extends UnresolvedType implements AnnotatedEl
     return ret;
   }
 
-  private final List<ShadowMunger> collectShadowMungers() {
-    if (!this.isAspect() || this.isAbstract() || this.doesNotExposeShadowMungers()) {
-      return Collections.emptyList();
-    }
-
-    final List<ShadowMunger> acc = new ArrayList<ShadowMunger>();
-    final Iterators.Filter<ResolvedType> dupFilter = Iterators.dupFilter();
-    final Iterators.Getter<ResolvedType, ResolvedType> typeGetter = new Iterators.Getter<ResolvedType, ResolvedType>() {
-      @Override
-      public Iterator<ResolvedType> get(ResolvedType o) {
-        return dupFilter.filter((o).getDirectSupertypes());
-      }
-    };
-    final Iterator<ResolvedType> typeIterator = Iterators.recur(this, typeGetter);
-
-    while (typeIterator.hasNext()) {
-      final ResolvedType ty = typeIterator.next();
-      acc.addAll(ty.getDeclaredShadowMungers());
-    }
-
-    return acc;
-  }
-
   public void addParent(ResolvedType newParent) {
     // Nothing to do for anything except a ReferenceType
-  }
-
-  protected boolean doesNotExposeShadowMungers() {
-    return false;
   }
 
   public PerClause getPerClause() {
@@ -958,18 +814,6 @@ public abstract class ResolvedType extends UnresolvedType implements AnnotatedEl
     return Modifier.isFinal(getModifiers());
   }
 
-  protected Map<String, UnresolvedType> getMemberParameterizationMap() {
-    if (!isParameterizedType()) {
-      return Collections.emptyMap();
-    }
-    final TypeVariable[] tvs = getGenericType().getTypeVariables();
-    final Map<String, UnresolvedType> parameterizationMap = new HashMap<String, UnresolvedType>();
-    for (int i = 0; i < tvs.length; i++) {
-      parameterizationMap.put(tvs[i].getName(), typeParameters[i]);
-    }
-    return parameterizationMap;
-  }
-
   public List<ShadowMunger> getDeclaredAdvice() {
     final List<ShadowMunger> l = new ArrayList<ShadowMunger>();
     ResolvedMember[] methods = getDeclaredMethods();
@@ -1025,251 +869,7 @@ public abstract class ResolvedType extends UnresolvedType implements AnnotatedEl
     return filterInJavaVisible(getDeclaredMethods());
   }
 
-  private ResolvedMember[] filterInJavaVisible(ResolvedMember[] ms) {
-    final List<ResolvedMember> l = new ArrayList<ResolvedMember>();
-    for (int i = 0, len = ms.length; i < len; i++) {
-      if (!ms[i].isAjSynthetic() && ms[i].getAssociatedShadowMunger() == null) {
-        l.add(ms[i]);
-      }
-    }
-    return l.toArray(new ResolvedMember[l.size()]);
-  }
-
   public abstract ISourceContext getSourceContext();
-
-  // ---- fields
-
-  public static final ResolvedType[] NONE = new ResolvedType[0];
-  public static final ResolvedType[] EMPTY_ARRAY = NONE;
-
-  public static final Missing MISSING = new Missing();
-
-  // ---- types
-  public static ResolvedType makeArray(ResolvedType type, int dim) {
-    if (dim == 0) {
-      return type;
-    }
-    final ResolvedType array = new ArrayReferenceType("[" + type.getSignature(), "[" + type.getErasureSignature(), type.getWorld(),
-        type);
-    return makeArray(array, dim - 1);
-  }
-
-  static class Primitive extends ResolvedType {
-    private final int size;
-    private final int index;
-
-    Primitive(String signature, int size, int index) {
-      super(signature, null);
-      this.size = size;
-      this.index = index;
-      this.typeKind = TypeKind.PRIMITIVE;
-    }
-
-    @Override
-    public final int getSize() {
-      return size;
-    }
-
-    @Override
-    public final int getModifiers() {
-      return Modifier.PUBLIC | Modifier.FINAL;
-    }
-
-    @Override
-    public final boolean isPrimitiveType() {
-      return true;
-    }
-
-    @Override
-    public boolean hasAnnotation(UnresolvedType ofType) {
-      return false;
-    }
-
-    @Override
-    public final boolean isAssignableFrom(ResolvedType other) {
-      if (!other.isPrimitiveType()) {
-        if (!world.isInJava5Mode()) {
-          return false;
-        }
-        return validBoxing.contains(this.getSignature() + other.getSignature());
-      }
-      return assignTable[((Primitive) other).index][index];
-    }
-
-    @Override
-    public final boolean isAssignableFrom(ResolvedType other, boolean allowMissing) {
-      return isAssignableFrom(other);
-    }
-
-    @Override
-    public final boolean isCoerceableFrom(ResolvedType other) {
-      if (this == other) {
-        return true;
-      }
-      if (!other.isPrimitiveType()) {
-        return false;
-      }
-      if (index > 6 || ((Primitive) other).index > 6) {
-        return false;
-      }
-      return true;
-    }
-
-    @Override
-    public ResolvedType resolve(World world) {
-      if (this.world != world) {
-        throw new IllegalStateException();
-      }
-      this.world = world;
-      return super.resolve(world);
-    }
-
-    @Override
-    public final boolean needsNoConversionFrom(ResolvedType other) {
-      if (!other.isPrimitiveType()) {
-        return false;
-      }
-      return noConvertTable[((Primitive) other).index][index];
-    }
-
-    private static final boolean[][] assignTable = {// to: B C D F I J S V Z
-        // from
-        {true, true, true, true, true, true, true, false, false}, // B
-        {false, true, true, true, true, true, false, false, false}, // C
-        {false, false, true, false, false, false, false, false, false}, // D
-        {false, false, true, true, false, false, false, false, false}, // F
-        {false, false, true, true, true, true, false, false, false}, // I
-        {false, false, true, true, false, true, false, false, false}, // J
-        {false, false, true, true, true, true, true, false, false}, // S
-        {false, false, false, false, false, false, false, true, false}, // V
-        {false, false, false, false, false, false, false, false, true}, // Z
-    };
-    private static final boolean[][] noConvertTable = {// to: B C D F I J S
-        // V Z from
-        {true, true, false, false, true, false, true, false, false}, // B
-        {false, true, false, false, true, false, false, false, false}, // C
-        {false, false, true, false, false, false, false, false, false}, // D
-        {false, false, false, true, false, false, false, false, false}, // F
-        {false, false, false, false, true, false, false, false, false}, // I
-        {false, false, false, false, false, true, false, false, false}, // J
-        {false, false, false, false, true, false, true, false, false}, // S
-        {false, false, false, false, false, false, false, true, false}, // V
-        {false, false, false, false, false, false, false, false, true}, // Z
-    };
-
-    // ----
-
-    @Override
-    public final ResolvedMember[] getDeclaredFields() {
-      return ResolvedMember.NONE;
-    }
-
-    @Override
-    public final ResolvedMember[] getDeclaredMethods() {
-      return ResolvedMember.NONE;
-    }
-
-    @Override
-    public final ResolvedType[] getDeclaredInterfaces() {
-      return ResolvedType.NONE;
-    }
-
-    @Override
-    public final ResolvedMember[] getDeclaredPointcuts() {
-      return ResolvedMember.NONE;
-    }
-
-    @Override
-    public final ResolvedType getSuperclass() {
-      return null;
-    }
-
-    @Override
-    public ISourceContext getSourceContext() {
-      return null;
-    }
-
-  }
-
-  static class Missing extends ResolvedType {
-    Missing() {
-      super(MISSING_NAME, null);
-    }
-
-    // public final String toString() {
-    // return "<missing>";
-    // }
-    @Override
-    public final String getName() {
-      return MISSING_NAME;
-    }
-
-    @Override
-    public final boolean isMissing() {
-      return true;
-    }
-
-    @Override
-    public boolean hasAnnotation(UnresolvedType ofType) {
-      return false;
-    }
-
-    @Override
-    public final ResolvedMember[] getDeclaredFields() {
-      return ResolvedMember.NONE;
-    }
-
-    @Override
-    public final ResolvedMember[] getDeclaredMethods() {
-      return ResolvedMember.NONE;
-    }
-
-    @Override
-    public final ResolvedType[] getDeclaredInterfaces() {
-      return ResolvedType.NONE;
-    }
-
-    @Override
-    public final ResolvedMember[] getDeclaredPointcuts() {
-      return ResolvedMember.NONE;
-    }
-
-    @Override
-    public final ResolvedType getSuperclass() {
-      return null;
-    }
-
-    @Override
-    public final int getModifiers() {
-      return 0;
-    }
-
-    @Override
-    public final boolean isAssignableFrom(ResolvedType other) {
-      return false;
-    }
-
-    @Override
-    public final boolean isAssignableFrom(ResolvedType other, boolean allowMissing) {
-      return false;
-    }
-
-    @Override
-    public final boolean isCoerceableFrom(ResolvedType other) {
-      return false;
-    }
-
-    @Override
-    public boolean needsNoConversionFrom(ResolvedType other) {
-      return false;
-    }
-
-    @Override
-    public ISourceContext getSourceContext() {
-      return null;
-    }
-
-  }
 
   /**
    * Look up a member, takes into account any ITDs on this type. return null if not found
@@ -1328,39 +928,17 @@ public abstract class ResolvedType extends UnresolvedType implements AnnotatedEl
    * @param member
    * @return
    */
+  @Nullable
   public ResolvedMember lookupMemberIncludingITDsOnInterfaces(Member member) {
     return lookupMemberIncludingITDsOnInterfaces(member, this);
   }
 
-  private ResolvedMember lookupMemberIncludingITDsOnInterfaces(Member member, ResolvedType onType) {
-    ResolvedMember ret = onType.lookupMemberNoSupers(member);
-    if (ret != null) {
-      return ret;
-    } else {
-      final ResolvedType superType = onType.getSuperclass();
-      if (superType != null) {
-        ret = lookupMemberIncludingITDsOnInterfaces(member, superType);
-      }
-      if (ret == null) {
-        // try interfaces then, but only ITDs now...
-        final ResolvedType[] superInterfaces = onType.getDeclaredInterfaces();
-        for (int i = 0; i < superInterfaces.length; i++) {
-          ret = superInterfaces[i].lookupMethodInITDs(member);
-          if (ret != null) {
-            return ret;
-          }
-        }
-      }
-    }
-    return ret;
-  }
-
-  protected List<ConcreteTypeMunger> interTypeMungers = new ArrayList<ConcreteTypeMunger>();
-
+  @NotNull
   public List<ConcreteTypeMunger> getInterTypeMungers() {
     return interTypeMungers;
   }
 
+  @NotNull
   public List<ConcreteTypeMunger> getInterTypeParentMungers() {
     final List<ConcreteTypeMunger> l = new ArrayList<ConcreteTypeMunger>();
     for (ConcreteTypeMunger element : interTypeMungers) {
@@ -1374,67 +952,18 @@ public abstract class ResolvedType extends UnresolvedType implements AnnotatedEl
   /**
    * ??? This method is O(N*M) where N = number of methods and M is number of inter-type declarations in my super
    */
+  @NotNull
   public List<ConcreteTypeMunger> getInterTypeMungersIncludingSupers() {
     final ArrayList<ConcreteTypeMunger> ret = new ArrayList<ConcreteTypeMunger>();
     collectInterTypeMungers(ret);
     return ret;
   }
 
+  @NotNull
   public List<ConcreteTypeMunger> getInterTypeParentMungersIncludingSupers() {
     final ArrayList<ConcreteTypeMunger> ret = new ArrayList<ConcreteTypeMunger>();
     collectInterTypeParentMungers(ret);
     return ret;
-  }
-
-  private void collectInterTypeParentMungers(List<ConcreteTypeMunger> collector) {
-    for (final Iterator<ResolvedType> iter = getDirectSupertypes(); iter.hasNext(); ) {
-      final ResolvedType superType = iter.next();
-      superType.collectInterTypeParentMungers(collector);
-    }
-    collector.addAll(getInterTypeParentMungers());
-  }
-
-  protected void collectInterTypeMungers(List<ConcreteTypeMunger> collector) {
-    for (final Iterator<ResolvedType> iter = getDirectSupertypes(); iter.hasNext(); ) {
-      final ResolvedType superType = iter.next();
-      if (superType == null) {
-        throw new BCException("UnexpectedProblem: a supertype in the hierarchy for " + this.getName() + " is null");
-      }
-      superType.collectInterTypeMungers(collector);
-    }
-
-    outer:
-    for (Iterator<ConcreteTypeMunger> iter1 = collector.iterator(); iter1.hasNext(); ) {
-      final ConcreteTypeMunger superMunger = iter1.next();
-      if (superMunger.getSignature() == null) {
-        continue;
-      }
-
-      if (!superMunger.getSignature().isAbstract()) {
-        continue;
-      }
-
-      for (ConcreteTypeMunger myMunger : getInterTypeMungers()) {
-        if (conflictingSignature(myMunger.getSignature(), superMunger.getSignature())) {
-          iter1.remove();
-          continue outer;
-        }
-      }
-
-      if (!superMunger.getSignature().isPublic()) {
-        continue;
-      }
-
-      for (final Iterator<ResolvedMember> iter = getMethods(true, true); iter.hasNext(); ) {
-        final ResolvedMember method = iter.next();
-        if (conflictingSignature(method, superMunger.getSignature())) {
-          iter1.remove();
-          continue outer;
-        }
-      }
-    }
-
-    collector.addAll(getInterTypeMungers());
   }
 
   /**
@@ -1473,39 +1002,6 @@ public abstract class ResolvedType extends UnresolvedType implements AnnotatedEl
   }
 
   /**
-   * See PR70794. This method checks that if an abstract inter-type method declaration is made on an interface then it must also
-   * be public. This is a compiler limitation that could be made to work in the future (if someone provides a worthwhile usecase)
-   *
-   * @return indicates if the munger failed the check
-   */
-  private boolean checkAbstractDeclaration(ConcreteTypeMunger munger) {
-    if (munger.getMunger() != null && (munger.getMunger() instanceof NewMethodTypeMunger)) {
-      final ResolvedMember itdMember = munger.getSignature();
-      final ResolvedType onType = itdMember.getDeclaringType().resolve(world);
-      if (onType.isInterface() && itdMember.isAbstract() && !itdMember.isPublic()) {
-        world.getMessageHandler().handleMessage(
-            new Message(WeaverMessages.format(WeaverMessages.ITD_ABSTRACT_MUST_BE_PUBLIC_ON_INTERFACE,
-                munger.getSignature(), onType), "", Message.ERROR, getSourceLocation(), null,
-                new ISourceLocation[]{getMungerLocation(munger)}));
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /**
-   * Get a source location for the munger. Until intertype mungers remember where they came from, the source location for the
-   * munger itself is null. In these cases use the source location for the aspect containing the ITD.
-   */
-  private ISourceLocation getMungerLocation(ConcreteTypeMunger munger) {
-    ISourceLocation sloc = munger.getSourceLocation();
-    if (sloc == null) {
-      sloc = munger.getAspectType().getSourceLocation();
-    }
-    return sloc;
-  }
-
-  /**
    * Returns a ResolvedType object representing the declaring type of this type, or null if this type does not represent a
    * non-package-level-type.
    * <p/>
@@ -1515,6 +1011,7 @@ public abstract class ResolvedType extends UnresolvedType implements AnnotatedEl
    *
    * @return the declaring type, or null if it is not an nested type.
    */
+  @Nullable
   public ResolvedType getDeclaringType() {
     if (isArray()) {
       return null;
@@ -1525,55 +1022,15 @@ public abstract class ResolvedType extends UnresolvedType implements AnnotatedEl
     return null;
   }
 
-  public static boolean isVisible(int modifiers, ResolvedType targetType, ResolvedType fromType) {
-    // System.err.println("mod: " + modifiers + ", " + targetType + " and "
-    // + fromType);
-
-    if (Modifier.isPublic(modifiers)) {
-      return true;
-    } else if (Modifier.isPrivate(modifiers)) {
-      return targetType.getOutermostType().equals(fromType.getOutermostType());
-    } else if (Modifier.isProtected(modifiers)) {
-      return samePackage(targetType, fromType) || targetType.isAssignableFrom(fromType);
-    } else { // package-visible
-      return samePackage(targetType, fromType);
-    }
-  }
-
-  private static boolean samePackage(ResolvedType targetType, ResolvedType fromType) {
-    final String p1 = targetType.getPackageName();
-    final String p2 = fromType.getPackageName();
-    if (p1 == null) {
-      return p2 == null;
-    }
-    if (p2 == null) {
-      return false;
-    }
-    return p1.equals(p2);
-  }
-
-  /**
-   * Checks if the generic type for 'this' and the generic type for 'other' are the same - it can be passed raw or parameterized
-   * versions and will just compare the underlying generic type.
-   */
-  private boolean genericTypeEquals(ResolvedType other) {
-    final ResolvedType rt = other;
-    if (rt.isParameterizedType() || rt.isRawType()) {
-      rt.getGenericType();
-    }
-    if (((isParameterizedType() || isRawType()) && getGenericType().equals(rt)) || (this.equals(other))) {
-      return true;
-    }
-    return false;
-  }
-
   /**
    * Look up the actual occurence of a particular type in the hierarchy for 'this' type. The input is going to be a generic type,
    * and the caller wants to know if it was used in its RAW or a PARAMETERIZED form in this hierarchy.
    * <p/>
-   * returns null if it can't be found.
+   *
+   * @return null if it can't be found.
    */
-  public ResolvedType discoverActualOccurrenceOfTypeInHierarchy(ResolvedType lookingFor) {
+  @Nullable
+  public ResolvedType discoverActualOccurrenceOfTypeInHierarchy(@NotNull ResolvedType lookingFor) {
     if (!lookingFor.isGenericType()) {
       throw new BCException("assertion failed: method should only be called with generic type, but " + lookingFor + " is "
           + lookingFor.typeKind);
@@ -1612,7 +1069,8 @@ public abstract class ResolvedType extends UnresolvedType implements AnnotatedEl
    * appropriate. For example, for the ITD "List<T> I<T>.x" against a type like this: "class A implements I<String>" this routine
    * will return a parameterized form of the ITD "List<String> I.x"
    */
-  public ConcreteTypeMunger fillInAnyTypeParameters(ConcreteTypeMunger munger) {
+  @NotNull
+  public ConcreteTypeMunger fillInAnyTypeParameters(@NotNull ConcreteTypeMunger munger) {
     final boolean debug = false;
     final ResolvedMember member = munger.getSignature();
     if (munger.isTargetTypeParameterized()) {
@@ -1730,7 +1188,6 @@ public abstract class ResolvedType extends UnresolvedType implements AnnotatedEl
                       // this check ensures no problem for a clash with an ITD on an interface
                       && existing.getSignature().getDeclaringType()
                       .equals(newFieldTypeMunger.getSignature().getDeclaringType())) {
-
                     // report error on the aspect
                     final StringBuffer sb = new StringBuffer();
                     sb.append("Cannot handle two aspects both attempting to use new style ITDs for the same named field ");
@@ -1810,6 +1267,949 @@ public abstract class ResolvedType extends UnresolvedType implements AnnotatedEl
         interTypeMungers.add(0, munger);
       }
     }
+  }
+
+  /**
+   * @param transformerPosition which parameter is the type transformer (0x10 for first, 0x01 for second, 0x11 for both, 0x00 for
+   *                            neither)
+   * @param aspectType          the declaring type of aspect defining the *first* type transformer
+   * @return true if the override is legal note: calling showMessage with two locations issues TWO messages, not ONE message with
+   * an additional source location.
+   */
+  public boolean checkLegalOverride(ResolvedMember parent, ResolvedMember child, int transformerPosition, ResolvedType aspectType) {
+    // System.err.println("check: " + child.getDeclaringType() + " overrides " + parent.getDeclaringType());
+    if (Modifier.isFinal(parent.getModifiers())) {
+      // If the ITD matching is occurring due to pulling in a BinaryTypeBinding then this check can incorrectly
+      // signal an error because the ITD transformer being examined here will exactly match the member it added
+      // during the first round of compilation. This situation can only occur if the ITD is on an interface whilst
+      // the class is the top most implementor. If the ITD is on the same type that received it during compilation,
+      // this method won't be called as the previous check for precedence level will return 0.
+
+      if (transformerPosition == 0x10 && aspectType != null) {
+        final ResolvedType nonItdDeclaringType = child.getDeclaringType().resolve(world);
+        final WeaverStateInfo wsi = nonItdDeclaringType.getWeaverState();
+        if (wsi != null) {
+          final List<ConcreteTypeMunger> transformersOnThisType = wsi.getTypeMungers(nonItdDeclaringType);
+          if (transformersOnThisType != null) {
+            for (ConcreteTypeMunger transformer : transformersOnThisType) {
+              // relatively crude check - is the ITD for the same as the existingmember
+              // and does it come from the same aspect
+              if (transformer.aspectType.equals(aspectType)) {
+                if (parent.equalsApartFromDeclaringType(transformer.getSignature())) {
+                  return true;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      world.showMessage(Message.ERROR, WeaverMessages.format(WeaverMessages.CANT_OVERRIDE_FINAL_MEMBER, parent),
+          child.getSourceLocation(), null);
+      return false;
+    }
+
+    boolean incompatibleReturnTypes = false;
+    // In 1.5 mode, allow for covariance on return type
+    if (world.isInJava5Mode() && parent.getKind() == Member.METHOD) {
+      // Look at the generic types when doing this comparison
+      final ResolvedType rtParentReturnType = parent.resolve(world).getGenericReturnType().resolve(world);
+      final ResolvedType rtChildReturnType = child.resolve(world).getGenericReturnType().resolve(world);
+      incompatibleReturnTypes = !rtParentReturnType.isAssignableFrom(rtChildReturnType);
+      // For debug, uncomment this bit and we'll repeat the check - stick
+      // a breakpoint on the call
+      // if (incompatibleReturnTypes) {
+      // incompatibleReturnTypes =
+      // !rtParentReturnType.isAssignableFrom(rtChildReturnType);
+      // }
+    } else {
+      final ResolvedType rtParentReturnType = parent.resolve(world).getGenericReturnType().resolve(world);
+      final ResolvedType rtChildReturnType = child.resolve(world).getGenericReturnType().resolve(world);
+
+      incompatibleReturnTypes = !rtParentReturnType.equals(rtChildReturnType);
+    }
+
+    if (incompatibleReturnTypes) {
+      world.showMessage(IMessage.ERROR, WeaverMessages.format(WeaverMessages.ITD_RETURN_TYPE_MISMATCH, parent, child),
+          child.getSourceLocation(), parent.getSourceLocation());
+      return false;
+    }
+    if (parent.getKind() == Member.POINTCUT) {
+      final UnresolvedType[] pTypes = parent.getParameterTypes();
+      final UnresolvedType[] cTypes = child.getParameterTypes();
+      if (!Arrays.equals(pTypes, cTypes)) {
+        world.showMessage(IMessage.ERROR, WeaverMessages.format(WeaverMessages.ITD_PARAM_TYPE_MISMATCH, parent, child),
+            child.getSourceLocation(), parent.getSourceLocation());
+        return false;
+      }
+    }
+    // System.err.println("check: " + child.getModifiers() +
+    // " more visible " + parent.getModifiers());
+    if (isMoreVisible(parent.getModifiers(), child.getModifiers())) {
+      world.showMessage(IMessage.ERROR, WeaverMessages.format(WeaverMessages.ITD_VISIBILITY_REDUCTION, parent, child),
+          child.getSourceLocation(), parent.getSourceLocation());
+      return false;
+    }
+
+    // check declared exceptions
+    final ResolvedType[] childExceptions = world.resolve(child.getExceptions());
+    final ResolvedType[] parentExceptions = world.resolve(parent.getExceptions());
+    final ResolvedType runtimeException = world.resolve("java.lang.RuntimeException");
+    final ResolvedType error = world.resolve("java.lang.Error");
+
+    outer:
+    for (int i = 0, leni = childExceptions.length; i < leni; i++) {
+      // System.err.println("checking: " + childExceptions[i]);
+      if (runtimeException.isAssignableFrom(childExceptions[i])) {
+        continue;
+      }
+      if (error.isAssignableFrom(childExceptions[i])) {
+        continue;
+      }
+
+      for (int j = 0, lenj = parentExceptions.length; j < lenj; j++) {
+        if (parentExceptions[j].isAssignableFrom(childExceptions[i])) {
+          continue outer;
+        }
+      }
+
+      // this message is now better handled my MethodVerifier in JDT core.
+      // world.showMessage(IMessage.ERROR,
+      // WeaverMessages.format(WeaverMessages.ITD_DOESNT_THROW,
+      // childExceptions[i].getName()),
+      // child.getSourceLocation(), null);
+
+      return false;
+    }
+    final boolean parentStatic = Modifier.isStatic(parent.getModifiers());
+    final boolean childStatic = Modifier.isStatic(child.getModifiers());
+    if (parentStatic && !childStatic) {
+      world.showMessage(IMessage.ERROR, WeaverMessages.format(WeaverMessages.ITD_OVERRIDDEN_STATIC, child, parent),
+          child.getSourceLocation(), null);
+      return false;
+    } else if (childStatic && !parentStatic) {
+      world.showMessage(IMessage.ERROR, WeaverMessages.format(WeaverMessages.ITD_OVERIDDING_STATIC, child, parent),
+          child.getSourceLocation(), null);
+      return false;
+    }
+    return true;
+
+  }
+
+  public ResolvedMember lookupSyntheticMember(Member member) {
+    // ??? horribly inefficient
+    // for (Iterator i =
+    // System.err.println("lookup " + member + " in " + interTypeMungers);
+    for (ConcreteTypeMunger m : interTypeMungers) {
+      final ResolvedMember ret = m.getMatchingSyntheticMember(member);
+      if (ret != null) {
+        // System.err.println("   found: " + ret);
+        return ret;
+      }
+    }
+
+    // Handling members for the new array join point
+    if (world.isJoinpointArrayConstructionEnabled() && this.isArray()) {
+      if (member.getKind() == Member.CONSTRUCTOR) {
+        final ResolvedMemberImpl ret = new ResolvedMemberImpl(Member.CONSTRUCTOR, this, Modifier.PUBLIC, UnresolvedType.VOID,
+            "<init>", world.resolve(member.getParameterTypes()));
+        // Give the parameters names - they are going to be the dimensions uses to build the array (dim0 > dimN)
+        final int count = ret.getParameterTypes().length;
+        final String[] paramNames = new String[count];
+        for (int i = 0; i < count; i++) {
+          paramNames[i] = new StringBuffer("dim").append(i).toString();
+        }
+        ret.setParameterNames(paramNames);
+        return ret;
+      }
+    }
+
+    // if (this.getSuperclass() != ResolvedType.OBJECT &&
+    // this.getSuperclass() != null) {
+    // return getSuperclass().lookupSyntheticMember(member);
+    // }
+
+    return null;
+  }
+
+  public void clearInterTypeMungers() {
+    if (isRawType()) {
+      final ResolvedType genericType = getGenericType();
+      if (genericType.isRawType()) { // ERROR SITUATION: PR341926
+        // For some reason the raw type is pointing to another raw form (possibly itself)
+        System.err.println("DebugFor341926: Type " + this.getName() + " has an incorrect generic form");
+      } else {
+        genericType.clearInterTypeMungers();
+      }
+    }
+    // interTypeMungers.clear();
+    // BUG? Why can't this be clear() instead: 293620 c6
+    interTypeMungers = new ArrayList<ConcreteTypeMunger>();
+  }
+
+  public boolean isTopmostImplementor(ResolvedType interfaceType) {
+    boolean b = true;
+    if (isInterface()) {
+      b = false;
+    } else if (!interfaceType.isAssignableFrom(this, true)) {
+      b = false;
+    } else {
+      final ResolvedType superclass = this.getSuperclass();
+      if (superclass.isMissing()) {
+        b = true; // we don't know anything about supertype, and it can't be exposed to weaver
+      } else if (interfaceType.isAssignableFrom(superclass, true)) { // check that I'm truly the topmost implementor
+        b = false;
+      }
+    }
+    // System.out.println("is " + getName() + " topmostimplementor of " + interfaceType + "? " + b);
+    return b;
+  }
+
+  public ResolvedType getTopmostImplementor(ResolvedType interfaceType) {
+    if (isInterface()) {
+      return null;
+    }
+    if (!interfaceType.isAssignableFrom(this)) {
+      return null;
+    }
+    // Check if my super class is an implementor?
+    final ResolvedType higherType = this.getSuperclass().getTopmostImplementor(interfaceType);
+    if (higherType != null) {
+      return higherType;
+    }
+    return this;
+  }
+
+  public List<ResolvedMember> getExposedPointcuts() {
+    final List<ResolvedMember> ret = new ArrayList<ResolvedMember>();
+    if (getSuperclass() != null) {
+      ret.addAll(getSuperclass().getExposedPointcuts());
+    }
+
+    for (ResolvedType type : getDeclaredInterfaces()) {
+      addPointcutsResolvingConflicts(ret, Arrays.asList(type.getDeclaredPointcuts()), false);
+    }
+
+    addPointcutsResolvingConflicts(ret, Arrays.asList(getDeclaredPointcuts()), true);
+
+    for (ResolvedMember member : ret) {
+      final ResolvedPointcutDefinition inherited = (ResolvedPointcutDefinition) member;
+      if (inherited != null && inherited.isAbstract()) {
+        if (!this.isAbstract()) {
+          getWorld().showMessage(IMessage.ERROR,
+              WeaverMessages.format(WeaverMessages.POINCUT_NOT_CONCRETE, inherited, this.getName()),
+              inherited.getSourceLocation(), this.getSourceLocation());
+        }
+      }
+    }
+    return ret;
+  }
+
+  public ISourceLocation getSourceLocation() {
+    return null;
+  }
+
+  public boolean isExposedToWeaver() {
+    return false;
+  }
+
+  public WeaverStateInfo getWeaverState() {
+    return null;
+  }
+
+  /**
+   * Overridden by ReferenceType to return a sensible answer for parameterized and raw types.
+   *
+   * @return
+   */
+  public ReferenceType getGenericType() {
+    // if (!(isParameterizedType() || isRawType()))
+    // throw new BCException("The type " + getBaseName() + " is not parameterized or raw - it has no generic type");
+    return null;
+  }
+
+  @Override
+  public ResolvedType getRawType() {
+    return super.getRawType().resolve(world);
+  }
+
+  public ResolvedType parameterizedWith(UnresolvedType[] typeParameters) {
+    if (!(isGenericType() || isParameterizedType())) {
+      return this;
+    }
+    return TypeFactory.createParameterizedType(this.getGenericType(), typeParameters, getWorld());
+  }
+
+  /**
+   * Iff I am a parameterized type, and any of my parameters are type variable references (or nested parameterized types),
+   * return a version with those type parameters replaced in accordance with the passed bindings.
+   */
+  @Override
+  public UnresolvedType parameterize(Map<String, UnresolvedType> typeBindings) {
+    if (!isParameterizedType()) {
+      // throw new IllegalStateException("Can't parameterize a type that is not a parameterized type");
+      return this;
+    }
+    boolean workToDo = false;
+    for (int i = 0; i < typeParameters.length; i++) {
+      if (typeParameters[i].isTypeVariableReference() || (typeParameters[i] instanceof BoundedReferenceType) || typeParameters[i].isParameterizedType()) {
+        workToDo = true;
+      }
+    }
+    if (!workToDo) {
+      return this;
+    } else {
+      final UnresolvedType[] newTypeParams = new UnresolvedType[typeParameters.length];
+      for (int i = 0; i < newTypeParams.length; i++) {
+        newTypeParams[i] = typeParameters[i];
+        if (newTypeParams[i].isTypeVariableReference()) {
+          final TypeVariableReferenceType tvrt = (TypeVariableReferenceType) newTypeParams[i];
+          final UnresolvedType binding = typeBindings.get(tvrt.getTypeVariable().getName());
+          if (binding != null) {
+            newTypeParams[i] = binding;
+          }
+        } else if (newTypeParams[i] instanceof BoundedReferenceType) {
+          final BoundedReferenceType brType = (BoundedReferenceType) newTypeParams[i];
+          newTypeParams[i] = brType.parameterize(typeBindings);
+          // brType.parameterize(typeBindings)
+        } else if (newTypeParams[i].isParameterizedType()) {
+          newTypeParams[i] = newTypeParams[i].parameterize(typeBindings);
+        }
+      }
+      return TypeFactory.createParameterizedType(getGenericType(), newTypeParams, getWorld());
+    }
+  }
+
+  // public boolean hasParameterizedSuperType() {
+  // getParameterizedSuperTypes();
+  // return parameterizedSuperTypes.length > 0;
+  // }
+
+  // public boolean hasGenericSuperType() {
+  // ResolvedType[] superTypes = getDeclaredInterfaces();
+  // for (int i = 0; i < superTypes.length; i++) {
+  // if (superTypes[i].isGenericType())
+  // return true;
+  // }
+  // return false;
+  // }
+
+  // private ResolvedType[] parameterizedSuperTypes = null;
+
+  /**
+   * Similar to the above method, but accumulates the super types
+   *
+   * @return
+   */
+  // public ResolvedType[] getParameterizedSuperTypes() {
+  // if (parameterizedSuperTypes != null)
+  // return parameterizedSuperTypes;
+  // List accumulatedTypes = new ArrayList();
+  // accumulateParameterizedSuperTypes(this, accumulatedTypes);
+  // ResolvedType[] ret = new ResolvedType[accumulatedTypes.size()];
+  // parameterizedSuperTypes = (ResolvedType[]) accumulatedTypes.toArray(ret);
+  // return parameterizedSuperTypes;
+  // }
+  // private void accumulateParameterizedSuperTypes(ResolvedType forType, List
+  // parameterizedTypeList) {
+  // if (forType.isParameterizedType()) {
+  // parameterizedTypeList.add(forType);
+  // }
+  // if (forType.getSuperclass() != null) {
+  // accumulateParameterizedSuperTypes(forType.getSuperclass(),
+  // parameterizedTypeList);
+  // }
+  // ResolvedType[] interfaces = forType.getDeclaredInterfaces();
+  // for (int i = 0; i < interfaces.length; i++) {
+  // accumulateParameterizedSuperTypes(interfaces[i], parameterizedTypeList);
+  // }
+  // }
+
+  /**
+   * @return true if assignable to java.lang.Exception
+   */
+  public boolean isException() {
+    return (world.getCoreType(UnresolvedType.JL_EXCEPTION).isAssignableFrom(this));
+  }
+
+  /**
+   * @return true if it is an exception and it is a checked one, false otherwise.
+   */
+  public boolean isCheckedException() {
+    if (!isException()) {
+      return false;
+    }
+    if (world.getCoreType(UnresolvedType.RUNTIME_EXCEPTION).isAssignableFrom(this)) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Determines if variables of this type could be assigned values of another with lots of help. java.lang.Object is convertable
+   * from all types. A primitive type is convertable from X iff it's assignable from X. A reference type is convertable from X iff
+   * it's coerceable from X. In other words, X isConvertableFrom Y iff the compiler thinks that _some_ value of Y could be
+   * assignable to a variable of type X without loss of precision.
+   *
+   * @param other the other type
+   * @return true iff variables of this type could be assigned values of other with possible conversion
+   */
+  public final boolean isConvertableFrom(@NotNull ResolvedType other) {
+    // // version from TypeX
+    // if (this.equals(OBJECT)) return true;
+    // if (this.isPrimitiveType() || other.isPrimitiveType()) return
+    // this.isAssignableFrom(other);
+    // return this.isCoerceableFrom(other);
+    //
+
+    // version from ResolvedTypeX
+    if (this.equals(OBJECT)) {
+      return true;
+    }
+    if (world.isInJava5Mode()) {
+      if (this.isPrimitiveType() ^ other.isPrimitiveType()) { // If one is
+        // primitive
+        // and the
+        // other
+        // isnt
+        if (validBoxing.contains(this.getSignature() + other.getSignature())) {
+          return true;
+        }
+      }
+    }
+    if (this.isPrimitiveType() || other.isPrimitiveType()) {
+      return this.isAssignableFrom(other);
+    }
+    return this.isCoerceableFrom(other);
+  }
+
+  /**
+   * Determines if the variables of this type could be assigned values of another type without casting. This still allows for
+   * assignment conversion as per JLS 2ed 5.2. For object types, this means supertypeOrEqual(THIS, OTHER).
+   *
+   * @param other the other type
+   * @return true iff variables of this type could be assigned values of other without casting
+   * @throws NullPointerException if other is null
+   */
+  public abstract boolean isAssignableFrom(ResolvedType other);
+
+  public abstract boolean isAssignableFrom(ResolvedType other, boolean allowMissing);
+
+  /**
+   * Determines if values of another type could possibly be cast to this type. The rules followed are from JLS 2ed 5.5,
+   * "Casting Conversion".
+   * <p/>
+   * <p/>
+   * This method should be commutative, i.e., for all UnresolvedType a, b and all World w:
+   * <p/>
+   * <blockquote>
+   * <p/>
+   * <pre>
+   * a.isCoerceableFrom(b, w) == b.isCoerceableFrom(a, w)
+   * </pre>
+   * <p/>
+   * </blockquote>
+   *
+   * @param other the other type
+   * @return true iff values of other could possibly be cast to this type.
+   * @throws NullPointerException if other is null.
+   */
+  public abstract boolean isCoerceableFrom(ResolvedType other);
+
+  public boolean needsNoConversionFrom(ResolvedType o) {
+    return isAssignableFrom(o);
+  }
+
+  public String getSignatureForAttribute() {
+    return signature; // Assume if this is being called that it is for a
+    // simple type (eg. void, int, etc)
+  }
+
+  /**
+   * return true if the parameterization of this type includes a member type variable. Member type variables occur in generic
+   * methods/ctors.
+   */
+  public boolean isParameterizedWithTypeVariable() {
+    // MAYBE means we haven't worked it out yet...
+    if (parameterizedWithTypeVariable == FuzzyBoolean.MAYBE) {
+      // if there are no type parameters then we cant be...
+      if (typeParameters == null || typeParameters.length == 0) {
+        parameterizedWithTypeVariable = FuzzyBoolean.NO;
+        return false;
+      }
+
+      for (int i = 0; i < typeParameters.length; i++) {
+        final ResolvedType aType = (ResolvedType) typeParameters[i];
+        if (aType.isTypeVariableReference()
+          // Changed according to the problems covered in bug 222648
+          // Don't care what kind of type variable - the fact that there
+          // is one
+          // at all means we can't risk caching it against we get confused
+          // later
+          // by another variation of the parameterization that just
+          // happens to
+          // use the same type variable name
+
+          // assume the worst - if its definetly not a type declared one,
+          // it could be anything
+          // && ((TypeVariableReference)aType).getTypeVariable().
+          // getDeclaringElementKind()!=TypeVariable.TYPE
+            ) {
+          parameterizedWithTypeVariable = FuzzyBoolean.YES;
+          return true;
+        }
+        if (aType.isParameterizedType()) {
+          final boolean b = aType.isParameterizedWithTypeVariable();
+          if (b) {
+            parameterizedWithTypeVariable = FuzzyBoolean.YES;
+            return true;
+          }
+        }
+        if (aType.isGenericWildcard()) {
+          final BoundedReferenceType boundedRT = (BoundedReferenceType) aType;
+          if (boundedRT.isExtends()) {
+            boolean b = false;
+            final UnresolvedType upperBound = boundedRT.getUpperBound();
+            if (upperBound.isParameterizedType()) {
+              b = ((ResolvedType) upperBound).isParameterizedWithTypeVariable();
+            } else if (upperBound.isTypeVariableReference()
+                && ((TypeVariableReference) upperBound).getTypeVariable().getDeclaringElementKind() == TypeVariable.METHOD) {
+              b = true;
+            }
+            if (b) {
+              parameterizedWithTypeVariable = FuzzyBoolean.YES;
+              return true;
+            }
+            // FIXME asc need to check additional interface bounds
+          }
+          if (boundedRT.isSuper()) {
+            boolean b = false;
+            final UnresolvedType lowerBound = boundedRT.getLowerBound();
+            if (lowerBound.isParameterizedType()) {
+              b = ((ResolvedType) lowerBound).isParameterizedWithTypeVariable();
+            } else if (lowerBound.isTypeVariableReference()
+                && ((TypeVariableReference) lowerBound).getTypeVariable().getDeclaringElementKind() == TypeVariable.METHOD) {
+              b = true;
+            }
+            if (b) {
+              parameterizedWithTypeVariable = FuzzyBoolean.YES;
+              return true;
+            }
+          }
+        }
+      }
+      parameterizedWithTypeVariable = FuzzyBoolean.NO;
+    }
+    return parameterizedWithTypeVariable.alwaysTrue();
+  }
+
+  public void setBinaryPath(String binaryPath) {
+    this.binaryPath = binaryPath;
+  }
+
+  /**
+   * Returns the path to the jar or class file from which this binary aspect came or null if not a binary aspect
+   */
+  public String getBinaryPath() {
+    return binaryPath;
+  }
+
+  /**
+   * Undo any temporary modifications to the type (for example it may be holding annotations temporarily whilst some matching is
+   * occurring - These annotations will be added properly during weaving but sometimes for type completion they need to be held
+   * here for a while).
+   */
+  public void ensureConsistent() {
+    // Nothing to do for anything except a ReferenceType
+  }
+
+  /**
+   * For an annotation type, this will return if it is marked with @Inherited
+   */
+  public boolean isInheritedAnnotation() {
+    ensureAnnotationBitsInitialized();
+    return (bits & AnnotationMarkedInherited) != 0;
+  }
+
+  public void tagAsTypeHierarchyComplete() {
+    bits |= TypeHierarchyCompleteBit;
+  }
+
+  public boolean isTypeHierarchyComplete() {
+    return (bits & TypeHierarchyCompleteBit) != 0;
+  }
+
+  /**
+   * return the weaver version used to build this type - defaults to the most recent version unless discovered otherwise.
+   *
+   * @return the (major) version, {@link WeaverVersionInfo}
+   */
+  public int getCompilerVersion() {
+    return WeaverVersionInfo.getCurrentWeaverMajorVersion();
+  }
+
+  public boolean isPrimitiveArray() {
+    return false;
+  }
+
+  public boolean isGroovyObject() {
+    if ((bits & GroovyObjectInitialized) == 0) {
+      final ResolvedType[] intfaces = getDeclaredInterfaces();
+      boolean done = false;
+      // TODO do we need to walk more of these? (i.e. the interfaces interfaces and supertypes supertype). Check what groovy
+      // does in the case where a hierarchy is involved and there are types in between GroovyObject/GroovyObjectSupport and
+      // the type
+      if (intfaces != null) {
+        for (ResolvedType intface : intfaces) {
+          if (intface.getName().equals("groovy.lang.GroovyObject")) {
+            bits |= IsGroovyObject;
+            done = true;
+            break;
+          }
+        }
+      }
+      if (!done) {
+        // take a look at the supertype
+        if (getSuperclass().getName().equals("groovy.lang.GroovyObjectSupport")) {
+          bits |= IsGroovyObject;
+        }
+      }
+      bits |= GroovyObjectInitialized;
+    }
+    return (bits & IsGroovyObject) != 0;
+  }
+
+  protected boolean doesNotExposeShadowMungers() {
+    return false;
+  }
+
+  @NotNull
+  protected Map<String, UnresolvedType> getMemberParameterizationMap() {
+    if (!isParameterizedType()) {
+      return Collections.emptyMap();
+    }
+    final TypeVariable[] tvs = getGenericType().getTypeVariables();
+    final Map<String, UnresolvedType> parameterizationMap = new HashMap<String, UnresolvedType>();
+    for (int i = 0; i < tvs.length; i++) {
+      parameterizationMap.put(tvs[i].getName(), typeParameters[i]);
+    }
+    return parameterizationMap;
+  }
+
+  protected void collectInterTypeMungers(@NotNull List<ConcreteTypeMunger> collector) {
+    for (final Iterator<ResolvedType> iter = getDirectSupertypes(); iter.hasNext(); ) {
+      final ResolvedType superType = iter.next();
+      if (superType == null) {
+        throw new BCException("UnexpectedProblem: a supertype in the hierarchy for " + this.getName() + " is null");
+      }
+      superType.collectInterTypeMungers(collector);
+    }
+
+    outer:
+    for (Iterator<ConcreteTypeMunger> iter1 = collector.iterator(); iter1.hasNext(); ) {
+      final ConcreteTypeMunger superMunger = iter1.next();
+      if (superMunger.getSignature() == null) {
+        continue;
+      }
+
+      if (!superMunger.getSignature().isAbstract()) {
+        continue;
+      }
+
+      for (ConcreteTypeMunger myMunger : getInterTypeMungers()) {
+        if (conflictingSignature(myMunger.getSignature(), superMunger.getSignature())) {
+          iter1.remove();
+          continue outer;
+        }
+      }
+
+      if (!superMunger.getSignature().isPublic()) {
+        continue;
+      }
+
+      for (final Iterator<ResolvedMember> iter = getMethods(true, true); iter.hasNext(); ) {
+        final ResolvedMember method = iter.next();
+        if (conflictingSignature(method, superMunger.getSignature())) {
+          iter1.remove();
+          continue outer;
+        }
+      }
+    }
+
+    collector.addAll(getInterTypeMungers());
+  }
+
+  protected boolean ajMembersNeedParameterization() {
+    if (isParameterizedType()) {
+      return true;
+    }
+    final ResolvedType superclass = getSuperclass();
+    if (superclass != null && !superclass.isMissing()) {
+      return superclass.ajMembersNeedParameterization();
+    }
+    return false;
+  }
+
+  @NotNull
+  protected Map<String, UnresolvedType> getAjMemberParameterizationMap() {
+    final Map<String, UnresolvedType> myMap = getMemberParameterizationMap();
+    if (myMap.isEmpty()) {
+      // might extend a parameterized aspect that we also need to
+      // consider...
+      if (getSuperclass() != null) {
+        return getSuperclass().getAjMemberParameterizationMap();
+      }
+    }
+    return myMap;
+  }
+
+  private void addAndRecurse(Set<String> knowninterfaces, List<ResolvedMember> collector, ResolvedType resolvedType,
+                             boolean includeITDs, boolean allowMissing, boolean genericsAware) {
+    // Add the methods declared on this type
+    collector.addAll(Arrays.asList(resolvedType.getDeclaredMethods()));
+    // now add all the inter-typed members too
+    if (includeITDs && resolvedType.interTypeMungers != null) {
+      for (ConcreteTypeMunger typeTransformer : interTypeMungers) {
+        final ResolvedMember rm = typeTransformer.getSignature();
+        if (rm != null) { // new parent type munger can have null signature
+          collector.add(typeTransformer.getSignature());
+        }
+      }
+    }
+    // BUG? interface type superclass is Object - is that correct?
+    if (!resolvedType.isInterface() && !resolvedType.equals(ResolvedType.OBJECT)) {
+      ResolvedType superType = resolvedType.getSuperclass();
+      if (superType != null && !superType.isMissing()) {
+        if (!genericsAware && superType.isParameterizedOrGenericType()) {
+          superType = superType.getRawType();
+        }
+        // Recurse if we are not at the top
+        addAndRecurse(knowninterfaces, collector, superType, includeITDs, allowMissing, genericsAware);
+      }
+    }
+    // Go through the interfaces on the way back down
+    final ResolvedType[] interfaces = resolvedType.getDeclaredInterfaces();
+    for (int i = 0; i < interfaces.length; i++) {
+      ResolvedType iface = interfaces[i];
+      if (!genericsAware && iface.isParameterizedOrGenericType()) {
+        iface = iface.getRawType();
+      }
+      // we need to know if it is an interface from Parent kind munger
+      // as those are used for @AJ ITD and we precisely want to skip those
+      boolean shouldSkip = false;
+      for (int j = 0; j < resolvedType.interTypeMungers.size(); j++) {
+        final ConcreteTypeMunger munger = resolvedType.interTypeMungers.get(j);
+        if (munger.getMunger() != null && munger.getMunger().getKind() == ResolvedTypeMunger.Parent
+            && ((NewParentTypeMunger) munger.getMunger()).getNewParent().equals(iface) // pr171953
+            ) {
+          shouldSkip = true;
+          break;
+        }
+      }
+
+      // Do not do interfaces more than once
+      if (!shouldSkip && !knowninterfaces.contains(iface.getSignature())) {
+        knowninterfaces.add(iface.getSignature());
+        if (allowMissing && iface.isMissing()) {
+          if (iface instanceof MissingResolvedTypeWithKnownSignature) {
+            ((MissingResolvedTypeWithKnownSignature) iface).raiseWarningOnMissingInterfaceWhilstFindingMethods();
+          }
+        } else {
+          addAndRecurse(knowninterfaces, collector, iface, includeITDs, allowMissing, genericsAware);
+        }
+      }
+    }
+  }
+
+  /**
+   * Recurse up a type hierarchy, first the superclasses then the super interfaces.
+   */
+  private static void recurseHierarchy(Set<String> knowninterfaces, List<ResolvedType> collector, ResolvedType resolvedType,
+                                       boolean includeITDs, boolean allowMissing, boolean genericsAware) {
+    collector.add(resolvedType);
+    if (!resolvedType.isInterface() && !resolvedType.equals(ResolvedType.OBJECT)) {
+      ResolvedType superType = resolvedType.getSuperclass();
+      if (superType != null && !superType.isMissing()) {
+        if (!genericsAware && (superType.isParameterizedType() || superType.isGenericType())) {
+          superType = superType.getRawType();
+        }
+        // Recurse if we are not at the top
+        recurseHierarchy(knowninterfaces, collector, superType, includeITDs, allowMissing, genericsAware);
+      }
+    }
+    // Go through the interfaces on the way back down
+    final ResolvedType[] interfaces = resolvedType.getDeclaredInterfaces();
+    for (int i = 0; i < interfaces.length; i++) {
+      ResolvedType iface = interfaces[i];
+      if (!genericsAware && (iface.isParameterizedType() || iface.isGenericType())) {
+        iface = iface.getRawType();
+      }
+      // we need to know if it is an interface from Parent kind munger
+      // as those are used for @AJ ITD and we precisely want to skip those
+      boolean shouldSkip = false;
+      for (int j = 0; j < resolvedType.interTypeMungers.size(); j++) {
+        final ConcreteTypeMunger munger = resolvedType.interTypeMungers.get(j);
+        if (munger.getMunger() != null && munger.getMunger().getKind() == ResolvedTypeMunger.Parent
+            && ((NewParentTypeMunger) munger.getMunger()).getNewParent().equals(iface) // pr171953
+            ) {
+          shouldSkip = true;
+          break;
+        }
+      }
+
+      // Do not do interfaces more than once
+      if (!shouldSkip && !knowninterfaces.contains(iface.getSignature())) {
+        knowninterfaces.add(iface.getSignature());
+        if (allowMissing && iface.isMissing()) {
+          if (iface instanceof MissingResolvedTypeWithKnownSignature) {
+            ((MissingResolvedTypeWithKnownSignature) iface).raiseWarningOnMissingInterfaceWhilstFindingMethods();
+          }
+        } else {
+          recurseHierarchy(knowninterfaces, collector, iface, includeITDs, allowMissing, genericsAware);
+        }
+      }
+    }
+  }
+
+  /**
+   * return null if not found
+   */
+  @Nullable
+  private static ResolvedMember lookupMember(Member m, ResolvedMember[] a) {
+    for (int i = 0; i < a.length; i++) {
+      final ResolvedMember f = a[i];
+      if (matches(f, m)) {
+        return f;
+      }
+    }
+    return null;
+  }
+
+  @NotNull
+  private final List<ShadowMunger> collectShadowMungers() {
+    if (!this.isAspect() || this.isAbstract() || this.doesNotExposeShadowMungers()) {
+      return Collections.emptyList();
+    }
+
+    final List<ShadowMunger> acc = new ArrayList<ShadowMunger>();
+    final Iterators.Filter<ResolvedType> dupFilter = Iterators.dupFilter();
+    final Iterators.Getter<ResolvedType, ResolvedType> typeGetter = new Iterators.Getter<ResolvedType, ResolvedType>() {
+      @Override
+      public Iterator<ResolvedType> get(ResolvedType o) {
+        return dupFilter.filter((o).getDirectSupertypes());
+      }
+    };
+    final Iterator<ResolvedType> typeIterator = Iterators.recur(this, typeGetter);
+
+    while (typeIterator.hasNext()) {
+      final ResolvedType ty = typeIterator.next();
+      acc.addAll(ty.getDeclaredShadowMungers());
+    }
+
+    return acc;
+  }
+
+  @NotNull
+  private static ResolvedMember[] filterInJavaVisible(@NotNull ResolvedMember[] ms) {
+    final List<ResolvedMember> l = new ArrayList<ResolvedMember>();
+    for (int i = 0, len = ms.length; i < len; i++) {
+      if (!ms[i].isAjSynthetic() && ms[i].getAssociatedShadowMunger() == null) {
+        l.add(ms[i]);
+      }
+    }
+    return l.toArray(new ResolvedMember[l.size()]);
+  }
+
+  @Nullable
+  private static ResolvedMember lookupMemberIncludingITDsOnInterfaces(Member member, ResolvedType onType) {
+    ResolvedMember ret = onType.lookupMemberNoSupers(member);
+    if (ret != null) {
+      return ret;
+    } else {
+      final ResolvedType superType = onType.getSuperclass();
+      if (superType != null) {
+        ret = lookupMemberIncludingITDsOnInterfaces(member, superType);
+      }
+      if (ret == null) {
+        // try interfaces then, but only ITDs now...
+        final ResolvedType[] superInterfaces = onType.getDeclaredInterfaces();
+        for (int i = 0; i < superInterfaces.length; i++) {
+          ret = superInterfaces[i].lookupMethodInITDs(member);
+          if (ret != null) {
+            return ret;
+          }
+        }
+      }
+    }
+    return ret;
+  }
+
+  private void collectInterTypeParentMungers(List<ConcreteTypeMunger> collector) {
+    for (final Iterator<ResolvedType> iter = getDirectSupertypes(); iter.hasNext(); ) {
+      final ResolvedType superType = iter.next();
+      superType.collectInterTypeParentMungers(collector);
+    }
+    collector.addAll(getInterTypeParentMungers());
+  }
+
+  /**
+   * See PR70794. This method checks that if an abstract inter-type method declaration is made on an interface then it must also
+   * be public. This is a compiler limitation that could be made to work in the future (if someone provides a worthwhile usecase)
+   *
+   * @return indicates if the munger failed the check
+   */
+  private boolean checkAbstractDeclaration(ConcreteTypeMunger munger) {
+    if (munger.getMunger() != null && (munger.getMunger() instanceof NewMethodTypeMunger)) {
+      final ResolvedMember itdMember = munger.getSignature();
+      final ResolvedType onType = itdMember.getDeclaringType().resolve(world);
+      if (onType.isInterface() && itdMember.isAbstract() && !itdMember.isPublic()) {
+        world.getMessageHandler().handleMessage(
+            new Message(WeaverMessages.format(WeaverMessages.ITD_ABSTRACT_MUST_BE_PUBLIC_ON_INTERFACE,
+                munger.getSignature(), onType), "", Message.ERROR, getSourceLocation(), null,
+                new ISourceLocation[]{getMungerLocation(munger)}));
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Get a source location for the munger. Until intertype mungers remember where they came from, the source location for the
+   * munger itself is null. In these cases use the source location for the aspect containing the ITD.
+   */
+  private static ISourceLocation getMungerLocation(ConcreteTypeMunger munger) {
+    ISourceLocation sloc = munger.getSourceLocation();
+    if (sloc == null) {
+      sloc = munger.getAspectType().getSourceLocation();
+    }
+    return sloc;
+  }
+
+  private static boolean samePackage(ResolvedType targetType, ResolvedType fromType) {
+    final String p1 = targetType.getPackageName();
+    final String p2 = fromType.getPackageName();
+    if (p1 == null) {
+      return p2 == null;
+    }
+    if (p2 == null) {
+      return false;
+    }
+    return p1.equals(p2);
+  }
+
+  /**
+   * Checks if the generic type for 'this' and the generic type for 'other' are the same - it can be passed raw or parameterized
+   * versions and will just compare the underlying generic type.
+   */
+  private boolean genericTypeEquals(ResolvedType other) {
+    final ResolvedType rt = other;
+    if (rt.isParameterizedType() || rt.isRawType()) {
+      rt.getGenericType();
+    }
+    if (((isParameterizedType() || isRawType()) && getGenericType().equals(rt)) || (this.equals(other))) {
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -1960,8 +2360,8 @@ public abstract class ResolvedType extends UnresolvedType implements AnnotatedEl
   // same declaring type with the same
   // signature AND more than one of them is concrete AND they are both visible
   // within the target type.
-  private boolean isDuplicateMemberWithinTargetType(ResolvedMember existingMember, ResolvedType targetType,
-                                                    ResolvedMember itdMember) {
+  private static boolean isDuplicateMemberWithinTargetType(ResolvedMember existingMember, ResolvedType targetType,
+                                                           ResolvedMember itdMember) {
     if ((existingMember.isAbstract() || itdMember.isAbstract())) {
       return false;
     }
@@ -1984,134 +2384,6 @@ public abstract class ResolvedType extends UnresolvedType implements AnnotatedEl
     // trying to put two members with the same signature into the exact same
     // type..., and both visible in that type.
     return true;
-  }
-
-  /**
-   * @param transformerPosition which parameter is the type transformer (0x10 for first, 0x01 for second, 0x11 for both, 0x00 for
-   *                            neither)
-   * @param aspectType          the declaring type of aspect defining the *first* type transformer
-   * @return true if the override is legal note: calling showMessage with two locations issues TWO messages, not ONE message with
-   * an additional source location.
-   */
-  public boolean checkLegalOverride(ResolvedMember parent, ResolvedMember child, int transformerPosition, ResolvedType aspectType) {
-    // System.err.println("check: " + child.getDeclaringType() + " overrides " + parent.getDeclaringType());
-    if (Modifier.isFinal(parent.getModifiers())) {
-      // If the ITD matching is occurring due to pulling in a BinaryTypeBinding then this check can incorrectly
-      // signal an error because the ITD transformer being examined here will exactly match the member it added
-      // during the first round of compilation. This situation can only occur if the ITD is on an interface whilst
-      // the class is the top most implementor. If the ITD is on the same type that received it during compilation,
-      // this method won't be called as the previous check for precedence level will return 0.
-
-      if (transformerPosition == 0x10 && aspectType != null) {
-        final ResolvedType nonItdDeclaringType = child.getDeclaringType().resolve(world);
-        final WeaverStateInfo wsi = nonItdDeclaringType.getWeaverState();
-        if (wsi != null) {
-          final List<ConcreteTypeMunger> transformersOnThisType = wsi.getTypeMungers(nonItdDeclaringType);
-          if (transformersOnThisType != null) {
-            for (ConcreteTypeMunger transformer : transformersOnThisType) {
-              // relatively crude check - is the ITD for the same as the existingmember
-              // and does it come from the same aspect
-              if (transformer.aspectType.equals(aspectType)) {
-                if (parent.equalsApartFromDeclaringType(transformer.getSignature())) {
-                  return true;
-                }
-              }
-            }
-          }
-        }
-      }
-
-      world.showMessage(Message.ERROR, WeaverMessages.format(WeaverMessages.CANT_OVERRIDE_FINAL_MEMBER, parent),
-          child.getSourceLocation(), null);
-      return false;
-    }
-
-    boolean incompatibleReturnTypes = false;
-    // In 1.5 mode, allow for covariance on return type
-    if (world.isInJava5Mode() && parent.getKind() == Member.METHOD) {
-
-      // Look at the generic types when doing this comparison
-      final ResolvedType rtParentReturnType = parent.resolve(world).getGenericReturnType().resolve(world);
-      final ResolvedType rtChildReturnType = child.resolve(world).getGenericReturnType().resolve(world);
-      incompatibleReturnTypes = !rtParentReturnType.isAssignableFrom(rtChildReturnType);
-      // For debug, uncomment this bit and we'll repeat the check - stick
-      // a breakpoint on the call
-      // if (incompatibleReturnTypes) {
-      // incompatibleReturnTypes =
-      // !rtParentReturnType.isAssignableFrom(rtChildReturnType);
-      // }
-    } else {
-      final ResolvedType rtParentReturnType = parent.resolve(world).getGenericReturnType().resolve(world);
-      final ResolvedType rtChildReturnType = child.resolve(world).getGenericReturnType().resolve(world);
-
-      incompatibleReturnTypes = !rtParentReturnType.equals(rtChildReturnType);
-    }
-
-    if (incompatibleReturnTypes) {
-      world.showMessage(IMessage.ERROR, WeaverMessages.format(WeaverMessages.ITD_RETURN_TYPE_MISMATCH, parent, child),
-          child.getSourceLocation(), parent.getSourceLocation());
-      return false;
-    }
-    if (parent.getKind() == Member.POINTCUT) {
-      final UnresolvedType[] pTypes = parent.getParameterTypes();
-      final UnresolvedType[] cTypes = child.getParameterTypes();
-      if (!Arrays.equals(pTypes, cTypes)) {
-        world.showMessage(IMessage.ERROR, WeaverMessages.format(WeaverMessages.ITD_PARAM_TYPE_MISMATCH, parent, child),
-            child.getSourceLocation(), parent.getSourceLocation());
-        return false;
-      }
-    }
-    // System.err.println("check: " + child.getModifiers() +
-    // " more visible " + parent.getModifiers());
-    if (isMoreVisible(parent.getModifiers(), child.getModifiers())) {
-      world.showMessage(IMessage.ERROR, WeaverMessages.format(WeaverMessages.ITD_VISIBILITY_REDUCTION, parent, child),
-          child.getSourceLocation(), parent.getSourceLocation());
-      return false;
-    }
-
-    // check declared exceptions
-    final ResolvedType[] childExceptions = world.resolve(child.getExceptions());
-    final ResolvedType[] parentExceptions = world.resolve(parent.getExceptions());
-    final ResolvedType runtimeException = world.resolve("java.lang.RuntimeException");
-    final ResolvedType error = world.resolve("java.lang.Error");
-
-    outer:
-    for (int i = 0, leni = childExceptions.length; i < leni; i++) {
-      // System.err.println("checking: " + childExceptions[i]);
-      if (runtimeException.isAssignableFrom(childExceptions[i])) {
-        continue;
-      }
-      if (error.isAssignableFrom(childExceptions[i])) {
-        continue;
-      }
-
-      for (int j = 0, lenj = parentExceptions.length; j < lenj; j++) {
-        if (parentExceptions[j].isAssignableFrom(childExceptions[i])) {
-          continue outer;
-        }
-      }
-
-      // this message is now better handled my MethodVerifier in JDT core.
-      // world.showMessage(IMessage.ERROR,
-      // WeaverMessages.format(WeaverMessages.ITD_DOESNT_THROW,
-      // childExceptions[i].getName()),
-      // child.getSourceLocation(), null);
-
-      return false;
-    }
-    final boolean parentStatic = Modifier.isStatic(parent.getModifiers());
-    final boolean childStatic = Modifier.isStatic(child.getModifiers());
-    if (parentStatic && !childStatic) {
-      world.showMessage(IMessage.ERROR, WeaverMessages.format(WeaverMessages.ITD_OVERRIDDEN_STATIC, child, parent),
-          child.getSourceLocation(), null);
-      return false;
-    } else if (childStatic && !parentStatic) {
-      world.showMessage(IMessage.ERROR, WeaverMessages.format(WeaverMessages.ITD_OVERIDDING_STATIC, child, parent),
-          child.getSourceLocation(), null);
-      return false;
-    }
-    return true;
-
   }
 
   private int compareMemberPrecedence(ResolvedMember m1, ResolvedMember m2) {
@@ -2154,22 +2426,6 @@ public abstract class ResolvedType extends UnresolvedType implements AnnotatedEl
     return 0;
   }
 
-  public static boolean isMoreVisible(int m1, int m2) {
-    if (Modifier.isPrivate(m1)) {
-      return false;
-    }
-    if (isPackage(m1)) {
-      return Modifier.isPrivate(m2);
-    }
-    if (Modifier.isProtected(m1)) {
-      return /* private package */(Modifier.isPrivate(m2) || isPackage(m2));
-    }
-    if (Modifier.isPublic(m1)) {
-      return /* private package protected */!Modifier.isPublic(m2);
-    }
-    throw new RuntimeException("bad modifier: " + m1);
-  }
-
   private static boolean isPackage(int i) {
     return (0 == (i & (Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED)));
   }
@@ -2189,40 +2445,353 @@ public abstract class ResolvedType extends UnresolvedType implements AnnotatedEl
     // return false;
   }
 
-  public ResolvedMember lookupSyntheticMember(Member member) {
-    // ??? horribly inefficient
-    // for (Iterator i =
-    // System.err.println("lookup " + member + " in " + interTypeMungers);
-    for (ConcreteTypeMunger m : interTypeMungers) {
-      final ResolvedMember ret = m.getMatchingSyntheticMember(member);
-      if (ret != null) {
-        // System.err.println("   found: " + ret);
-        return ret;
-      }
-    }
-
-    // Handling members for the new array join point
-    if (world.isJoinpointArrayConstructionEnabled() && this.isArray()) {
-      if (member.getKind() == Member.CONSTRUCTOR) {
-        final ResolvedMemberImpl ret = new ResolvedMemberImpl(Member.CONSTRUCTOR, this, Modifier.PUBLIC, UnresolvedType.VOID,
-            "<init>", world.resolve(member.getParameterTypes()));
-        // Give the parameters names - they are going to be the dimensions uses to build the array (dim0 > dimN)
-        final int count = ret.getParameterTypes().length;
-        final String[] paramNames = new String[count];
-        for (int i = 0; i < count; i++) {
-          paramNames[i] = new StringBuffer("dim").append(i).toString();
+  private void addPointcutsResolvingConflicts(List<ResolvedMember> acc, List<ResolvedMember> added, boolean isOverriding) {
+    for (final Iterator<ResolvedMember> i = added.iterator(); i.hasNext(); ) {
+      final ResolvedPointcutDefinition toAdd = (ResolvedPointcutDefinition) i.next();
+      for (final Iterator<ResolvedMember> j = acc.iterator(); j.hasNext(); ) {
+        final ResolvedPointcutDefinition existing = (ResolvedPointcutDefinition) j.next();
+        if (toAdd == null || existing == null || existing == toAdd) {
+          continue;
         }
-        ret.setParameterNames(paramNames);
-        return ret;
+        final UnresolvedType pointcutDeclaringTypeUT = existing.getDeclaringType();
+        if (pointcutDeclaringTypeUT != null) {
+          final ResolvedType pointcutDeclaringType = pointcutDeclaringTypeUT.resolve(getWorld());
+          if (!isVisible(existing.getModifiers(), pointcutDeclaringType, this)) {
+            // if they intended to override it but it is not visible,
+            // give them a nicer message
+            if (existing.isAbstract() && conflictingSignature(existing, toAdd)) {
+              getWorld().showMessage(
+                  IMessage.ERROR,
+                  WeaverMessages.format(WeaverMessages.POINTCUT_NOT_VISIBLE, existing.getDeclaringType()
+                      .getName() + "." + existing.getName() + "()", this.getName()),
+                  toAdd.getSourceLocation(), null);
+              j.remove();
+            }
+            continue;
+          }
+        }
+        if (conflictingSignature(existing, toAdd)) {
+          if (isOverriding) {
+            checkLegalOverride(existing, toAdd, 0x00, null);
+            j.remove();
+          } else {
+            getWorld().showMessage(
+                IMessage.ERROR,
+                WeaverMessages.format(WeaverMessages.CONFLICTING_INHERITED_POINTCUTS,
+                    this.getName() + toAdd.getSignature()), existing.getSourceLocation(),
+                toAdd.getSourceLocation());
+            j.remove();
+          }
+        }
+      }
+      acc.add(toAdd);
+    }
+  }
+
+  /*
+   * Setup the bitflags if they have not already been done.
+   */
+  private void ensureAnnotationBitsInitialized() {
+    if ((bits & AnnotationBitsInitialized) == 0) {
+      bits |= AnnotationBitsInitialized;
+      // Is it marked @Inherited?
+      if (hasAnnotation(UnresolvedType.AT_INHERITED)) {
+        bits |= AnnotationMarkedInherited;
       }
     }
+  }
 
-    // if (this.getSuperclass() != ResolvedType.OBJECT &&
-    // this.getSuperclass() != null) {
-    // return getSuperclass().lookupSyntheticMember(member);
+  private boolean hasNewParentMungers() {
+    if ((bits & MungersAnalyzed) == 0) {
+      bits |= MungersAnalyzed;
+      for (ConcreteTypeMunger munger : interTypeMungers) {
+        final ResolvedTypeMunger resolvedTypeMunger = munger.getMunger();
+        if (resolvedTypeMunger != null && resolvedTypeMunger.getKind() == ResolvedTypeMunger.Parent) {
+          bits |= HasParentMunger;
+        }
+      }
+    }
+    return (bits & HasParentMunger) != 0;
+  }
+
+  /**
+   * An Iterators.Getter that returns an iterator over all methods declared on some resolved type.
+   */
+  private static class MethodGetter implements Iterators.Getter<ResolvedType, ResolvedMember> {
+    @Override
+    public Iterator<ResolvedMember> get(ResolvedType type) {
+      return Iterators.array(type.getDeclaredMethods());
+    }
+  }
+
+  /**
+   * An Iterators.Getter that returns an iterator over all pointcuts declared on some resolved type.
+   */
+  private static class PointcutGetter implements Iterators.Getter<ResolvedType, ResolvedMember> {
+    @Override
+    public Iterator<ResolvedMember> get(ResolvedType o) {
+      return Iterators.array(o.getDeclaredPointcuts());
+    }
+  }
+
+  // OPTIMIZE could cache the result of discovering ITDs
+
+  // Getter that returns all declared methods for a type through an iterator - including intertype declarations
+  private static class MethodGetterIncludingItds implements Iterators.Getter<ResolvedType, ResolvedMember> {
+    @Override
+    public Iterator<ResolvedMember> get(ResolvedType type) {
+      ResolvedMember[] methods = type.getDeclaredMethods();
+      if (type.interTypeMungers != null) {
+        int additional = 0;
+        for (ConcreteTypeMunger typeTransformer : type.interTypeMungers) {
+          final ResolvedMember rm = typeTransformer.getSignature();
+          // BUG won't this include fields? When we are looking for methods
+          if (rm != null) { // new parent type munger can have null signature
+            additional++;
+          }
+        }
+        if (additional > 0) {
+          final ResolvedMember[] methods2 = new ResolvedMember[methods.length + additional];
+          System.arraycopy(methods, 0, methods2, 0, methods.length);
+          additional = methods.length;
+          for (ConcreteTypeMunger typeTransformer : type.interTypeMungers) {
+            final ResolvedMember rm = typeTransformer.getSignature();
+            if (rm != null) { // new parent type munger can have null signature
+              methods2[additional++] = typeTransformer.getSignature();
+            }
+          }
+          methods = methods2;
+        }
+      }
+      return Iterators.array(methods);
+    }
+  }
+
+  /**
+   * An Iterators.Getter that returns an iterator over all fields declared on some resolved type.
+   */
+  private static class FieldGetter implements Iterators.Getter<ResolvedType, ResolvedMember> {
+    @Override
+    public Iterator<ResolvedMember> get(ResolvedType type) {
+      return Iterators.array(type.getDeclaredFields());
+    }
+  }
+
+  static class Primitive extends ResolvedType {
+
+    private static final boolean[][] assignTable = {// to: B C D F I J S V Z
+        // from
+        {true, true, true, true, true, true, true, false, false}, // B
+        {false, true, true, true, true, true, false, false, false}, // C
+        {false, false, true, false, false, false, false, false, false}, // D
+        {false, false, true, true, false, false, false, false, false}, // F
+        {false, false, true, true, true, true, false, false, false}, // I
+        {false, false, true, true, false, true, false, false, false}, // J
+        {false, false, true, true, true, true, true, false, false}, // S
+        {false, false, false, false, false, false, false, true, false}, // V
+        {false, false, false, false, false, false, false, false, true}, // Z
+    };
+    private static final boolean[][] noConvertTable = {// to: B C D F I J S
+        // V Z from
+        {true, true, false, false, true, false, true, false, false}, // B
+        {false, true, false, false, true, false, false, false, false}, // C
+        {false, false, true, false, false, false, false, false, false}, // D
+        {false, false, false, true, false, false, false, false, false}, // F
+        {false, false, false, false, true, false, false, false, false}, // I
+        {false, false, false, false, false, true, false, false, false}, // J
+        {false, false, false, false, true, false, true, false, false}, // S
+        {false, false, false, false, false, false, false, true, false}, // V
+        {false, false, false, false, false, false, false, false, true}, // Z
+    };
+    private final int size;
+    private final int index;
+
+    Primitive(String signature, int size, int index) {
+      super(signature, null);
+      this.size = size;
+      this.index = index;
+      this.typeKind = TypeKind.PRIMITIVE;
+    }
+
+    @Override
+    public final int getSize() {
+      return size;
+    }
+
+    @Override
+    public final int getModifiers() {
+      return Modifier.PUBLIC | Modifier.FINAL;
+    }
+
+    @Override
+    public final boolean isPrimitiveType() {
+      return true;
+    }
+
+    @Override
+    public boolean hasAnnotation(UnresolvedType ofType) {
+      return false;
+    }
+
+    @Override
+    public final boolean isAssignableFrom(ResolvedType other) {
+      if (!other.isPrimitiveType()) {
+        if (!world.isInJava5Mode()) {
+          return false;
+        }
+        return validBoxing.contains(this.getSignature() + other.getSignature());
+      }
+      return assignTable[((Primitive) other).index][index];
+    }
+
+    @Override
+    public final boolean isAssignableFrom(ResolvedType other, boolean allowMissing) {
+      return isAssignableFrom(other);
+    }
+
+    @Override
+    public final boolean isCoerceableFrom(ResolvedType other) {
+      if (this == other) {
+        return true;
+      }
+      if (!other.isPrimitiveType()) {
+        return false;
+      }
+      if (index > 6 || ((Primitive) other).index > 6) {
+        return false;
+      }
+      return true;
+    }
+
+    @Override
+    public ResolvedType resolve(World world) {
+      if (this.world != world) {
+        throw new IllegalStateException();
+      }
+      this.world = world;
+      return super.resolve(world);
+    }
+
+    @Override
+    public final boolean needsNoConversionFrom(ResolvedType other) {
+      if (!other.isPrimitiveType()) {
+        return false;
+      }
+      return noConvertTable[((Primitive) other).index][index];
+    }
+
+    // ----
+
+    @Override
+    public final ResolvedMember[] getDeclaredFields() {
+      return ResolvedMember.NONE;
+    }
+
+    @Override
+    public final ResolvedMember[] getDeclaredMethods() {
+      return ResolvedMember.NONE;
+    }
+
+    @Override
+    public final ResolvedType[] getDeclaredInterfaces() {
+      return ResolvedType.NONE;
+    }
+
+    @Override
+    public final ResolvedMember[] getDeclaredPointcuts() {
+      return ResolvedMember.NONE;
+    }
+
+    @Override
+    public final ResolvedType getSuperclass() {
+      return null;
+    }
+
+    @Override
+    public ISourceContext getSourceContext() {
+      return null;
+    }
+
+  }
+
+  static class Missing extends ResolvedType {
+    Missing() {
+      super(MISSING_NAME, null);
+    }
+
+    // public final String toString() {
+    // return "<missing>";
     // }
+    @Override
+    public final String getName() {
+      return MISSING_NAME;
+    }
 
-    return null;
+    @Override
+    public final boolean isMissing() {
+      return true;
+    }
+
+    @Override
+    public boolean hasAnnotation(UnresolvedType ofType) {
+      return false;
+    }
+
+    @Override
+    public final ResolvedMember[] getDeclaredFields() {
+      return ResolvedMember.NONE;
+    }
+
+    @Override
+    public final ResolvedMember[] getDeclaredMethods() {
+      return ResolvedMember.NONE;
+    }
+
+    @Override
+    public final ResolvedType[] getDeclaredInterfaces() {
+      return ResolvedType.NONE;
+    }
+
+    @Override
+    public final ResolvedMember[] getDeclaredPointcuts() {
+      return ResolvedMember.NONE;
+    }
+
+    @Override
+    public final ResolvedType getSuperclass() {
+      return null;
+    }
+
+    @Override
+    public final int getModifiers() {
+      return 0;
+    }
+
+    @Override
+    public final boolean isAssignableFrom(ResolvedType other) {
+      return false;
+    }
+
+    @Override
+    public final boolean isAssignableFrom(ResolvedType other, boolean allowMissing) {
+      return false;
+    }
+
+    @Override
+    public final boolean isCoerceableFrom(ResolvedType other) {
+      return false;
+    }
+
+    @Override
+    public boolean needsNoConversionFrom(ResolvedType other) {
+      return false;
+    }
+
+    @Override
+    public ISourceContext getSourceContext() {
+      return null;
+    }
+
   }
 
   static class SuperClassWalker implements Iterator<ResolvedType> {
@@ -2311,552 +2880,6 @@ public abstract class ResolvedType extends UnresolvedType implements AnnotatedEl
     public void remove() {
       throw new UnsupportedOperationException();
     }
-  }
-
-  public void clearInterTypeMungers() {
-    if (isRawType()) {
-      final ResolvedType genericType = getGenericType();
-      if (genericType.isRawType()) { // ERROR SITUATION: PR341926
-        // For some reason the raw type is pointing to another raw form (possibly itself)
-        System.err.println("DebugFor341926: Type " + this.getName() + " has an incorrect generic form");
-      } else {
-        genericType.clearInterTypeMungers();
-      }
-    }
-    // interTypeMungers.clear();
-    // BUG? Why can't this be clear() instead: 293620 c6
-    interTypeMungers = new ArrayList<ConcreteTypeMunger>();
-  }
-
-  public boolean isTopmostImplementor(ResolvedType interfaceType) {
-    boolean b = true;
-    if (isInterface()) {
-      b = false;
-    } else if (!interfaceType.isAssignableFrom(this, true)) {
-      b = false;
-    } else {
-      final ResolvedType superclass = this.getSuperclass();
-      if (superclass.isMissing()) {
-        b = true; // we don't know anything about supertype, and it can't be exposed to weaver
-      } else if (interfaceType.isAssignableFrom(superclass, true)) { // check that I'm truly the topmost implementor
-        b = false;
-      }
-    }
-    // System.out.println("is " + getName() + " topmostimplementor of " + interfaceType + "? " + b);
-    return b;
-  }
-
-  public ResolvedType getTopmostImplementor(ResolvedType interfaceType) {
-    if (isInterface()) {
-      return null;
-    }
-    if (!interfaceType.isAssignableFrom(this)) {
-      return null;
-    }
-    // Check if my super class is an implementor?
-    final ResolvedType higherType = this.getSuperclass().getTopmostImplementor(interfaceType);
-    if (higherType != null) {
-      return higherType;
-    }
-    return this;
-  }
-
-  public List<ResolvedMember> getExposedPointcuts() {
-    final List<ResolvedMember> ret = new ArrayList<ResolvedMember>();
-    if (getSuperclass() != null) {
-      ret.addAll(getSuperclass().getExposedPointcuts());
-    }
-
-    for (ResolvedType type : getDeclaredInterfaces()) {
-      addPointcutsResolvingConflicts(ret, Arrays.asList(type.getDeclaredPointcuts()), false);
-    }
-
-    addPointcutsResolvingConflicts(ret, Arrays.asList(getDeclaredPointcuts()), true);
-
-    for (ResolvedMember member : ret) {
-      final ResolvedPointcutDefinition inherited = (ResolvedPointcutDefinition) member;
-      if (inherited != null && inherited.isAbstract()) {
-        if (!this.isAbstract()) {
-          getWorld().showMessage(IMessage.ERROR,
-              WeaverMessages.format(WeaverMessages.POINCUT_NOT_CONCRETE, inherited, this.getName()),
-              inherited.getSourceLocation(), this.getSourceLocation());
-        }
-      }
-    }
-    return ret;
-  }
-
-  private void addPointcutsResolvingConflicts(List<ResolvedMember> acc, List<ResolvedMember> added, boolean isOverriding) {
-    for (final Iterator<ResolvedMember> i = added.iterator(); i.hasNext(); ) {
-      final ResolvedPointcutDefinition toAdd = (ResolvedPointcutDefinition) i.next();
-      for (final Iterator<ResolvedMember> j = acc.iterator(); j.hasNext(); ) {
-        final ResolvedPointcutDefinition existing = (ResolvedPointcutDefinition) j.next();
-        if (toAdd == null || existing == null || existing == toAdd) {
-          continue;
-        }
-        final UnresolvedType pointcutDeclaringTypeUT = existing.getDeclaringType();
-        if (pointcutDeclaringTypeUT != null) {
-          final ResolvedType pointcutDeclaringType = pointcutDeclaringTypeUT.resolve(getWorld());
-          if (!isVisible(existing.getModifiers(), pointcutDeclaringType, this)) {
-            // if they intended to override it but it is not visible,
-            // give them a nicer message
-            if (existing.isAbstract() && conflictingSignature(existing, toAdd)) {
-              getWorld().showMessage(
-                  IMessage.ERROR,
-                  WeaverMessages.format(WeaverMessages.POINTCUT_NOT_VISIBLE, existing.getDeclaringType()
-                      .getName() + "." + existing.getName() + "()", this.getName()),
-                  toAdd.getSourceLocation(), null);
-              j.remove();
-            }
-            continue;
-          }
-        }
-        if (conflictingSignature(existing, toAdd)) {
-          if (isOverriding) {
-            checkLegalOverride(existing, toAdd, 0x00, null);
-            j.remove();
-          } else {
-            getWorld().showMessage(
-                IMessage.ERROR,
-                WeaverMessages.format(WeaverMessages.CONFLICTING_INHERITED_POINTCUTS,
-                    this.getName() + toAdd.getSignature()), existing.getSourceLocation(),
-                toAdd.getSourceLocation());
-            j.remove();
-          }
-        }
-      }
-      acc.add(toAdd);
-    }
-  }
-
-  public ISourceLocation getSourceLocation() {
-    return null;
-  }
-
-  public boolean isExposedToWeaver() {
-    return false;
-  }
-
-  public WeaverStateInfo getWeaverState() {
-    return null;
-  }
-
-  /**
-   * Overridden by ReferenceType to return a sensible answer for parameterized and raw types.
-   *
-   * @return
-   */
-  public ReferenceType getGenericType() {
-    // if (!(isParameterizedType() || isRawType()))
-    // throw new BCException("The type " + getBaseName() + " is not parameterized or raw - it has no generic type");
-    return null;
-  }
-
-  @Override
-  public ResolvedType getRawType() {
-    return super.getRawType().resolve(world);
-  }
-
-  public ResolvedType parameterizedWith(UnresolvedType[] typeParameters) {
-    if (!(isGenericType() || isParameterizedType())) {
-      return this;
-    }
-    return TypeFactory.createParameterizedType(this.getGenericType(), typeParameters, getWorld());
-  }
-
-  /**
-   * Iff I am a parameterized type, and any of my parameters are type variable references (or nested parameterized types),
-   * return a version with those type parameters replaced in accordance with the passed bindings.
-   */
-  @Override
-  public UnresolvedType parameterize(Map<String, UnresolvedType> typeBindings) {
-    if (!isParameterizedType()) {
-      // throw new IllegalStateException("Can't parameterize a type that is not a parameterized type");
-      return this;
-    }
-    boolean workToDo = false;
-    for (int i = 0; i < typeParameters.length; i++) {
-      if (typeParameters[i].isTypeVariableReference() || (typeParameters[i] instanceof BoundedReferenceType) || typeParameters[i].isParameterizedType()) {
-        workToDo = true;
-      }
-    }
-    if (!workToDo) {
-      return this;
-    } else {
-      final UnresolvedType[] newTypeParams = new UnresolvedType[typeParameters.length];
-      for (int i = 0; i < newTypeParams.length; i++) {
-        newTypeParams[i] = typeParameters[i];
-        if (newTypeParams[i].isTypeVariableReference()) {
-          final TypeVariableReferenceType tvrt = (TypeVariableReferenceType) newTypeParams[i];
-          final UnresolvedType binding = typeBindings.get(tvrt.getTypeVariable().getName());
-          if (binding != null) {
-            newTypeParams[i] = binding;
-          }
-        } else if (newTypeParams[i] instanceof BoundedReferenceType) {
-          final BoundedReferenceType brType = (BoundedReferenceType) newTypeParams[i];
-          newTypeParams[i] = brType.parameterize(typeBindings);
-          // brType.parameterize(typeBindings)
-        } else if (newTypeParams[i].isParameterizedType()) {
-          newTypeParams[i] = newTypeParams[i].parameterize(typeBindings);
-        }
-      }
-      return TypeFactory.createParameterizedType(getGenericType(), newTypeParams, getWorld());
-    }
-  }
-
-  // public boolean hasParameterizedSuperType() {
-  // getParameterizedSuperTypes();
-  // return parameterizedSuperTypes.length > 0;
-  // }
-
-  // public boolean hasGenericSuperType() {
-  // ResolvedType[] superTypes = getDeclaredInterfaces();
-  // for (int i = 0; i < superTypes.length; i++) {
-  // if (superTypes[i].isGenericType())
-  // return true;
-  // }
-  // return false;
-  // }
-
-  // private ResolvedType[] parameterizedSuperTypes = null;
-
-  /**
-   * Similar to the above method, but accumulates the super types
-   *
-   * @return
-   */
-  // public ResolvedType[] getParameterizedSuperTypes() {
-  // if (parameterizedSuperTypes != null)
-  // return parameterizedSuperTypes;
-  // List accumulatedTypes = new ArrayList();
-  // accumulateParameterizedSuperTypes(this, accumulatedTypes);
-  // ResolvedType[] ret = new ResolvedType[accumulatedTypes.size()];
-  // parameterizedSuperTypes = (ResolvedType[]) accumulatedTypes.toArray(ret);
-  // return parameterizedSuperTypes;
-  // }
-  // private void accumulateParameterizedSuperTypes(ResolvedType forType, List
-  // parameterizedTypeList) {
-  // if (forType.isParameterizedType()) {
-  // parameterizedTypeList.add(forType);
-  // }
-  // if (forType.getSuperclass() != null) {
-  // accumulateParameterizedSuperTypes(forType.getSuperclass(),
-  // parameterizedTypeList);
-  // }
-  // ResolvedType[] interfaces = forType.getDeclaredInterfaces();
-  // for (int i = 0; i < interfaces.length; i++) {
-  // accumulateParameterizedSuperTypes(interfaces[i], parameterizedTypeList);
-  // }
-  // }
-
-  /**
-   * @return true if assignable to java.lang.Exception
-   */
-  public boolean isException() {
-    return (world.getCoreType(UnresolvedType.JL_EXCEPTION).isAssignableFrom(this));
-  }
-
-  /**
-   * @return true if it is an exception and it is a checked one, false otherwise.
-   */
-  public boolean isCheckedException() {
-    if (!isException()) {
-      return false;
-    }
-    if (world.getCoreType(UnresolvedType.RUNTIME_EXCEPTION).isAssignableFrom(this)) {
-      return false;
-    }
-    return true;
-  }
-
-  /**
-   * Determines if variables of this type could be assigned values of another with lots of help. java.lang.Object is convertable
-   * from all types. A primitive type is convertable from X iff it's assignable from X. A reference type is convertable from X iff
-   * it's coerceable from X. In other words, X isConvertableFrom Y iff the compiler thinks that _some_ value of Y could be
-   * assignable to a variable of type X without loss of precision.
-   *
-   * @param other the other type
-   * @param world the {@link World} in which the possible assignment should be checked.
-   * @return true iff variables of this type could be assigned values of other with possible conversion
-   */
-  public final boolean isConvertableFrom(ResolvedType other) {
-
-    // // version from TypeX
-    // if (this.equals(OBJECT)) return true;
-    // if (this.isPrimitiveType() || other.isPrimitiveType()) return
-    // this.isAssignableFrom(other);
-    // return this.isCoerceableFrom(other);
-    //
-
-    // version from ResolvedTypeX
-    if (this.equals(OBJECT)) {
-      return true;
-    }
-    if (world.isInJava5Mode()) {
-      if (this.isPrimitiveType() ^ other.isPrimitiveType()) { // If one is
-        // primitive
-        // and the
-        // other
-        // isnt
-        if (validBoxing.contains(this.getSignature() + other.getSignature())) {
-          return true;
-        }
-      }
-    }
-    if (this.isPrimitiveType() || other.isPrimitiveType()) {
-      return this.isAssignableFrom(other);
-    }
-    return this.isCoerceableFrom(other);
-  }
-
-  /**
-   * Determines if the variables of this type could be assigned values of another type without casting. This still allows for
-   * assignment conversion as per JLS 2ed 5.2. For object types, this means supertypeOrEqual(THIS, OTHER).
-   *
-   * @param other the other type
-   * @param world the {@link World} in which the possible assignment should be checked.
-   * @return true iff variables of this type could be assigned values of other without casting
-   * @throws NullPointerException if other is null
-   */
-  public abstract boolean isAssignableFrom(ResolvedType other);
-
-  public abstract boolean isAssignableFrom(ResolvedType other, boolean allowMissing);
-
-  /**
-   * Determines if values of another type could possibly be cast to this type. The rules followed are from JLS 2ed 5.5,
-   * "Casting Conversion".
-   * <p/>
-   * <p/>
-   * This method should be commutative, i.e., for all UnresolvedType a, b and all World w:
-   * <p/>
-   * <blockquote>
-   * <p/>
-   * <pre>
-   * a.isCoerceableFrom(b, w) == b.isCoerceableFrom(a, w)
-   * </pre>
-   * <p/>
-   * </blockquote>
-   *
-   * @param other the other type
-   * @param world the {@link World} in which the possible coersion should be checked.
-   * @return true iff values of other could possibly be cast to this type.
-   * @throws NullPointerException if other is null.
-   */
-  public abstract boolean isCoerceableFrom(ResolvedType other);
-
-  public boolean needsNoConversionFrom(ResolvedType o) {
-    return isAssignableFrom(o);
-  }
-
-  public String getSignatureForAttribute() {
-    return signature; // Assume if this is being called that it is for a
-    // simple type (eg. void, int, etc)
-  }
-
-  private FuzzyBoolean parameterizedWithTypeVariable = FuzzyBoolean.MAYBE;
-
-  /**
-   * return true if the parameterization of this type includes a member type variable. Member type variables occur in generic
-   * methods/ctors.
-   */
-  public boolean isParameterizedWithTypeVariable() {
-    // MAYBE means we haven't worked it out yet...
-    if (parameterizedWithTypeVariable == FuzzyBoolean.MAYBE) {
-
-      // if there are no type parameters then we cant be...
-      if (typeParameters == null || typeParameters.length == 0) {
-        parameterizedWithTypeVariable = FuzzyBoolean.NO;
-        return false;
-      }
-
-      for (int i = 0; i < typeParameters.length; i++) {
-        final ResolvedType aType = (ResolvedType) typeParameters[i];
-        if (aType.isTypeVariableReference()
-          // Changed according to the problems covered in bug 222648
-          // Don't care what kind of type variable - the fact that there
-          // is one
-          // at all means we can't risk caching it against we get confused
-          // later
-          // by another variation of the parameterization that just
-          // happens to
-          // use the same type variable name
-
-          // assume the worst - if its definetly not a type declared one,
-          // it could be anything
-          // && ((TypeVariableReference)aType).getTypeVariable().
-          // getDeclaringElementKind()!=TypeVariable.TYPE
-            ) {
-          parameterizedWithTypeVariable = FuzzyBoolean.YES;
-          return true;
-        }
-        if (aType.isParameterizedType()) {
-          final boolean b = aType.isParameterizedWithTypeVariable();
-          if (b) {
-            parameterizedWithTypeVariable = FuzzyBoolean.YES;
-            return true;
-          }
-        }
-        if (aType.isGenericWildcard()) {
-          final BoundedReferenceType boundedRT = (BoundedReferenceType) aType;
-          if (boundedRT.isExtends()) {
-            boolean b = false;
-            final UnresolvedType upperBound = boundedRT.getUpperBound();
-            if (upperBound.isParameterizedType()) {
-              b = ((ResolvedType) upperBound).isParameterizedWithTypeVariable();
-            } else if (upperBound.isTypeVariableReference()
-                && ((TypeVariableReference) upperBound).getTypeVariable().getDeclaringElementKind() == TypeVariable.METHOD) {
-              b = true;
-            }
-            if (b) {
-              parameterizedWithTypeVariable = FuzzyBoolean.YES;
-              return true;
-            }
-            // FIXME asc need to check additional interface bounds
-          }
-          if (boundedRT.isSuper()) {
-            boolean b = false;
-            final UnresolvedType lowerBound = boundedRT.getLowerBound();
-            if (lowerBound.isParameterizedType()) {
-              b = ((ResolvedType) lowerBound).isParameterizedWithTypeVariable();
-            } else if (lowerBound.isTypeVariableReference()
-                && ((TypeVariableReference) lowerBound).getTypeVariable().getDeclaringElementKind() == TypeVariable.METHOD) {
-              b = true;
-            }
-            if (b) {
-              parameterizedWithTypeVariable = FuzzyBoolean.YES;
-              return true;
-            }
-          }
-        }
-      }
-      parameterizedWithTypeVariable = FuzzyBoolean.NO;
-    }
-    return parameterizedWithTypeVariable.alwaysTrue();
-  }
-
-  protected boolean ajMembersNeedParameterization() {
-    if (isParameterizedType()) {
-      return true;
-    }
-    final ResolvedType superclass = getSuperclass();
-    if (superclass != null && !superclass.isMissing()) {
-      return superclass.ajMembersNeedParameterization();
-    }
-    return false;
-  }
-
-  protected Map<String, UnresolvedType> getAjMemberParameterizationMap() {
-    final Map<String, UnresolvedType> myMap = getMemberParameterizationMap();
-    if (myMap.isEmpty()) {
-      // might extend a parameterized aspect that we also need to
-      // consider...
-      if (getSuperclass() != null) {
-        return getSuperclass().getAjMemberParameterizationMap();
-      }
-    }
-    return myMap;
-  }
-
-  public void setBinaryPath(String binaryPath) {
-    this.binaryPath = binaryPath;
-  }
-
-  /**
-   * Returns the path to the jar or class file from which this binary aspect came or null if not a binary aspect
-   */
-  public String getBinaryPath() {
-    return binaryPath;
-  }
-
-  /**
-   * Undo any temporary modifications to the type (for example it may be holding annotations temporarily whilst some matching is
-   * occurring - These annotations will be added properly during weaving but sometimes for type completion they need to be held
-   * here for a while).
-   */
-  public void ensureConsistent() {
-    // Nothing to do for anything except a ReferenceType
-  }
-
-  /**
-   * For an annotation type, this will return if it is marked with @Inherited
-   */
-  public boolean isInheritedAnnotation() {
-    ensureAnnotationBitsInitialized();
-    return (bits & AnnotationMarkedInherited) != 0;
-  }
-
-  /*
-   * Setup the bitflags if they have not already been done.
-   */
-  private void ensureAnnotationBitsInitialized() {
-    if ((bits & AnnotationBitsInitialized) == 0) {
-      bits |= AnnotationBitsInitialized;
-      // Is it marked @Inherited?
-      if (hasAnnotation(UnresolvedType.AT_INHERITED)) {
-        bits |= AnnotationMarkedInherited;
-      }
-    }
-  }
-
-  private boolean hasNewParentMungers() {
-    if ((bits & MungersAnalyzed) == 0) {
-      bits |= MungersAnalyzed;
-      for (ConcreteTypeMunger munger : interTypeMungers) {
-        final ResolvedTypeMunger resolvedTypeMunger = munger.getMunger();
-        if (resolvedTypeMunger != null && resolvedTypeMunger.getKind() == ResolvedTypeMunger.Parent) {
-          bits |= HasParentMunger;
-        }
-      }
-    }
-    return (bits & HasParentMunger) != 0;
-  }
-
-  public void tagAsTypeHierarchyComplete() {
-    bits |= TypeHierarchyCompleteBit;
-  }
-
-  public boolean isTypeHierarchyComplete() {
-    return (bits & TypeHierarchyCompleteBit) != 0;
-  }
-
-  /**
-   * return the weaver version used to build this type - defaults to the most recent version unless discovered otherwise.
-   *
-   * @return the (major) version, {@link WeaverVersionInfo}
-   */
-  public int getCompilerVersion() {
-    return WeaverVersionInfo.getCurrentWeaverMajorVersion();
-  }
-
-  public boolean isPrimitiveArray() {
-    return false;
-  }
-
-  public boolean isGroovyObject() {
-    if ((bits & GroovyObjectInitialized) == 0) {
-      final ResolvedType[] intfaces = getDeclaredInterfaces();
-      boolean done = false;
-      // TODO do we need to walk more of these? (i.e. the interfaces interfaces and supertypes supertype). Check what groovy
-      // does in the case where a hierarchy is involved and there are types in between GroovyObject/GroovyObjectSupport and
-      // the type
-      if (intfaces != null) {
-        for (ResolvedType intface : intfaces) {
-          if (intface.getName().equals("groovy.lang.GroovyObject")) {
-            bits |= IsGroovyObject;
-            done = true;
-            break;
-          }
-        }
-      }
-      if (!done) {
-        // take a look at the supertype
-        if (getSuperclass().getName().equals("groovy.lang.GroovyObjectSupport")) {
-          bits |= IsGroovyObject;
-        }
-      }
-      bits |= GroovyObjectInitialized;
-    }
-    return (bits & IsGroovyObject) != 0;
   }
 
 }

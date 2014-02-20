@@ -57,6 +57,8 @@ package org.aspectj.apache.bcel.util;
 import org.aspectj.apache.bcel.classfile.ClassParser;
 import org.aspectj.apache.bcel.classfile.JavaClass;
 import org.aspectj.apache.bcel.util.ClassLoaderRepository.SoftHashMap.SpecialValue;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -77,23 +79,28 @@ import java.util.*;
  * @version $Id: ClassLoaderRepository.java,v 1.13 2009/09/09 19:56:20 aclement Exp $
  * @see org.aspectj.apache.bcel.Repository
  */
-public class ClassLoaderRepository implements Repository {
+public final class ClassLoaderRepository implements Repository {
+  @Nullable
   private static java.lang.ClassLoader bootClassLoader = null;
-  private final ClassLoaderReference loaderRef;
-
-  // Choice of cache...
-  private final WeakHashMap /* <URL,SoftRef(JavaClass)> */<URL, SoftReference<JavaClass>> localCache = new WeakHashMap<URL, SoftReference<JavaClass>>();
+  @NotNull
   private static final SoftHashMap /* <URL,JavaClass> */sharedCache = new SoftHashMap(Collections
       .synchronizedMap(new HashMap<Object, SpecialValue>()));
-
-  // For fast translation of the classname *intentionally not static*
-  private final SoftHashMap /* <String,URL> */nameMap = new SoftHashMap(new HashMap(), false);
 
   public static boolean useSharedCache = System.getProperty("org.aspectj.apache.bcel.useSharedCache", "true").equalsIgnoreCase(
       "true");
 
   private static int cacheHitsShared = 0;
   private static int missSharedEvicted = 0; // Misses in shared cache access due to reference GC
+  @NotNull
+  private final ClassLoaderReference loaderRef;
+
+  // Choice of cache...
+  @NotNull
+  private final WeakHashMap /* <URL,SoftRef(JavaClass)> */<URL, SoftReference<JavaClass>> localCache = new WeakHashMap<URL, SoftReference<JavaClass>>();
+
+  // For fast translation of the classname *intentionally not static*
+  @NotNull
+  private final SoftHashMap /* <String,URL> */nameMap = new SoftHashMap(new HashMap(), false);
   private long timeManipulatingURLs = 0L;
   private long timeSpentLoading = 0L;
   private int classesLoadedCount = 0;
@@ -101,132 +108,27 @@ public class ClassLoaderRepository implements Repository {
   private int cacheHitsLocal = 0;
   private int missLocalEvicted = 0; // Misses in local cache access due to reference GC
 
-  public ClassLoaderRepository(java.lang.ClassLoader loader) {
+  public ClassLoaderRepository(@Nullable java.lang.ClassLoader loader) {
     this.loaderRef = new DefaultClassLoaderReference((loader != null) ? loader : getBootClassLoader());
   }
 
-  public ClassLoaderRepository(ClassLoaderReference loaderRef) {
+  public ClassLoaderRepository(@NotNull ClassLoaderReference loaderRef) {
     this.loaderRef = loaderRef;
-  }
-
-  private static synchronized java.lang.ClassLoader getBootClassLoader() {
-    if (bootClassLoader == null) {
-      bootClassLoader = new URLClassLoader(new URL[0]);
-    }
-    return bootClassLoader;
-  }
-
-  // Can track back to its key
-  public static class SoftHashMap extends AbstractMap {
-    private final Map<Object, SpecialValue> map;
-    boolean recordMiss = true; // only interested in recording miss stats sometimes
-    private final ReferenceQueue rq = new ReferenceQueue();
-
-    public SoftHashMap(Map<Object, SpecialValue> map) {
-      this.map = map;
-    }
-
-    public SoftHashMap() {
-      this(new HashMap());
-    }
-
-    public SoftHashMap(Map map, boolean b) {
-      this(map);
-      this.recordMiss = b;
-    }
-
-    class SpecialValue extends SoftReference {
-      private final Object key;
-
-      SpecialValue(Object k, Object v) {
-        super(v, rq);
-        this.key = k;
-      }
-    }
-
-    private void processQueue() {
-      SpecialValue sv = null;
-      while ((sv = (SpecialValue) rq.poll()) != null) {
-        map.remove(sv.key);
-      }
-    }
-
-    @Override
-    public Object get(Object key) {
-      final SpecialValue value = map.get(key);
-      if (value == null)
-        return null;
-      if (value.get() == null) {
-        // it got GC'd
-        map.remove(value.key);
-        if (recordMiss)
-          missSharedEvicted++;
-        return null;
-      } else {
-        return value.get();
-      }
-    }
-
-    @Override
-    public Object put(Object k, Object v) {
-      processQueue();
-      return map.put(k, new SpecialValue(k, v));
-    }
-
-    @Override
-    public Set entrySet() {
-      return map.entrySet();
-    }
-
-    @Override
-    public void clear() {
-      processQueue();
-      map.clear();
-    }
-
-    @Override
-    public int size() {
-      processQueue();
-      return map.size();
-    }
-
-    @Override
-    public Object remove(Object k) {
-      processQueue();
-      final SpecialValue value = map.remove(k);
-      if (value == null)
-        return null;
-      if (value.get() != null) {
-        return value.get();
-      }
-      return null;
-    }
-  }
-
-  /**
-   * Store a new JavaClass into this repository as a soft reference and return the reference
-   */
-  private void storeClassAsReference(URL url, JavaClass clazz) {
-    if (useSharedCache) {
-      clazz.setRepository(null); // can't risk setting repository, we'll get in a pickle!
-      sharedCache.put(url, clazz);
-    } else {
-      clazz.setRepository(this);
-      localCache.put(url, new SoftReference<JavaClass>(clazz));
-    }
   }
 
   /**
    * Store a new JavaClass into this Repository.
    */
-  public void storeClass(JavaClass clazz) {
+  @Override
+  public void storeClass(@NotNull JavaClass clazz) {
     storeClassAsReference(toURL(clazz.getClassName()), clazz);
   }
 
   /**
    * Remove class from repository
    */
-  public void removeClass(JavaClass clazz) {
+  @Override
+  public void removeClass(@NotNull JavaClass clazz) {
     if (useSharedCache)
       sharedCache.remove(toURL(clazz.getClassName()));
     else
@@ -236,47 +138,21 @@ public class ClassLoaderRepository implements Repository {
   /**
    * Find an already defined JavaClass in the local cache.
    */
-  public JavaClass findClass(String className) {
+  @Override
+  @Nullable
+  public JavaClass findClass(@NotNull String className) {
     if (useSharedCache)
       return findClassShared(toURL(className));
     else
       return findClassLocal(toURL(className));
   }
 
-  private JavaClass findClassLocal(URL url) {
-    Object o = localCache.get(url);
-    if (o != null) {
-      o = ((Reference) o).get();
-      if (o != null) {
-        return (JavaClass) o;
-      } else {
-        missLocalEvicted++;
-      }
-    }
-    return null;
-  }
-
-  /**
-   * Find an already defined JavaClass in the shared cache.
-   */
-  private JavaClass findClassShared(URL url) {
-    return (JavaClass) sharedCache.get(url);
-  }
-
-  private URL toURL(String className) {
-    URL url = (URL) nameMap.get(className);
-    if (url == null) {
-      final String classFile = className.replace('.', '/');
-      url = loaderRef.getClassLoader().getResource(classFile + ".class");
-      nameMap.put(className, url);
-    }
-    return url;
-  }
-
   /**
    * Lookup a JavaClass object from the Class Name provided.
    */
-  public JavaClass loadClass(String className) throws ClassNotFoundException {
+  @Override
+  @NotNull
+  public JavaClass loadClass(@NotNull String className) throws ClassNotFoundException {
 
     // translate to a URL
     final long time = System.currentTimeMillis();
@@ -330,6 +206,7 @@ public class ClassLoaderRepository implements Repository {
   /**
    * Produce a report on cache usage.
    */
+  @NotNull
   public String report() {
     final StringBuilder sb = new StringBuilder();
     sb.append("BCEL repository report.");
@@ -355,6 +232,7 @@ public class ClassLoaderRepository implements Repository {
    * (static) 2=classes loaded (static) 3=cache hits shared (static) 4=misses in shared due to eviction (static) 5=cache hits
    * local 6=misses in local due to eviction 7=shared cache size
    */
+  @NotNull
   public long[] reportStats() {
     return new long[]{timeSpentLoading, timeManipulatingURLs, classesLoadedCount, cacheHitsShared, missSharedEvicted,
         cacheHitsLocal, missLocalEvicted, sharedCache.size()};
@@ -375,18 +253,171 @@ public class ClassLoaderRepository implements Repository {
     clear();
   }
 
-  public JavaClass loadClass(Class clazz) throws ClassNotFoundException {
+  @NotNull
+  @Override
+  public JavaClass loadClass(@NotNull Class clazz) throws ClassNotFoundException {
     return loadClass(clazz.getName());
   }
 
   /**
    * Clear all entries from the local cache
    */
+  @Override
   public void clear() {
     if (useSharedCache)
       sharedCache.clear();
     else
       localCache.clear();
+  }
+
+  @NotNull
+  private static synchronized java.lang.ClassLoader getBootClassLoader() {
+    if (bootClassLoader == null) {
+      bootClassLoader = new URLClassLoader(new URL[0]);
+    }
+    return bootClassLoader;
+  }
+
+  /**
+   * Store a new JavaClass into this repository as a soft reference and return the reference
+   */
+  private void storeClassAsReference(@NotNull URL url, @NotNull JavaClass clazz) {
+    if (useSharedCache) {
+      clazz.setRepository(null); // can't risk setting repository, we'll get in a pickle!
+      sharedCache.put(url, clazz);
+    } else {
+      clazz.setRepository(this);
+      localCache.put(url, new SoftReference<JavaClass>(clazz));
+    }
+  }
+
+  @Nullable
+  private JavaClass findClassLocal(@NotNull URL url) {
+    Object o = localCache.get(url);
+    if (o != null) {
+      o = ((Reference) o).get();
+      if (o != null) {
+        return (JavaClass) o;
+      } else {
+        missLocalEvicted++;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Find an already defined JavaClass in the shared cache.
+   */
+  @Nullable
+  private static JavaClass findClassShared(@NotNull URL url) {
+    return (JavaClass) sharedCache.get(url);
+  }
+
+  @NotNull
+  private URL toURL(@NotNull String className) {
+    URL url = (URL) nameMap.get(className);
+    if (url == null) {
+      final String classFile = className.replace('.', '/');
+      url = loaderRef.getClassLoader().getResource(classFile + ".class");
+      if (url == null)
+        throw new IllegalArgumentException(new ClassNotFoundException("failed to find class '" + className + '\''));
+      nameMap.put(className, url);
+    }
+    return url;
+  }
+
+  // Can track back to its key
+  public static class SoftHashMap extends java.util.AbstractMap {
+    @NotNull
+    private final Map<Object, SpecialValue> map;
+    boolean recordMiss = true; // only interested in recording miss stats sometimes
+    @NotNull
+    private final ReferenceQueue rq = new ReferenceQueue();
+
+    public SoftHashMap(@NotNull Map<Object, SpecialValue> map) {
+      this.map = map;
+    }
+
+    public SoftHashMap() {
+      this(new HashMap());
+    }
+
+    public SoftHashMap(@NotNull Map map, boolean b) {
+      this(map);
+      this.recordMiss = b;
+    }
+
+    @Nullable
+    @Override
+    public Object get(@NotNull Object key) {
+      final SpecialValue value = map.get(key);
+      if (value == null)
+        return null;
+      if (value.get() == null) {
+        // it got GC'd
+        map.remove(value.key);
+        if (recordMiss)
+          missSharedEvicted++;
+        return null;
+      } else {
+        return value.get();
+      }
+    }
+
+    @Nullable
+    @Override
+    public Object put(@NotNull Object k, Object v) {
+      processQueue();
+      return map.put(k, new SpecialValue(k, v));
+    }
+
+    @NotNull
+    @Override
+    public Set entrySet() {
+      return map.entrySet();
+    }
+
+    @Override
+    public void clear() {
+      processQueue();
+      map.clear();
+    }
+
+    @Override
+    public int size() {
+      processQueue();
+      return map.size();
+    }
+
+    @Nullable
+    @Override
+    public Object remove(@NotNull Object k) {
+      processQueue();
+      final SpecialValue value = map.remove(k);
+      if (value == null)
+        return null;
+      if (value.get() != null) {
+        return value.get();
+      }
+      return null;
+    }
+
+    private void processQueue() {
+      SpecialValue sv = null;
+      while ((sv = (SpecialValue) rq.poll()) != null) {
+        map.remove(sv.key);
+      }
+    }
+
+    class SpecialValue extends SoftReference {
+      @NotNull
+      private final Object key;
+
+      SpecialValue(@NotNull Object k, Object v) {
+        super(v, rq);
+        this.key = k;
+      }
+    }
   }
 
 }

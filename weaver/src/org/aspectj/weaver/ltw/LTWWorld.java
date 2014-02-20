@@ -31,6 +31,7 @@ import org.aspectj.weaver.reflect.AnnotationFinder;
 import org.aspectj.weaver.reflect.IReflectionWorld;
 import org.aspectj.weaver.reflect.ReflectionBasedReferenceTypeDelegateFactory;
 import org.aspectj.weaver.reflect.ReflectionWorld;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author adrian
@@ -159,6 +160,7 @@ public class LTWWorld extends BcelWorld implements IReflectionWorld {
 
   private static final long serialVersionUID = 1;
 
+  @Override
   public AnnotationFinder getAnnotationFinder() {
     return this.annotationFinder;
   }
@@ -168,6 +170,7 @@ public class LTWWorld extends BcelWorld implements IReflectionWorld {
    *
    * @see org.aspectj.weaver.reflect.IReflectionWorld#resolve(java.lang.Class)
    */
+  @Override
   public ResolvedType resolve(Class aClass) {
     return ReflectionWorld.resolve(this, aClass);
   }
@@ -250,7 +253,7 @@ public class LTWWorld extends BcelWorld implements IReflectionWorld {
   }
 
   @Override
-  public boolean isLocallyDefined(String classname) {
+  public boolean isLocallyDefined(@NotNull String classname) {
     return weavingContext.isLocallyDefined(classname);
   }
 
@@ -268,13 +271,13 @@ public class LTWWorld extends BcelWorld implements IReflectionWorld {
   }
 
   @Override
-  public void storeClass(JavaClass clazz) {
+  public void storeClass(@NotNull JavaClass clazz) {
     ensureRepositorySetup();
     delegate.storeClass(clazz);
   }
 
   @Override
-  public void accept(IVisitor visitor) {
+  public void accept(@NotNull IVisitor visitor) {
     visitor.visitObject("Class loader:");
     visitor.visitObject(classLoaderString);
     visitor.visitObject("Class loader parent:");
@@ -282,6 +285,7 @@ public class LTWWorld extends BcelWorld implements IReflectionWorld {
     super.accept(visitor);
   }
 
+  @Override
   public boolean isLoadtimeWeaving() {
     return true;
   }

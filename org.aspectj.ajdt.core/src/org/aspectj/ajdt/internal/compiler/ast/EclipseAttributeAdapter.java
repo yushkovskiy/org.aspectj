@@ -15,21 +15,25 @@ package org.aspectj.ajdt.internal.compiler.ast;
 import org.aspectj.org.eclipse.jdt.internal.compiler.IAttribute;
 import org.aspectj.org.eclipse.jdt.internal.compiler.codegen.ConstantPool;
 import org.aspectj.weaver.AjAttribute;
+import org.jetbrains.annotations.NotNull;
 
-public class EclipseAttributeAdapter implements IAttribute {
-  AjAttribute attr;
+public final class EclipseAttributeAdapter implements IAttribute {
+  @NotNull
+  final AjAttribute attr;
 
-  public EclipseAttributeAdapter(AjAttribute attr) {
+  public EclipseAttributeAdapter(@NotNull AjAttribute attr) {
     this.attr = attr;
   }
 
   @Override
+  @NotNull
   public char[] getNameChars() {
     return attr.getNameChars();
   }
 
   @Override
-  public byte[] getAllBytes(short nameIndex, ConstantPool constantPool) {
+  @NotNull
+  public byte[] getAllBytes(short nameIndex, @NotNull ConstantPool constantPool) {
     return attr.getAllBytes(nameIndex, new EclipseConstantPoolWriter(constantPool));
   }
 

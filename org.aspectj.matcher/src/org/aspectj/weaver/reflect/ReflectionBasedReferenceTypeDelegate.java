@@ -67,7 +67,7 @@ public class ReflectionBasedReferenceTypeDelegate implements ReferenceTypeDelega
     return this.world;
   }
 
-  public ReferenceType buildGenericType() {
+  public static ReferenceType buildGenericType() {
     throw new UnsupportedOperationException("Shouldn't be asking for generic type at 1.4 source level or lower");
   }
 
@@ -407,7 +407,7 @@ public class ReflectionBasedReferenceTypeDelegate implements ReferenceTypeDelega
     return null;
   }
 
-  public ReflectionBasedResolvedMemberImpl createResolvedMemberFor(Member aMember) {
+  public static ReflectionBasedResolvedMemberImpl createResolvedMemberFor(Member aMember) {
     return null;
   }
 

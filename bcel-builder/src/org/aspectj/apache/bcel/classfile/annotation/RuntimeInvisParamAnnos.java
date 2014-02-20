@@ -35,10 +35,12 @@ public class RuntimeInvisParamAnnos extends RuntimeParamAnnos {
     super(Constants.ATTR_RUNTIME_INVISIBLE_PARAMETER_ANNOTATIONS, false, nameIndex, len, rvaData, cpool);
   }
 
+  @Override
   public void accept(ClassVisitor v) {
     v.visitRuntimeInvisibleParameterAnnotations(this);
   }
 
+  @Override
   public Attribute copy(ConstantPool constant_pool) {
     throw new RuntimeException("Not implemented yet!");
   }

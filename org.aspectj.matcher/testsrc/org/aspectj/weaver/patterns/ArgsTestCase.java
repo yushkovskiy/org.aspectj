@@ -132,11 +132,11 @@ public class ArgsTestCase extends TestCase {
 
   }
 
-  private void checkMatches(ShadowMatch sMatch, Object thisOjb, Object targetObj, Object[] args) {
+  private static void checkMatches(ShadowMatch sMatch, Object thisOjb, Object targetObj, Object[] args) {
     assertTrue("match expected", sMatch.matchesJoinPoint(thisOjb, targetObj, args).matches());
   }
 
-  private void checkNoMatch(ShadowMatch sMatch, Object thisOjb, Object targetObj, Object[] args) {
+  private static void checkNoMatch(ShadowMatch sMatch, Object thisOjb, Object targetObj, Object[] args) {
     assertFalse("no match expected", sMatch.matchesJoinPoint(thisOjb, targetObj, args).matches());
   }
 

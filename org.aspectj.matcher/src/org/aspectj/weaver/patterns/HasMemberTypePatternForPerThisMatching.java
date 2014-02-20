@@ -14,6 +14,7 @@ package org.aspectj.weaver.patterns;
 import org.aspectj.weaver.CompressingDataOutputStream;
 import org.aspectj.weaver.ConcreteTypeMunger;
 import org.aspectj.weaver.ResolvedType;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.List;
@@ -60,7 +61,7 @@ public class HasMemberTypePatternForPerThisMatching extends HasMemberTypePattern
   }
 
   @Override
-  public void write(CompressingDataOutputStream s) throws IOException {
+  public void write(@NotNull CompressingDataOutputStream s) throws IOException {
     throw new IllegalAccessError("Should never be called, these are transient and don't get serialized");
   }
 }

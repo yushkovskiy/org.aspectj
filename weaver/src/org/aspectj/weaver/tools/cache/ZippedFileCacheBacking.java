@@ -46,6 +46,7 @@ public class ZippedFileCacheBacking extends AsynchronousFileCacheBacking {
   public static final String ZIP_FILE = "cache.zip";
   private static final AsynchronousFileCacheBackingCreator<ZippedFileCacheBacking> defaultCreator =
       new AsynchronousFileCacheBackingCreator<ZippedFileCacheBacking>() {
+        @Override
         public ZippedFileCacheBacking create(File cacheDir) {
           return new ZippedFileCacheBacking(cacheDir);
         }

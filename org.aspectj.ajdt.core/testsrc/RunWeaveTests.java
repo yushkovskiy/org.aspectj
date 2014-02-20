@@ -37,7 +37,7 @@ public class RunWeaveTests {
 
   private static String filename;
 
-  private static long[][] times = new long[7][3 * ITERATIONS];
+  private static final long[][] times = new long[7][3 * ITERATIONS];
 
   public static void main(String[] args) throws IOException {
 

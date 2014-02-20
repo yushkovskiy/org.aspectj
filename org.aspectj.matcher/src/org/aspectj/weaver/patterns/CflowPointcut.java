@@ -17,6 +17,7 @@ import org.aspectj.util.FileUtil;
 import org.aspectj.util.FuzzyBoolean;
 import org.aspectj.weaver.*;
 import org.aspectj.weaver.ast.Test;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.lang.reflect.Modifier;
@@ -76,7 +77,7 @@ public class CflowPointcut extends Pointcut {
   }
 
   @Override
-  public void write(CompressingDataOutputStream s) throws IOException {
+  public void write(@NotNull CompressingDataOutputStream s) throws IOException {
     s.writeByte(Pointcut.CFLOW);
     entry.write(s);
     s.writeBoolean(isBelow);
@@ -309,7 +310,7 @@ public class CflowPointcut extends Pointcut {
 
   }
 
-  private String getKey(Pointcut p, ResolvedType a, String stackOrCounter) {
+  private static String getKey(Pointcut p, ResolvedType a, String stackOrCounter) {
     final StringBuffer sb = new StringBuffer();
     sb.append(a.getName());
     sb.append("::");

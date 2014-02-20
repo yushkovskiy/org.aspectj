@@ -522,6 +522,7 @@ public class PointcutExpressionTest extends TestCase {
     assertTrue("Dynamic test needed", ex.mayNeedDynamicTest());
   }
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     p = PointcutParser.getPointcutParserSupportingAllPrimitivesAndUsingSpecifiedClassloaderForResolution(this.getClass()
@@ -571,6 +572,7 @@ public class PointcutExpressionTest extends TestCase {
       return null;
     }
 
+    @Override
     public void aa(int i) {
     }
 

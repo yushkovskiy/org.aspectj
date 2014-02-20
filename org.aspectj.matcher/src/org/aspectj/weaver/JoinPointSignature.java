@@ -13,6 +13,7 @@ package org.aspectj.weaver;
 
 import org.aspectj.bridge.ISourceLocation;
 import org.aspectj.weaver.AjAttribute.EffectiveSignatureAttribute;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -270,7 +271,7 @@ public class JoinPointSignature implements ResolvedMember {
   }
 
   @Override
-  public int compareTo(Member other) {
+  public int compareTo(@NotNull Member other) {
     return realMember.compareTo(other);
   }
 

@@ -36,6 +36,7 @@ import org.aspectj.weaver.bcel.BcelWorld;
 import org.aspectj.weaver.bcel.TypeDelegateResolver;
 import org.aspectj.weaver.bcel.UnwovenClassFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.lang.ref.ReferenceQueue;
@@ -51,6 +52,7 @@ public class AjState implements CompilerConfigurationChangeFlags, TypeDelegateRe
   public static boolean CHECK_STATE_FIRST = true;
 
   // SECRETAPI static so beware of multi-threading bugs...
+  @Nullable
   public static IStateListener stateListener = null;
 
   public static boolean FORCE_INCREMENTAL_DURING_TESTING = false;
@@ -59,10 +61,10 @@ public class AjState implements CompilerConfigurationChangeFlags, TypeDelegateRe
   static int PATHID_ASPECTPATH = 1;
   static int PATHID_INPATH = 2;
 
-  private static int CLASS_FILE_NO_CHANGES = 0;
-  private static int CLASS_FILE_CHANGED_THAT_NEEDS_INCREMENTAL_BUILD = 1;
-  private static int CLASS_FILE_CHANGED_THAT_NEEDS_FULL_BUILD = 2;
-
+  private static final int CLASS_FILE_NO_CHANGES = 0;
+  private static final int CLASS_FILE_CHANGED_THAT_NEEDS_INCREMENTAL_BUILD = 1;
+  private static final int CLASS_FILE_CHANGED_THAT_NEEDS_FULL_BUILD = 2;
+  @NotNull
   private static final char[][] EMPTY_CHAR_ARRAY = new char[0][];
 
   // now follows non static, but transient state - no need to write out, doesn't need reinitializing
@@ -86,6 +88,7 @@ public class AjState implements CompilerConfigurationChangeFlags, TypeDelegateRe
   private Set<BinarySourceFile> addedBinaryFiles;
   private Set<BinarySourceFile> deletedBinaryFiles;
   // For a particular build run, this set records the changes to classesFromName
+  @NotNull
   public final Set<String> deltaAddedClasses = new HashSet<String>();
 
   // now follows non static, but transient state - no need to write out, DOES need reinitializing when read AjState instance
@@ -100,6 +103,7 @@ public class AjState implements CompilerConfigurationChangeFlags, TypeDelegateRe
   private boolean batchBuildRequiredThisTime = false;
   private AjBuildConfig buildConfig;
   private long lastSuccessfulFullBuildTime = -1;
+  @NotNull
   private final Hashtable<String, Long> structuralChangesSinceLastFullBuild = new Hashtable<String, Long>();
   private long lastSuccessfulBuildTime = -1;
   private long currentBuildTime = -1;
@@ -109,17 +113,20 @@ public class AjState implements CompilerConfigurationChangeFlags, TypeDelegateRe
    * For a given source file, records the ClassFiles (which contain a fully qualified name and a file name) that were created when
    * the source file was compiled. Populated in noteResult and used in addDependentsOf(File)
    */
+  @NotNull
   private final Map<File, List<ClassFile>> fullyQualifiedTypeNamesResultingFromCompilationUnit = new HashMap<File, List<ClassFile>>();
 
   /**
    * Source files defining aspects Populated in noteResult and used in processDeletedFiles
    */
+  @NotNull
   private final Set<File> sourceFilesDefiningAspects = new HashSet<File>();
 
   /**
    * Populated in noteResult to record the set of types that should be recompiled if the given file is modified or deleted.
    * Referred to during addAffectedSourceFiles when calculating incremental compilation set.
    */
+  @NotNull
   private final Map<File, ReferenceCollection> references = new HashMap<File, ReferenceCollection>();
 
   /**
@@ -139,6 +146,7 @@ public class AjState implements CompilerConfigurationChangeFlags, TypeDelegateRe
    * Used during getBinaryFilesToCompile when compiling incrementally to determine which files should be recompiled if a given
    * input file has changed.
    */
+  @NotNull
   private Map<String, List<UnwovenClassFile>> binarySourceFiles = new HashMap<String, List<UnwovenClassFile>>();
 
   /**
@@ -146,17 +154,20 @@ public class AjState implements CompilerConfigurationChangeFlags, TypeDelegateRe
    * (type name, File) not UnwovenClassFiles (which also have all the byte code in them). After a batch build, binarySourceFiles
    * is cleared, leaving just this much lighter weight map to use in processing subsequent incremental builds.
    */
+  @NotNull
   private final Map<String, List<ClassFile>> inputClassFilesBySource = new HashMap<String, List<ClassFile>>();
 
   /**
    * A list of the .class files created by this state that contain aspects.
    */
+  @NotNull
   private final List<String> aspectClassFiles = new ArrayList<String>();
 
   /**
    * Holds structure information on types as they were at the end of the last build. It would be nice to get rid of this too, but
    * can't see an easy way to do that right now.
    */
+  @NotNull
   private final Map<String, CompactTypeStructureRepresentation> resolvedTypeStructuresFromLastBuild = new HashMap<String, CompactTypeStructureRepresentation>();
 
   /**
@@ -167,6 +178,7 @@ public class AjState implements CompilerConfigurationChangeFlags, TypeDelegateRe
    * <p/>
    * Passed into StatefulNameEnvironment during incremental compilation to support findType lookups.
    */
+  @NotNull
   private final Map<String, File> classesFromName = new HashMap<String, File>();
 
   /**
@@ -176,14 +188,24 @@ public class AjState implements CompilerConfigurationChangeFlags, TypeDelegateRe
    * in which it is contained.
    */
   private Map<String, char[]> aspectsFromFileNames;
-
+  @NotNull
   private Set<File> compiledSourceFiles = new HashSet<File>();
+  @NotNull
   private final Map<String, File> resources = new HashMap<String, File>();
-
+  @NotNull
   SoftHashMap/* <baseDir,SoftHashMap<theFile,className>> */fileToClassNameMap = new SoftHashMap();
 
   private BcelWeaver weaver;
   private BcelWorld world;
+
+  // Will allow us to record decisions made during incremental processing, hopefully aid in debugging
+  public static boolean listenerDefined() {
+    return stateListener != null;
+  }
+
+  public static IStateListener getListener() {
+    return stateListener;
+  }
 
   // --- below here is unsorted state
 
@@ -195,17 +217,6 @@ public class AjState implements CompilerConfigurationChangeFlags, TypeDelegateRe
 
   public void setCouldBeSubsequentIncrementalBuild(boolean yesThereCould) {
     this.couldBeSubsequentIncrementalBuild = yesThereCould;
-  }
-
-  void successfulCompile(AjBuildConfig config, boolean wasFullBuild) {
-    buildConfig = config;
-    lastSuccessfulBuildTime = currentBuildTime;
-    if (stateListener != null) {
-      stateListener.buildSuccessful(wasFullBuild);
-    }
-    if (wasFullBuild) {
-      lastSuccessfulFullBuildTime = currentBuildTime;
-    }
   }
 
   /**
@@ -319,34 +330,463 @@ public class AjState implements CompilerConfigurationChangeFlags, TypeDelegateRe
     return true;
   }
 
-  /**
-   * Checks if any of the files in the set passed in contains an aspect declaration. If one is found then we start the process of
-   * batch building, i.e. we remove all the results of the last build, call any registered listener to tell them whats happened
-   * and return false.
-   *
-   * @return false if we discovered an aspect declaration
-   */
-  private boolean processDeletedFiles(Set<File> deletedFiles) {
-    for (File deletedFile : deletedFiles) {
-      if (this.sourceFilesDefiningAspects.contains(deletedFile)) {
-        removeAllResultsOfLastBuild();
-        if (stateListener != null) {
-          stateListener.detectedAspectDeleted(deletedFile);
+  // /**
+  // * For a given class file, determine which source file it came from. This will only succeed if the class file is from a source
+  // * file within this project.
+  // */
+  // private File getSourceFileForClassFile(File classfile) {
+  // Set sourceFiles = fullyQualifiedTypeNamesResultingFromCompilationUnit.keySet();
+  // for (Iterator sourceFileIterator = sourceFiles.iterator(); sourceFileIterator.hasNext();) {
+  // File sourceFile = (File) sourceFileIterator.next();
+  // List/* ClassFile */classesFromSourceFile = (List/* ClassFile */) fullyQualifiedTypeNamesResultingFromCompilationUnit
+  // .get(sourceFile);
+  // for (int i = 0; i < classesFromSourceFile.size(); i++) {
+  // if (((ClassFile) classesFromSourceFile.get(i)).locationOnDisk.equals(classfile))
+  // return sourceFile;
+  // }
+  // }
+  // return null;
+  // }
+
+  public String toString() {
+    final StringBuilder sb = new StringBuilder();
+    // null config means failed build i think as it is only set on successful full build?
+    sb.append("AjState(").append((buildConfig == null ? "NULLCONFIG" : buildConfig.getConfigFile().toString())).append(")");
+    return sb.toString();
+  }
+
+  public Set<File> getFilesToCompile(boolean firstPass) {
+    final Set<File> thisTime = new HashSet<File>();
+    if (firstPass) {
+      compiledSourceFiles = new HashSet<File>();
+      final Collection<File> modifiedFiles = getModifiedFiles();
+      // System.out.println("modified: " + modifiedFiles);
+      thisTime.addAll(modifiedFiles);
+      // ??? eclipse IncrementalImageBuilder appears to do this
+      // for (Iterator i = modifiedFiles.iterator(); i.hasNext();) {
+      // File file = (File) i.next();
+      // addDependentsOf(file);
+      // }
+
+      if (addedFiles != null) {
+        for (final Iterator<File> fIter = addedFiles.iterator(); fIter.hasNext(); ) {
+          final File o = fIter.next();
+          // TODO isn't it a set?? why do this
+          if (!thisTime.contains(o)) {
+            thisTime.add(o);
+          }
         }
-        return false;
+        // thisTime.addAll(addedFiles);
       }
-      final List<ClassFile> classes = fullyQualifiedTypeNamesResultingFromCompilationUnit.get(deletedFile);
-      if (classes != null) {
-        for (ClassFile cf : classes) {
-          resolvedTypeStructuresFromLastBuild.remove(cf.fullyQualifiedTypeName);
+
+      deleteClassFiles();
+      // Do not delete resources on incremental build, AJDT will handle
+      // copying updates to the output folder. AspectJ only does a copy
+      // of them on full build (see copyResourcesToDestination() call
+      // in AjBuildManager)
+      // deleteResources();
+
+      addAffectedSourceFiles(thisTime, thisTime);
+    } else {
+      addAffectedSourceFiles(thisTime, compiledSourceFiles);
+    }
+    compiledSourceFiles = thisTime;
+    return thisTime;
+  }
+
+  public Map<String, List<UnwovenClassFile>> getBinaryFilesToCompile(boolean firstTime) {
+    if (lastSuccessfulBuildTime == -1 || buildConfig == null || !maybeIncremental()) {
+      return binarySourceFiles;
+    }
+    // else incremental...
+    final Map<String, List<UnwovenClassFile>> toWeave = new HashMap<String, List<UnwovenClassFile>>();
+    if (firstTime) {
+      final List<BinarySourceFile> addedOrModified = new ArrayList<BinarySourceFile>();
+      addedOrModified.addAll(addedBinaryFiles);
+      addedOrModified.addAll(getModifiedBinaryFiles());
+      for (final Iterator<BinarySourceFile> iter = addedOrModified.iterator(); iter.hasNext(); ) {
+        final AjBuildConfig.BinarySourceFile bsf = iter.next();
+        final UnwovenClassFile ucf = createUnwovenClassFile(bsf);
+        if (ucf == null) {
+          continue;
+        }
+        final List<UnwovenClassFile> ucfs = new ArrayList<UnwovenClassFile>();
+        ucfs.add(ucf);
+        recordTypeChanged(ucf.getClassName());
+        binarySourceFiles.put(bsf.binSrc.getPath(), ucfs);
+        final List<ClassFile> cfs = new ArrayList<ClassFile>(1);
+        cfs.add(getClassFileFor(ucf));
+        this.inputClassFilesBySource.put(bsf.binSrc.getPath(), cfs);
+        toWeave.put(bsf.binSrc.getPath(), ucfs);
+      }
+      deleteBinaryClassFiles();
+    } else {
+      // return empty set... we've already done our bit.
+    }
+    return toWeave;
+  }
+
+  public void noteResult(InterimCompilationResult result) {
+    if (!maybeIncremental()) {
+      return;
+    }
+
+    final File sourceFile = new File(result.fileName());
+    final CompilationResult cr = result.result();
+
+    references.put(sourceFile, new ReferenceCollection(cr.qualifiedReferences, cr.simpleNameReferences, cr.rootReferences));
+
+    final UnwovenClassFile[] unwovenClassFiles = result.unwovenClassFiles();
+    for (int i = 0; i < unwovenClassFiles.length; i++) {
+      final File lastTimeRound = classesFromName.get(unwovenClassFiles[i].getClassName());
+      recordClassFile(unwovenClassFiles[i], lastTimeRound);
+      final String name = unwovenClassFiles[i].getClassName();
+      if (lastTimeRound == null) {
+        deltaAddedClasses.add(name);
+      }
+      classesFromName.put(name, new File(unwovenClassFiles[i].getFilename()));
+    }
+
+    // need to do this before types are deleted from the World...
+    recordWhetherCompilationUnitDefinedAspect(sourceFile, cr);
+    deleteTypesThatWereInThisCompilationUnitLastTimeRoundButHaveBeenDeletedInThisIncrement(sourceFile, unwovenClassFiles);
+
+    recordFQNsResultingFromCompilationUnit(sourceFile, result);
+  }
+
+  public void noteNewResult(CompilationResult cr) {
+    // if (!maybeIncremental()) {
+    // return;
+    // }
+    //
+    // // File sourceFile = new File(result.fileName());
+    // // CompilationResult cr = result.result();
+    // if (new String(cr.getFileName()).indexOf("C") != -1) {
+    // cr.references.put(new String(cr.getFileName()),
+    // new ReferenceCollection(cr.qualifiedReferences, cr.simpleNameReferences));
+    // int stop = 1;
+    // }
+
+    // references.put(sourceFile, new ReferenceCollection(cr.qualifiedReferences, cr.simpleNameReferences));
+    //
+    // UnwovenClassFile[] unwovenClassFiles = cr.unwovenClassFiles();
+    // for (int i = 0; i < unwovenClassFiles.length; i++) {
+    // File lastTimeRound = (File) classesFromName.get(unwovenClassFiles[i].getClassName());
+    // recordClassFile(unwovenClassFiles[i], lastTimeRound);
+    // classesFromName.put(unwovenClassFiles[i].getClassName(), new File(unwovenClassFiles[i].getFilename()));
+    // }
+
+    // need to do this before types are deleted from the World...
+    // recordWhetherCompilationUnitDefinedAspect(sourceFile, cr);
+    // deleteTypesThatWereInThisCompilationUnitLastTimeRoundButHaveBeenDeletedInThisIncrement(sourceFile, unwovenClassFiles);
+    //
+    // recordFQNsResultingFromCompilationUnit(sourceFile, result);
+  }
+
+  /**
+   * Record some additional dependencies between types. When any of the types specified in fullyQualifiedTypeNames changes, we
+   * need to recompile the file named in the CompilationResult. This method patches that information into the existing data
+   * structures.
+   */
+  public boolean recordDependencies(File file, String[] typeNameDependencies) {
+    try {
+      final File sourceFile = new File(new String(file.getCanonicalPath()));
+      final ReferenceCollection existingCollection = references.get(sourceFile);
+      if (existingCollection != null) {
+        existingCollection.addDependencies(typeNameDependencies);
+        return true;
+      } else {
+        final ReferenceCollection rc = new ReferenceCollection(null, null, null);
+        rc.addDependencies(typeNameDependencies);
+        references.put(sourceFile, rc);
+        return true;
+      }
+    } catch (IOException ioe) {
+      ioe.printStackTrace();
+    }
+    return false;
+  }
+
+  public void setStructureModel(AsmManager structureModel) {
+    this.structureModel = structureModel;
+  }
+
+  public AsmManager getStructureModel() {
+    return structureModel;
+  }
+
+  public void setWeaver(BcelWeaver bw) {
+    weaver = bw;
+  }
+
+  public BcelWeaver getWeaver() {
+    return weaver;
+  }
+
+  public void setWorld(BcelWorld bw) {
+    world = bw;
+    world.addTypeDelegateResolver(this);
+  }
+
+  public BcelWorld getBcelWorld() {
+    return world;
+  }
+
+  //
+  // public void setRelationshipMap(IRelationshipMap irm) {
+  // relmap = irm;
+  // }
+  //
+  // public IRelationshipMap getRelationshipMap() {
+  // return relmap;
+  // }
+
+  public int getNumberOfStructuralChangesSinceLastFullBuild() {
+    return structuralChangesSinceLastFullBuild.size();
+  }
+
+  /**
+   * Returns last time we did a full or incremental build.
+   */
+  public long getLastBuildTime() {
+    return lastSuccessfulBuildTime;
+  }
+
+  /**
+   * Returns last time we did a full build
+   */
+  public long getLastFullBuildTime() {
+    return lastSuccessfulFullBuildTime;
+  }
+
+  /**
+   * @return Returns the buildConfig.
+   */
+  public AjBuildConfig getBuildConfig() {
+    return this.buildConfig;
+  }
+
+  public void clearBinarySourceFiles() {
+    this.binarySourceFiles = new HashMap<String, List<UnwovenClassFile>>();
+  }
+
+  public void recordBinarySource(String fromPathName, List<UnwovenClassFile> unwovenClassFiles) {
+    this.binarySourceFiles.put(fromPathName, unwovenClassFiles);
+    if (this.maybeIncremental()) {
+      final List<ClassFile> simpleClassFiles = new LinkedList<ClassFile>();
+      for (UnwovenClassFile ucf : unwovenClassFiles) {
+        final ClassFile cf = getClassFileFor(ucf);
+        simpleClassFiles.add(cf);
+      }
+      this.inputClassFilesBySource.put(fromPathName, simpleClassFiles);
+    }
+  }
+
+  public Map<String, List<UnwovenClassFile>> getBinarySourceMap() {
+    return this.binarySourceFiles;
+  }
+
+  public Map<String, File> getClassNameToFileMap() {
+    return this.classesFromName;
+  }
+
+  public boolean hasResource(String resourceName) {
+    return this.resources.keySet().contains(resourceName);
+  }
+
+  public void recordResource(String resourceName, File resourceSourceLocation) {
+    this.resources.put(resourceName, resourceSourceLocation);
+  }
+
+  /**
+   * @return Returns the addedFiles.
+   */
+  public Set<File> getAddedFiles() {
+    return this.addedFiles;
+  }
+
+  /**
+   * @return Returns the deletedFiles.
+   */
+  public Set<File> getDeletedFiles() {
+    return this.deletedFiles;
+  }
+
+  public void forceBatchBuildNextTimeAround() {
+    this.batchBuildRequiredThisTime = true;
+  }
+
+  public boolean requiresFullBatchBuild() {
+    return this.batchBuildRequiredThisTime;
+  }
+
+  public void wipeAllKnowledge() {
+    buildManager.state = null;
+    // buildManager.setStructureModel(null);
+  }
+
+  public Map<String, char[]> getAspectNamesToFileNameMap() {
+    return aspectsFromFileNames;
+  }
+
+  public void initializeAspectNamesToFileNameMap() {
+    this.aspectsFromFileNames = new HashMap<String, char[]>();
+  }
+
+  public IBinaryType checkPreviousBuild(String name) {
+    return resolvedTypeStructuresFromLastBuild.get(name);
+  }
+
+  public AjBuildManager getAjBuildManager() {
+    return buildManager;
+  }
+
+  public INameEnvironment getNameEnvironment() {
+    return this.nameEnvironment;
+  }
+
+  public void setNameEnvironment(INameEnvironment nameEnvironment) {
+    this.nameEnvironment = nameEnvironment;
+  }
+
+  /**
+   * Record an aspect that came in on the aspect path. When a .class file changes on the aspect path we can then recognize it as
+   * an aspect and know to do more than just a tiny incremental build. <br>
+   * TODO but this doesn't allow for a new aspect created on the aspectpath?
+   *
+   * @param aspectFile path to the file, eg. c:/temp/foo/Fred.class
+   */
+  public void recordAspectClassFile(String aspectFile) {
+    aspectClassFiles.add(aspectFile);
+  }
+
+  public void write(@NotNull CompressingDataOutputStream dos) throws IOException {
+    // weaver
+    weaver.write(dos);
+    // world
+    // model
+    // local state
+  }
+
+  /**
+   * See if we can create a delegate from a CompactTypeStructure - TODO better comment
+   */
+  @Override
+  public ReferenceTypeDelegate getDelegate(ReferenceType referenceType) {
+    final File f = classesFromName.get(referenceType.getName());
+    if (f == null) {
+      return null; // not heard of it
+    }
+    try {
+      final ClassParser parser = new ClassParser(f.toString());
+      return world.buildBcelDelegate(referenceType, parser.parse(), true, false);
+    } catch (IOException e) {
+      final IMessage msg = new Message("Failed to recover " + referenceType, referenceType.getDelegate() != null ? referenceType.getSourceLocation() : null, false);
+      buildManager.handler.handleMessage(msg);
+    }
+    return null;
+  }
+
+  protected void addAffectedSourceFiles(Set<File> addTo, Set<File> lastTimeSources) {
+    if (qualifiedStrings.elementSize == 0 && simpleStrings.elementSize == 0) {
+      return;
+    }
+    if (listenerDefined()) {
+      getListener().recordDecision(
+          "Examining whether any other files now need compilation based on just compiling: '"
+              + stringifySet(lastTimeSources) + "'");
+    }
+    // the qualifiedStrings are of the form 'p1/p2' & the simpleStrings are just 'X'
+    char[][][] qualifiedNames = ReferenceCollection.internQualifiedNames(qualifiedStrings);
+    // if a well known qualified name was found then we can skip over these
+    if (qualifiedNames.length < qualifiedStrings.elementSize) {
+      qualifiedNames = null;
+    }
+    char[][] simpleNames = ReferenceCollection.internSimpleNames(simpleStrings);
+    // if a well known name was found then we can skip over these
+    if (simpleNames.length < simpleStrings.elementSize) {
+      simpleNames = null;
+    }
+
+    // System.err.println("simple: " + simpleStrings);
+    // System.err.println("qualif: " + qualifiedStrings);
+
+    for (final Iterator<Map.Entry<File, ReferenceCollection>> i = references.entrySet().iterator(); i.hasNext(); ) {
+      final Map.Entry<File, ReferenceCollection> entry = i.next();
+      final ReferenceCollection refs = entry.getValue();
+      if (refs != null && refs.includes(qualifiedNames, simpleNames)) {
+        final File file = entry.getKey();
+        if (file.exists()) {
+          if (!lastTimeSources.contains(file)) { // ??? O(n**2)
+            if (listenerDefined()) {
+              getListener().recordDecision("Need to recompile '" + file.getName().toString() + "'");
+            }
+            addTo.add(file);
+          }
         }
       }
     }
-    return true;
+    // add in the things we compiled previously - I know that seems crap but otherwise we may pull woven
+    // stuff off disk (since we no longer have UnwovenClassFile objects) in order to satisfy references
+    // in the new files we are about to compile (see pr133532)
+    if (addTo.size() > 0) {
+      addTo.addAll(lastTimeSources);
+    }
+    // // XXX Promote addTo to a Set - then we don't need this rubbish? but does it need to be ordered?
+    // if (addTo.size()>0) {
+    // for (Iterator iter = lastTimeSources.iterator(); iter.hasNext();) {
+    // Object element = (Object) iter.next();
+    // if (!addTo.contains(element)) addTo.add(element);
+    // }
+    // }
+
+    qualifiedStrings.clear();
+    simpleStrings.clear();
   }
 
-  private Collection<File> getModifiedFiles() {
-    return getModifiedFiles(lastSuccessfulBuildTime);
+  /**
+   * Record that a particular type has been touched during a compilation run. Information is used to ensure any types depending
+   * upon this one are also recompiled.
+   *
+   * @param typename (possibly qualified) type name
+   */
+  protected void recordTypeChanged(String typename) {
+    final int lastDot = typename.lastIndexOf('.');
+    String typeName;
+    if (lastDot != -1) {
+      final String packageName = typename.substring(0, lastDot).replace('.', '/');
+      qualifiedStrings.add(packageName);
+      typeName = typename.substring(lastDot + 1);
+    } else {
+      qualifiedStrings.add("");
+      typeName = typename;
+    }
+
+    final int memberIndex = typeName.indexOf('$');
+    if (memberIndex > 0) {
+      typeName = typeName.substring(0, memberIndex);
+    }
+    simpleStrings.add(typeName);
+  }
+
+  protected void addDependentsOf(File sourceFile) {
+    final List<ClassFile> cfs = this.fullyQualifiedTypeNamesResultingFromCompilationUnit.get(sourceFile);
+    if (cfs != null) {
+      for (ClassFile cf : cfs) {
+        recordTypeChanged(cf.fullyQualifiedTypeName);
+      }
+    }
+  }
+
+  void successfulCompile(AjBuildConfig config, boolean wasFullBuild) {
+    buildConfig = config;
+    lastSuccessfulBuildTime = currentBuildTime;
+    if (stateListener != null) {
+      stateListener.buildSuccessful(wasFullBuild);
+    }
+    if (wasFullBuild) {
+      lastSuccessfulFullBuildTime = currentBuildTime;
+    }
   }
 
   Collection<File> getModifiedFiles(long lastBuildTime) {
@@ -378,10 +818,6 @@ public class AjState implements CompilerConfigurationChangeFlags, TypeDelegateRe
     return ret;
   }
 
-  private Collection<BinarySourceFile> getModifiedBinaryFiles() {
-    return getModifiedBinaryFiles(lastSuccessfulBuildTime);
-  }
-
   Collection<BinarySourceFile> getModifiedBinaryFiles(long lastBuildTime) {
     final List<BinarySourceFile> ret = new ArrayList<BinarySourceFile>();
     // not our job to account for new and deleted files
@@ -400,6 +836,40 @@ public class AjState implements CompilerConfigurationChangeFlags, TypeDelegateRe
       }
     }
     return ret;
+  }
+
+  /**
+   * Checks if any of the files in the set passed in contains an aspect declaration. If one is found then we start the process of
+   * batch building, i.e. we remove all the results of the last build, call any registered listener to tell them whats happened
+   * and return false.
+   *
+   * @return false if we discovered an aspect declaration
+   */
+  private boolean processDeletedFiles(Set<File> deletedFiles) {
+    for (File deletedFile : deletedFiles) {
+      if (this.sourceFilesDefiningAspects.contains(deletedFile)) {
+        removeAllResultsOfLastBuild();
+        if (stateListener != null) {
+          stateListener.detectedAspectDeleted(deletedFile);
+        }
+        return false;
+      }
+      final List<ClassFile> classes = fullyQualifiedTypeNamesResultingFromCompilationUnit.get(deletedFile);
+      if (classes != null) {
+        for (ClassFile cf : classes) {
+          resolvedTypeStructuresFromLastBuild.remove(cf.fullyQualifiedTypeName);
+        }
+      }
+    }
+    return true;
+  }
+
+  private Collection<File> getModifiedFiles() {
+    return getModifiedFiles(lastSuccessfulBuildTime);
+  }
+
+  private Collection<BinarySourceFile> getModifiedBinaryFiles() {
+    return getModifiedBinaryFiles(lastSuccessfulBuildTime);
   }
 
   private void recordDecision(String decision) {
@@ -495,7 +965,6 @@ public class AjState implements CompilerConfigurationChangeFlags, TypeDelegateRe
                 return CLASS_FILE_CHANGED_THAT_NEEDS_FULL_BUILD;
               }
             }
-
           } else {
             // it is an aspect but we don't refer to it:
             // - for CLASSPATH I think this is OK, we can continue and try an
@@ -518,7 +987,6 @@ public class AjState implements CompilerConfigurationChangeFlags, TypeDelegateRe
               return CLASS_FILE_CHANGED_THAT_NEEDS_FULL_BUILD;
             }
           }
-
         }
         if (state.hasStructuralChangedSince(classFile, lastSuccessfulBuildTime)) {
           if (listenerDefined()) {
@@ -600,95 +1068,6 @@ public class AjState implements CompilerConfigurationChangeFlags, TypeDelegateRe
     return aspectClassFiles.contains(file.getAbsolutePath());
   }
 
-  @SuppressWarnings("rawtypes")
-  public static class SoftHashMap extends AbstractMap {
-
-    private final Map map;
-
-    private final ReferenceQueue rq = new ReferenceQueue();
-
-    public SoftHashMap(Map map) {
-      this.map = map;
-    }
-
-    public SoftHashMap() {
-      this(new HashMap());
-    }
-
-    public SoftHashMap(Map map, boolean b) {
-      this(map);
-    }
-
-    class SoftReferenceKnownKey extends SoftReference {
-
-      private final Object key;
-
-      @SuppressWarnings("unchecked")
-      SoftReferenceKnownKey(Object k, Object v) {
-        super(v, rq);
-        this.key = k;
-      }
-    }
-
-    private void processQueue() {
-      SoftReferenceKnownKey sv = null;
-      while ((sv = (SoftReferenceKnownKey) rq.poll()) != null) {
-        map.remove(sv.key);
-      }
-    }
-
-    @Override
-    public Object get(Object key) {
-      final SoftReferenceKnownKey value = (SoftReferenceKnownKey) map.get(key);
-      if (value == null) {
-        return null;
-      }
-      if (value.get() == null) {
-        // it got GC'd
-        map.remove(value.key);
-        return null;
-      } else {
-        return value.get();
-      }
-    }
-
-    @Override
-    public Object put(Object k, Object v) {
-      processQueue();
-      return map.put(k, new SoftReferenceKnownKey(k, v));
-    }
-
-    @Override
-    public Set entrySet() {
-      return map.entrySet();
-    }
-
-    @Override
-    public void clear() {
-      processQueue();
-      map.clear();
-    }
-
-    @Override
-    public int size() {
-      processQueue();
-      return map.size();
-    }
-
-    @Override
-    public Object remove(Object k) {
-      processQueue();
-      final SoftReferenceKnownKey value = (SoftReferenceKnownKey) map.remove(k);
-      if (value == null) {
-        return null;
-      }
-      if (value.get() != null) {
-        return value.get();
-      }
-      return null;
-    }
-  }
-
   /**
    * If a class file has changed in a path on our classpath, it may not be for a type that any of our source files care about.
    * This method checks if any of our source files have a dependency on the class in question and if not, we don't consider it an
@@ -757,31 +1136,6 @@ public class AjState implements CompilerConfigurationChangeFlags, TypeDelegateRe
       getListener().recordDecision(toString() + ": type " + new String(className) + " is not depended upon by this state");
     }
     return false;
-  }
-
-  // /**
-  // * For a given class file, determine which source file it came from. This will only succeed if the class file is from a source
-  // * file within this project.
-  // */
-  // private File getSourceFileForClassFile(File classfile) {
-  // Set sourceFiles = fullyQualifiedTypeNamesResultingFromCompilationUnit.keySet();
-  // for (Iterator sourceFileIterator = sourceFiles.iterator(); sourceFileIterator.hasNext();) {
-  // File sourceFile = (File) sourceFileIterator.next();
-  // List/* ClassFile */classesFromSourceFile = (List/* ClassFile */) fullyQualifiedTypeNamesResultingFromCompilationUnit
-  // .get(sourceFile);
-  // for (int i = 0; i < classesFromSourceFile.size(); i++) {
-  // if (((ClassFile) classesFromSourceFile.get(i)).locationOnDisk.equals(classfile))
-  // return sourceFile;
-  // }
-  // }
-  // return null;
-  // }
-
-  public String toString() {
-    final StringBuilder sb = new StringBuilder();
-    // null config means failed build i think as it is only set on successful full build?
-    sb.append("AjState(").append((buildConfig == null ? "NULLCONFIG" : buildConfig.getConfigFile().toString())).append(")");
-    return sb.toString();
   }
 
   /**
@@ -972,7 +1326,6 @@ public class AjState implements CompilerConfigurationChangeFlags, TypeDelegateRe
         return true;
       }
       if (checkClassFiles && f.exists() && f.isDirectory()) {
-
         // We should use here a list/set of directories we know have or have not changed - some kind of
         // List<File> buildConfig.getClasspathEntriesWithChangedContents()
         // and then only proceed to look inside directories if it is one of these, ignoring others -
@@ -1024,7 +1377,6 @@ public class AjState implements CompilerConfigurationChangeFlags, TypeDelegateRe
         return true;
       }
       if (checkClassFiles && f.exists() && f.isDirectory()) {
-
         // We should use here a list/set of directories we know have or have not changed - some kind of
         // List<File> buildConfig.getClasspathEntriesWithChangedContents()
         // and then only proceed to look inside directories if it is one of these, ignoring others -
@@ -1051,79 +1403,8 @@ public class AjState implements CompilerConfigurationChangeFlags, TypeDelegateRe
     return false;
   }
 
-  public Set<File> getFilesToCompile(boolean firstPass) {
-    final Set<File> thisTime = new HashSet<File>();
-    if (firstPass) {
-      compiledSourceFiles = new HashSet<File>();
-      final Collection<File> modifiedFiles = getModifiedFiles();
-      // System.out.println("modified: " + modifiedFiles);
-      thisTime.addAll(modifiedFiles);
-      // ??? eclipse IncrementalImageBuilder appears to do this
-      // for (Iterator i = modifiedFiles.iterator(); i.hasNext();) {
-      // File file = (File) i.next();
-      // addDependentsOf(file);
-      // }
-
-      if (addedFiles != null) {
-        for (final Iterator<File> fIter = addedFiles.iterator(); fIter.hasNext(); ) {
-          final File o = fIter.next();
-          // TODO isn't it a set?? why do this
-          if (!thisTime.contains(o)) {
-            thisTime.add(o);
-          }
-        }
-        // thisTime.addAll(addedFiles);
-      }
-
-      deleteClassFiles();
-      // Do not delete resources on incremental build, AJDT will handle
-      // copying updates to the output folder. AspectJ only does a copy
-      // of them on full build (see copyResourcesToDestination() call
-      // in AjBuildManager)
-      // deleteResources();
-
-      addAffectedSourceFiles(thisTime, thisTime);
-    } else {
-      addAffectedSourceFiles(thisTime, compiledSourceFiles);
-    }
-    compiledSourceFiles = thisTime;
-    return thisTime;
-  }
-
   private boolean maybeIncremental() {
     return (FORCE_INCREMENTAL_DURING_TESTING || this.couldBeSubsequentIncrementalBuild);
-  }
-
-  public Map<String, List<UnwovenClassFile>> getBinaryFilesToCompile(boolean firstTime) {
-    if (lastSuccessfulBuildTime == -1 || buildConfig == null || !maybeIncremental()) {
-      return binarySourceFiles;
-    }
-    // else incremental...
-    final Map<String, List<UnwovenClassFile>> toWeave = new HashMap<String, List<UnwovenClassFile>>();
-    if (firstTime) {
-      final List<BinarySourceFile> addedOrModified = new ArrayList<BinarySourceFile>();
-      addedOrModified.addAll(addedBinaryFiles);
-      addedOrModified.addAll(getModifiedBinaryFiles());
-      for (final Iterator<BinarySourceFile> iter = addedOrModified.iterator(); iter.hasNext(); ) {
-        final AjBuildConfig.BinarySourceFile bsf = iter.next();
-        final UnwovenClassFile ucf = createUnwovenClassFile(bsf);
-        if (ucf == null) {
-          continue;
-        }
-        final List<UnwovenClassFile> ucfs = new ArrayList<UnwovenClassFile>();
-        ucfs.add(ucf);
-        recordTypeChanged(ucf.getClassName());
-        binarySourceFiles.put(bsf.binSrc.getPath(), ucfs);
-        final List<ClassFile> cfs = new ArrayList<ClassFile>(1);
-        cfs.add(getClassFileFor(ucf));
-        this.inputClassFilesBySource.put(bsf.binSrc.getPath(), cfs);
-        toWeave.put(bsf.binSrc.getPath(), ucfs);
-      }
-      deleteBinaryClassFiles();
-    } else {
-      // return empty set... we've already done our bit.
-    }
-    return toWeave;
   }
 
   /**
@@ -1174,7 +1455,6 @@ public class AjState implements CompilerConfigurationChangeFlags, TypeDelegateRe
           deleteClassFile(cf);
         }
       }
-
     }
   }
 
@@ -1289,63 +1569,6 @@ public class AjState implements CompilerConfigurationChangeFlags, TypeDelegateRe
     return ucf;
   }
 
-  public void noteResult(InterimCompilationResult result) {
-    if (!maybeIncremental()) {
-      return;
-    }
-
-    final File sourceFile = new File(result.fileName());
-    final CompilationResult cr = result.result();
-
-    references.put(sourceFile, new ReferenceCollection(cr.qualifiedReferences, cr.simpleNameReferences, cr.rootReferences));
-
-    final UnwovenClassFile[] unwovenClassFiles = result.unwovenClassFiles();
-    for (int i = 0; i < unwovenClassFiles.length; i++) {
-      final File lastTimeRound = classesFromName.get(unwovenClassFiles[i].getClassName());
-      recordClassFile(unwovenClassFiles[i], lastTimeRound);
-      final String name = unwovenClassFiles[i].getClassName();
-      if (lastTimeRound == null) {
-        deltaAddedClasses.add(name);
-      }
-      classesFromName.put(name, new File(unwovenClassFiles[i].getFilename()));
-    }
-
-    // need to do this before types are deleted from the World...
-    recordWhetherCompilationUnitDefinedAspect(sourceFile, cr);
-    deleteTypesThatWereInThisCompilationUnitLastTimeRoundButHaveBeenDeletedInThisIncrement(sourceFile, unwovenClassFiles);
-
-    recordFQNsResultingFromCompilationUnit(sourceFile, result);
-  }
-
-  public void noteNewResult(CompilationResult cr) {
-    // if (!maybeIncremental()) {
-    // return;
-    // }
-    //
-    // // File sourceFile = new File(result.fileName());
-    // // CompilationResult cr = result.result();
-    // if (new String(cr.getFileName()).indexOf("C") != -1) {
-    // cr.references.put(new String(cr.getFileName()),
-    // new ReferenceCollection(cr.qualifiedReferences, cr.simpleNameReferences));
-    // int stop = 1;
-    // }
-
-    // references.put(sourceFile, new ReferenceCollection(cr.qualifiedReferences, cr.simpleNameReferences));
-    //
-    // UnwovenClassFile[] unwovenClassFiles = cr.unwovenClassFiles();
-    // for (int i = 0; i < unwovenClassFiles.length; i++) {
-    // File lastTimeRound = (File) classesFromName.get(unwovenClassFiles[i].getClassName());
-    // recordClassFile(unwovenClassFiles[i], lastTimeRound);
-    // classesFromName.put(unwovenClassFiles[i].getClassName(), new File(unwovenClassFiles[i].getFilename()));
-    // }
-
-    // need to do this before types are deleted from the World...
-    // recordWhetherCompilationUnitDefinedAspect(sourceFile, cr);
-    // deleteTypesThatWereInThisCompilationUnitLastTimeRoundButHaveBeenDeletedInThisIncrement(sourceFile, unwovenClassFiles);
-    //
-    // recordFQNsResultingFromCompilationUnit(sourceFile, result);
-  }
-
   /**
    * @param sourceFile
    * @param unwovenClassFiles
@@ -1354,7 +1577,6 @@ public class AjState implements CompilerConfigurationChangeFlags, TypeDelegateRe
                                                                                                       UnwovenClassFile[] unwovenClassFiles) {
     final List<ClassFile> classFiles = this.fullyQualifiedTypeNamesResultingFromCompilationUnit.get(sourceFile);
     if (classFiles != null) {
-
       for (int i = 0; i < unwovenClassFiles.length; i++) {
         // deleting also deletes types from the weaver... don't do this if they are
         // still present this time around...
@@ -1580,7 +1802,6 @@ public class AjState implements CompilerConfigurationChangeFlags, TypeDelegateRe
           return true;
         }
       }
-
     }
 
     // interfaces
@@ -1840,7 +2061,6 @@ public class AjState implements CompilerConfigurationChangeFlags, TypeDelegateRe
           return true;
         }
       }
-
     }
 
     // interfaces
@@ -2190,196 +2410,6 @@ public class AjState implements CompilerConfigurationChangeFlags, TypeDelegateRe
     return sb.toString();
   }
 
-  protected void addAffectedSourceFiles(Set<File> addTo, Set<File> lastTimeSources) {
-    if (qualifiedStrings.elementSize == 0 && simpleStrings.elementSize == 0) {
-      return;
-    }
-    if (listenerDefined()) {
-      getListener().recordDecision(
-          "Examining whether any other files now need compilation based on just compiling: '"
-              + stringifySet(lastTimeSources) + "'");
-    }
-    // the qualifiedStrings are of the form 'p1/p2' & the simpleStrings are just 'X'
-    char[][][] qualifiedNames = ReferenceCollection.internQualifiedNames(qualifiedStrings);
-    // if a well known qualified name was found then we can skip over these
-    if (qualifiedNames.length < qualifiedStrings.elementSize) {
-      qualifiedNames = null;
-    }
-    char[][] simpleNames = ReferenceCollection.internSimpleNames(simpleStrings);
-    // if a well known name was found then we can skip over these
-    if (simpleNames.length < simpleStrings.elementSize) {
-      simpleNames = null;
-    }
-
-    // System.err.println("simple: " + simpleStrings);
-    // System.err.println("qualif: " + qualifiedStrings);
-
-    for (final Iterator<Map.Entry<File, ReferenceCollection>> i = references.entrySet().iterator(); i.hasNext(); ) {
-      final Map.Entry<File, ReferenceCollection> entry = i.next();
-      final ReferenceCollection refs = entry.getValue();
-      if (refs != null && refs.includes(qualifiedNames, simpleNames)) {
-        final File file = entry.getKey();
-        if (file.exists()) {
-          if (!lastTimeSources.contains(file)) { // ??? O(n**2)
-            if (listenerDefined()) {
-              getListener().recordDecision("Need to recompile '" + file.getName().toString() + "'");
-            }
-            addTo.add(file);
-          }
-        }
-      }
-    }
-    // add in the things we compiled previously - I know that seems crap but otherwise we may pull woven
-    // stuff off disk (since we no longer have UnwovenClassFile objects) in order to satisfy references
-    // in the new files we are about to compile (see pr133532)
-    if (addTo.size() > 0) {
-      addTo.addAll(lastTimeSources);
-    }
-    // // XXX Promote addTo to a Set - then we don't need this rubbish? but does it need to be ordered?
-    // if (addTo.size()>0) {
-    // for (Iterator iter = lastTimeSources.iterator(); iter.hasNext();) {
-    // Object element = (Object) iter.next();
-    // if (!addTo.contains(element)) addTo.add(element);
-    // }
-    // }
-
-    qualifiedStrings.clear();
-    simpleStrings.clear();
-  }
-
-  /**
-   * Record that a particular type has been touched during a compilation run. Information is used to ensure any types depending
-   * upon this one are also recompiled.
-   *
-   * @param typename (possibly qualified) type name
-   */
-  protected void recordTypeChanged(String typename) {
-    final int lastDot = typename.lastIndexOf('.');
-    String typeName;
-    if (lastDot != -1) {
-      final String packageName = typename.substring(0, lastDot).replace('.', '/');
-      qualifiedStrings.add(packageName);
-      typeName = typename.substring(lastDot + 1);
-    } else {
-      qualifiedStrings.add("");
-      typeName = typename;
-    }
-
-    final int memberIndex = typeName.indexOf('$');
-    if (memberIndex > 0) {
-      typeName = typeName.substring(0, memberIndex);
-    }
-    simpleStrings.add(typeName);
-  }
-
-  /**
-   * Record some additional dependencies between types. When any of the types specified in fullyQualifiedTypeNames changes, we
-   * need to recompile the file named in the CompilationResult. This method patches that information into the existing data
-   * structures.
-   */
-  public boolean recordDependencies(File file, String[] typeNameDependencies) {
-    try {
-      final File sourceFile = new File(new String(file.getCanonicalPath()));
-      final ReferenceCollection existingCollection = references.get(sourceFile);
-      if (existingCollection != null) {
-        existingCollection.addDependencies(typeNameDependencies);
-        return true;
-      } else {
-        final ReferenceCollection rc = new ReferenceCollection(null, null, null);
-        rc.addDependencies(typeNameDependencies);
-        references.put(sourceFile, rc);
-        return true;
-      }
-    } catch (IOException ioe) {
-      ioe.printStackTrace();
-    }
-    return false;
-  }
-
-  protected void addDependentsOf(File sourceFile) {
-    final List<ClassFile> cfs = this.fullyQualifiedTypeNamesResultingFromCompilationUnit.get(sourceFile);
-    if (cfs != null) {
-      for (ClassFile cf : cfs) {
-        recordTypeChanged(cf.fullyQualifiedTypeName);
-      }
-    }
-  }
-
-  public void setStructureModel(AsmManager structureModel) {
-    this.structureModel = structureModel;
-  }
-
-  public AsmManager getStructureModel() {
-    return structureModel;
-  }
-
-  public void setWeaver(BcelWeaver bw) {
-    weaver = bw;
-  }
-
-  public BcelWeaver getWeaver() {
-    return weaver;
-  }
-
-  public void setWorld(BcelWorld bw) {
-    world = bw;
-    world.addTypeDelegateResolver(this);
-  }
-
-  public BcelWorld getBcelWorld() {
-    return world;
-  }
-
-  //
-  // public void setRelationshipMap(IRelationshipMap irm) {
-  // relmap = irm;
-  // }
-  //
-  // public IRelationshipMap getRelationshipMap() {
-  // return relmap;
-  // }
-
-  public int getNumberOfStructuralChangesSinceLastFullBuild() {
-    return structuralChangesSinceLastFullBuild.size();
-  }
-
-  /**
-   * Returns last time we did a full or incremental build.
-   */
-  public long getLastBuildTime() {
-    return lastSuccessfulBuildTime;
-  }
-
-  /**
-   * Returns last time we did a full build
-   */
-  public long getLastFullBuildTime() {
-    return lastSuccessfulFullBuildTime;
-  }
-
-  /**
-   * @return Returns the buildConfig.
-   */
-  public AjBuildConfig getBuildConfig() {
-    return this.buildConfig;
-  }
-
-  public void clearBinarySourceFiles() {
-    this.binarySourceFiles = new HashMap<String, List<UnwovenClassFile>>();
-  }
-
-  public void recordBinarySource(String fromPathName, List<UnwovenClassFile> unwovenClassFiles) {
-    this.binarySourceFiles.put(fromPathName, unwovenClassFiles);
-    if (this.maybeIncremental()) {
-      final List<ClassFile> simpleClassFiles = new LinkedList<ClassFile>();
-      for (UnwovenClassFile ucf : unwovenClassFiles) {
-        final ClassFile cf = getClassFileFor(ucf);
-        simpleClassFiles.add(cf);
-      }
-      this.inputClassFilesBySource.put(fromPathName, simpleClassFiles);
-    }
-  }
-
   /**
    * @param ucf
    * @return
@@ -2388,42 +2418,93 @@ public class AjState implements CompilerConfigurationChangeFlags, TypeDelegateRe
     return new ClassFile(ucf.getClassName(), new File(ucf.getFilename()));
   }
 
-  public Map<String, List<UnwovenClassFile>> getBinarySourceMap() {
-    return this.binarySourceFiles;
-  }
+  @SuppressWarnings("rawtypes")
+  public static class SoftHashMap extends AbstractMap {
 
-  public Map<String, File> getClassNameToFileMap() {
-    return this.classesFromName;
-  }
+    private final Map map;
 
-  public boolean hasResource(String resourceName) {
-    return this.resources.keySet().contains(resourceName);
-  }
+    private final ReferenceQueue rq = new ReferenceQueue();
 
-  public void recordResource(String resourceName, File resourceSourceLocation) {
-    this.resources.put(resourceName, resourceSourceLocation);
-  }
+    public SoftHashMap(Map map) {
+      this.map = map;
+    }
 
-  /**
-   * @return Returns the addedFiles.
-   */
-  public Set<File> getAddedFiles() {
-    return this.addedFiles;
-  }
+    public SoftHashMap() {
+      this(new HashMap());
+    }
 
-  /**
-   * @return Returns the deletedFiles.
-   */
-  public Set<File> getDeletedFiles() {
-    return this.deletedFiles;
-  }
+    public SoftHashMap(Map map, boolean b) {
+      this(map);
+    }
 
-  public void forceBatchBuildNextTimeAround() {
-    this.batchBuildRequiredThisTime = true;
-  }
+    @Override
+    public Object get(Object key) {
+      final SoftReferenceKnownKey value = (SoftReferenceKnownKey) map.get(key);
+      if (value == null) {
+        return null;
+      }
+      if (value.get() == null) {
+        // it got GC'd
+        map.remove(value.key);
+        return null;
+      } else {
+        return value.get();
+      }
+    }
 
-  public boolean requiresFullBatchBuild() {
-    return this.batchBuildRequiredThisTime;
+    @Override
+    public Object put(Object k, Object v) {
+      processQueue();
+      return map.put(k, new SoftReferenceKnownKey(k, v));
+    }
+
+    @Override
+    public Set entrySet() {
+      return map.entrySet();
+    }
+
+    @Override
+    public void clear() {
+      processQueue();
+      map.clear();
+    }
+
+    @Override
+    public int size() {
+      processQueue();
+      return map.size();
+    }
+
+    @Override
+    public Object remove(Object k) {
+      processQueue();
+      final SoftReferenceKnownKey value = (SoftReferenceKnownKey) map.remove(k);
+      if (value == null) {
+        return null;
+      }
+      if (value.get() != null) {
+        return value.get();
+      }
+      return null;
+    }
+
+    private void processQueue() {
+      SoftReferenceKnownKey sv = null;
+      while ((sv = (SoftReferenceKnownKey) rq.poll()) != null) {
+        map.remove(sv.key);
+      }
+    }
+
+    class SoftReferenceKnownKey extends SoftReference {
+
+      private final Object key;
+
+      @SuppressWarnings("unchecked")
+      SoftReferenceKnownKey(Object k, Object v) {
+        super(v, rq);
+        this.key = k;
+      }
+    }
   }
 
   private static class ClassFile {
@@ -2469,81 +2550,5 @@ public class AjState implements CompilerConfigurationChangeFlags, TypeDelegateRe
             CompilationResultDestinationManager.FILETYPE_CLASS);
       }
     }
-  }
-
-  public void wipeAllKnowledge() {
-    buildManager.state = null;
-    // buildManager.setStructureModel(null);
-  }
-
-  public Map<String, char[]> getAspectNamesToFileNameMap() {
-    return aspectsFromFileNames;
-  }
-
-  public void initializeAspectNamesToFileNameMap() {
-    this.aspectsFromFileNames = new HashMap<String, char[]>();
-  }
-
-  // Will allow us to record decisions made during incremental processing, hopefully aid in debugging
-  public static boolean listenerDefined() {
-    return stateListener != null;
-  }
-
-  public static IStateListener getListener() {
-    return stateListener;
-  }
-
-  public IBinaryType checkPreviousBuild(String name) {
-    return resolvedTypeStructuresFromLastBuild.get(name);
-  }
-
-  public AjBuildManager getAjBuildManager() {
-    return buildManager;
-  }
-
-  public INameEnvironment getNameEnvironment() {
-    return this.nameEnvironment;
-  }
-
-  public void setNameEnvironment(INameEnvironment nameEnvironment) {
-    this.nameEnvironment = nameEnvironment;
-  }
-
-  /**
-   * Record an aspect that came in on the aspect path. When a .class file changes on the aspect path we can then recognize it as
-   * an aspect and know to do more than just a tiny incremental build. <br>
-   * TODO but this doesn't allow for a new aspect created on the aspectpath?
-   *
-   * @param aspectFile path to the file, eg. c:/temp/foo/Fred.class
-   */
-  public void recordAspectClassFile(String aspectFile) {
-    aspectClassFiles.add(aspectFile);
-  }
-
-  public void write(CompressingDataOutputStream dos) throws IOException {
-    // weaver
-    weaver.write(dos);
-    // world
-    // model
-    // local state
-  }
-
-  /**
-   * See if we can create a delegate from a CompactTypeStructure - TODO better comment
-   */
-  @Override
-  public ReferenceTypeDelegate getDelegate(ReferenceType referenceType) {
-    final File f = classesFromName.get(referenceType.getName());
-    if (f == null) {
-      return null; // not heard of it
-    }
-    try {
-      final ClassParser parser = new ClassParser(f.toString());
-      return world.buildBcelDelegate(referenceType, parser.parse(), true, false);
-    } catch (IOException e) {
-      final IMessage msg = new Message("Failed to recover " + referenceType, referenceType.getDelegate() != null ? referenceType.getSourceLocation() : null, false);
-      buildManager.handler.handleMessage(msg);
-    }
-    return null;
   }
 }

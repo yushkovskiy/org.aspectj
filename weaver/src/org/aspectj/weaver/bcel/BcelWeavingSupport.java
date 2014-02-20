@@ -25,47 +25,54 @@ import org.aspectj.weaver.patterns.Pointcut;
 
 /**
  * Bcel implementation of the weaving support required in a BcelWorld which will actually modify bytecode.
- * 
+ *
  * @author Andy Clement
  */
 public class BcelWeavingSupport implements IWeavingSupport {
 
-	public Advice createAdviceMunger(AjAttribute.AdviceAttribute attribute, Pointcut pointcut, Member signature,
-			ResolvedType concreteAspect) {
-		// System.err.println("concrete advice: " + signature + " context " +
-		// sourceContext);
-		return new BcelAdvice(attribute, pointcut, signature, concreteAspect);
-	}
+  @Override
+  public Advice createAdviceMunger(AjAttribute.AdviceAttribute attribute, Pointcut pointcut, Member signature,
+                                   ResolvedType concreteAspect) {
+    // System.err.println("concrete advice: " + signature + " context " +
+    // sourceContext);
+    return new BcelAdvice(attribute, pointcut, signature, concreteAspect);
+  }
 
-	public ConcreteTypeMunger makeCflowStackFieldAdder(ResolvedMember cflowField) {
-		return new BcelCflowStackFieldAdder(cflowField);
-	}
+  @Override
+  public ConcreteTypeMunger makeCflowStackFieldAdder(ResolvedMember cflowField) {
+    return new BcelCflowStackFieldAdder(cflowField);
+  }
 
-	public ConcreteTypeMunger makeCflowCounterFieldAdder(ResolvedMember cflowField) {
-		return new BcelCflowCounterFieldAdder(cflowField);
-	}
+  @Override
+  public ConcreteTypeMunger makeCflowCounterFieldAdder(ResolvedMember cflowField) {
+    return new BcelCflowCounterFieldAdder(cflowField);
+  }
 
-	/**
-	 * Register a munger for perclause @AJ aspect so that we add aspectOf(..) to them as needed
-	 * 
-	 * @param aspect
-	 * @param kind
-	 * @return munger
-	 */
-	public ConcreteTypeMunger makePerClauseAspect(ResolvedType aspect, PerClause.Kind kind) {
-		return new BcelPerClauseAspectAdder(aspect, kind);
-	}
+  /**
+   * Register a munger for perclause @AJ aspect so that we add aspectOf(..) to them as needed
+   *
+   * @param aspect
+   * @param kind
+   * @return munger
+   */
+  @Override
+  public ConcreteTypeMunger makePerClauseAspect(ResolvedType aspect, PerClause.Kind kind) {
+    return new BcelPerClauseAspectAdder(aspect, kind);
+  }
 
-	public Var makeCflowAccessVar(ResolvedType formalType, Member cflowField, int arrayIndex) {
-		return new BcelCflowAccessVar(formalType, cflowField, arrayIndex);
-	}
+  @Override
+  public Var makeCflowAccessVar(ResolvedType formalType, Member cflowField, int arrayIndex) {
+    return new BcelCflowAccessVar(formalType, cflowField, arrayIndex);
+  }
 
-	public ConcreteTypeMunger concreteTypeMunger(ResolvedTypeMunger munger, ResolvedType aspectType) {
-		return new BcelTypeMunger(munger, aspectType);
-	}
+  @Override
+  public ConcreteTypeMunger concreteTypeMunger(ResolvedTypeMunger munger, ResolvedType aspectType) {
+    return new BcelTypeMunger(munger, aspectType);
+  }
 
-	public ConcreteTypeMunger createAccessForInlineMunger(ResolvedType aspect) {
-		return new BcelAccessForInlineMunger(aspect);
-	}
+  @Override
+  public ConcreteTypeMunger createAccessForInlineMunger(ResolvedType aspect) {
+    return new BcelAccessForInlineMunger(aspect);
+  }
 
 }

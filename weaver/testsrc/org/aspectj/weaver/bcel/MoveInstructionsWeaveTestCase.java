@@ -30,11 +30,13 @@ public class MoveInstructionsWeaveTestCase extends WeaveTestCase {
 
   public void testHello() throws IOException {
     final BcelAdvice p = new BcelAdvice(null, makePointcutAll(), null, 0, -1, -1, null, null) {
+      @Override
       public void specializeOn(Shadow s) {
         super.specializeOn(s);
         ((BcelShadow) s).initializeForAroundClosure();
       }
 
+      @Override
       public boolean implementOn(Shadow s) {
         final BcelShadow shadow = (BcelShadow) s;
         final LazyMethodGen newMethod = shadow.extractShadowInstructionsIntoNewMethod(NameMangler.getExtractableName(shadow
@@ -56,11 +58,13 @@ public class MoveInstructionsWeaveTestCase extends WeaveTestCase {
 
   public void testFancyHello() throws IOException {
     final BcelAdvice p = new BcelAdvice(null, makePointcutAll(), null, 0, -1, -1, null, null) {
+      @Override
       public void specializeOn(Shadow s) {
         super.specializeOn(s);
         ((BcelShadow) s).initializeForAroundClosure();
       }
 
+      @Override
       public boolean implementOn(Shadow s) {
         final BcelShadow shadow = (BcelShadow) s;
         final LazyMethodGen newMethod = shadow.extractShadowInstructionsIntoNewMethod(NameMangler.getExtractableName(shadow

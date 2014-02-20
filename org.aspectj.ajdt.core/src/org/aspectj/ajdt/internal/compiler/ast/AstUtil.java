@@ -13,6 +13,7 @@
 package org.aspectj.ajdt.internal.compiler.ast;
 
 import org.aspectj.org.eclipse.jdt.core.compiler.CharOperation;
+import org.aspectj.org.eclipse.jdt.internal.compiler.IAttribute;
 import org.aspectj.org.eclipse.jdt.internal.compiler.ast.*;
 import org.aspectj.org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
 import org.aspectj.org.eclipse.jdt.internal.compiler.codegen.CodeStream;
@@ -20,17 +21,17 @@ import org.aspectj.org.eclipse.jdt.internal.compiler.impl.Constant;
 import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.*;
 import org.aspectj.weaver.AjAttribute;
 import org.aspectj.weaver.patterns.WildTypePattern;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AstUtil {
+public final class AstUtil {
+  @NotNull
+  public static final char[] PREFIX = "ajc".toCharArray();
 
-  private AstUtil() {
-  }
-
-  public static void addMethodBinding(SourceTypeBinding sourceType, MethodBinding method) {
+  public static void addMethodBinding(@NotNull SourceTypeBinding sourceType, @NotNull MethodBinding method) {
     final int len = sourceType.methods.length;
     final MethodBinding[] temp = new MethodBinding[len + 1];
     System.arraycopy(sourceType.methods, 0, temp, 0, len);
@@ -38,7 +39,7 @@ public class AstUtil {
     sourceType.methods = temp;
   }
 
-  public static void addMethodDeclaration(TypeDeclaration typeDec, AbstractMethodDeclaration dec) {
+  public static void addMethodDeclaration(@NotNull TypeDeclaration typeDec, @NotNull AbstractMethodDeclaration dec) {
     final AbstractMethodDeclaration[] methods = typeDec.methods;
     final int len = methods.length;
     final AbstractMethodDeclaration[] newMethods = new AbstractMethodDeclaration[len + 1];
@@ -47,7 +48,8 @@ public class AstUtil {
     typeDec.methods = newMethods;
   }
 
-  public static Argument makeFinalArgument(char[] name, TypeBinding typeBinding) {
+  @NotNull
+  public static Argument makeFinalArgument(@NotNull char[] name, @NotNull TypeBinding typeBinding) {
     final long pos = 0; // XXX encode start and end location
     final LocalVariableBinding binding = new LocalVariableBinding(name, typeBinding, Modifier.FINAL, true);
     final Argument ret = new Argument(name, pos, makeTypeReference(typeBinding), Modifier.FINAL);
@@ -55,7 +57,8 @@ public class AstUtil {
     return ret;
   }
 
-  public static TypeReference makeTypeReference(TypeBinding binding) {
+  @NotNull
+  public static TypeReference makeTypeReference(@NotNull TypeBinding binding) {
     // ??? does this work for primitives
     final QualifiedTypeReference ref = new QualifiedTypeReference(new char[][]{binding.sourceName()}, new long[]{0}); // ???
     ref.resolvedType = binding;
@@ -63,8 +66,8 @@ public class AstUtil {
     return ref;
   }
 
-  public static NameReference makeNameReference(TypeBinding binding) {
-
+  @NotNull
+  public static NameReference makeNameReference(@NotNull TypeBinding binding) {
     final char[][] name = new char[][]{binding.sourceName()};
     final long[] dummyPositions = new long[name.length];
     final QualifiedNameReference ref = new QualifiedNameReference(name, dummyPositions, 0, 0);
@@ -73,11 +76,13 @@ public class AstUtil {
     return ref;
   }
 
-  public static ReturnStatement makeReturnStatement(Expression expr) {
+  @NotNull
+  public static ReturnStatement makeReturnStatement(@NotNull Expression expr) {
     return new ReturnStatement(expr, 0, 0);
   }
 
-  public static MethodDeclaration makeMethodDeclaration(MethodBinding binding) {
+  @NotNull
+  public static MethodDeclaration makeMethodDeclaration(@NotNull MethodBinding binding) {
     final MethodDeclaration ret = new MethodDeclaration(null);
     ret.binding = binding;
     final int nargs = binding.parameters.length;
@@ -88,11 +93,12 @@ public class AstUtil {
     return ret;
   }
 
-  public static void setStatements(MethodDeclaration ret, List statements) {
-    ret.statements = (Statement[]) statements.toArray(new Statement[statements.size()]);
+  public static void setStatements(@NotNull MethodDeclaration ret, @NotNull List<? extends Statement> statements) {
+    ret.statements = statements.toArray(new Statement[statements.size()]);
   }
 
-  public static SingleNameReference makeLocalVariableReference(LocalVariableBinding binding) {
+  @NotNull
+  public static SingleNameReference makeLocalVariableReference(@NotNull LocalVariableBinding binding) {
     final SingleNameReference ret = new SingleNameReference(binding.name, 0);
     ret.binding = binding;
 //		ret.codegenBinding = binding;
@@ -102,7 +108,8 @@ public class AstUtil {
     return ret;
   }
 
-  public static SingleNameReference makeResolvedLocalVariableReference(LocalVariableBinding binding) {
+  @NotNull
+  public static SingleNameReference makeResolvedLocalVariableReference(@NotNull LocalVariableBinding binding) {
     final SingleNameReference ret = new SingleNameReference(binding.name, 0);
     ret.binding = binding;
 //		ret.codegenBinding = binding;
@@ -121,14 +128,15 @@ public class AstUtil {
     return modifiers;
   }
 
-  public static CompilationUnitScope getCompilationUnitScope(Scope scope) {
+  @NotNull
+  public static CompilationUnitScope getCompilationUnitScope(@NotNull Scope scope) {
     if (scope instanceof CompilationUnitScope) {
       return (CompilationUnitScope) scope;
     }
     return getCompilationUnitScope(scope.parent);
   }
 
-  public static void generateParameterLoads(TypeBinding[] parameters, CodeStream codeStream) {
+  public static void generateParameterLoads(@NotNull TypeBinding[] parameters, @NotNull CodeStream codeStream) {
     int paramIndex = 0;
     int varIndex = 0;
     while (paramIndex < parameters.length) {
@@ -138,7 +146,7 @@ public class AstUtil {
     }
   }
 
-  public static void generateParameterLoads(TypeBinding[] parameters, CodeStream codeStream, int offset) {
+  public static void generateParameterLoads(@NotNull TypeBinding[] parameters, @NotNull CodeStream codeStream, int offset) {
     int paramIndex = 0;
     int varIndex = offset;
     while (paramIndex < parameters.length) {
@@ -148,7 +156,7 @@ public class AstUtil {
     }
   }
 
-  public static void generateReturn(TypeBinding returnType, CodeStream codeStream) {
+  public static void generateReturn(@NotNull TypeBinding returnType, @NotNull CodeStream codeStream) {
     if (returnType.id == TypeIds.T_void) {
       codeStream.return_();
     } else if (returnType.isBaseType()) {
@@ -178,23 +186,25 @@ public class AstUtil {
   }
 
   // XXX this could be inconsistent for wierd case, i.e. a class named "java_lang_String"
-  public static char[] makeMangledName(ReferenceBinding type) {
+  @NotNull
+  public static char[] makeMangledName(@NotNull ReferenceBinding type) {
     return CharOperation.concatWith(type.compoundName, '_');
   }
 
-  public static final char[] PREFIX = "ajc".toCharArray();
-
   // XXX not efficient
-  public static char[] makeAjcMangledName(char[] kind, ReferenceBinding type, char[] name) {
+  @NotNull
+  public static char[] makeAjcMangledName(@NotNull char[] kind, @NotNull ReferenceBinding type, @NotNull char[] name) {
     return CharOperation.concat(CharOperation.concat(PREFIX, new char[]{'$'}, kind), '$', makeMangledName(type), '$', name);
   }
 
-  public static char[] makeAjcMangledName(char[] kind, char[] p, char[] name) {
+  @NotNull
+  public static char[] makeAjcMangledName(@NotNull char[] kind, @NotNull char[] p, @NotNull char[] name) {
     return CharOperation.concat(CharOperation.concat(PREFIX, new char[]{'$'}, kind), '$', p, '$', name);
   }
 
-  public static List getAjSyntheticAttribute() {
-    final ArrayList ret = new ArrayList(1);
+  @NotNull
+  public static List<IAttribute> getAjSyntheticAttribute() {
+    final ArrayList<IAttribute> ret = new ArrayList<>(1);
     ret.add(new EclipseAttributeAdapter(new AjAttribute.AjSynthetic()));
     return ret;
   }
@@ -317,5 +327,8 @@ public class AstUtil {
     send.binding =/* send.codegenBinding =*/ newBinding;
     send.setActualReceiverType(newBinding.declaringClass);
 
+  }
+
+  private AstUtil() {
   }
 }

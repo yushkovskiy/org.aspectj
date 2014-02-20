@@ -25,12 +25,12 @@ public class InterTypeMethodBinding extends MethodBinding {
   /**
    * The target type upon which the ITD is declared
    */
-  private ReferenceBinding targetType;
+  private final ReferenceBinding targetType;
 
   /**
    * This is the 'pretend' method that should be the target of any attempt to call the ITD'd method.
    */
-  private MethodBinding syntheticMethod;
+  private final MethodBinding syntheticMethod;
 
   public MethodBinding postDispatchMethod;
 

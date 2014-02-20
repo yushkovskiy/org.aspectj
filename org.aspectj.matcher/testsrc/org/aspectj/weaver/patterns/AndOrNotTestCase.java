@@ -69,7 +69,7 @@ public class AndOrNotTestCase extends PatternsTestCase {
     new C(); // just to touch them and so eclipse thinks they are used
   }
 
-  private Pointcut makePointcut(String pattern) {
+  private static Pointcut makePointcut(String pattern) {
     return new PatternParser(pattern).parsePointcut();
   }
 

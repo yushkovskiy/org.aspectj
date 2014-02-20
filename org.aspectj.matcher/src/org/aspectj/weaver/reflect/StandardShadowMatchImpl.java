@@ -89,7 +89,7 @@ public class StandardShadowMatchImpl implements ShadowMatch {
     this.matchContext = aMatchContext;
   }
 
-  private PointcutParameter[] getPointcutParameters(Object thisObject, Object targetObject, Object[] args) {
+  private static PointcutParameter[] getPointcutParameters(Object thisObject, Object targetObject, Object[] args) {
     // Var[] vars = state.vars;
     // PointcutParameterImpl[] bindings = new PointcutParameterImpl[params.length];
     // for (int i = 0; i < bindings.length; i++) {

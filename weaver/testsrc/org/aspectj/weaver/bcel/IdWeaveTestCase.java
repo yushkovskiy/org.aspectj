@@ -33,6 +33,7 @@ public class IdWeaveTestCase extends WeaveTestCase {
     final List l = new ArrayList();
     final Pointcut pointcut2 = makePointcutAll();
     final BcelAdvice p = new BcelAdvice(null, pointcut2, null, 0, -1, -1, null, null) {
+      @Override
       public boolean match(Shadow shadow, World world) {
         if (super.match(shadow, world)) {
           l.add(shadow);
@@ -57,6 +58,7 @@ public class IdWeaveTestCase extends WeaveTestCase {
   public void testId() throws IOException {
     final List l = new ArrayList();
     final BcelAdvice p = new BcelAdvice(null, makePointcutAll(), null, 0, -1, -1, null, null) {
+      @Override
       public boolean implementOn(Shadow shadow) {
         l.add(shadow);
         return true;

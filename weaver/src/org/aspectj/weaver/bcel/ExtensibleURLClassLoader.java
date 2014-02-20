@@ -38,12 +38,14 @@ public abstract class ExtensibleURLClassLoader extends URLClassLoader {
     }
   }
 
+  @Override
   protected void addURL(URL url) {
     super.addURL(url); // amc - this call was missing and is needed in
     // WeavingURLClassLoader chains
     classPath.addPath(url.getPath(), null);
   }
 
+  @Override
   protected Class findClass(String name) throws ClassNotFoundException {
     // System.err.println("? ExtensibleURLClassLoader.findClass(" + name + ")");
     try {

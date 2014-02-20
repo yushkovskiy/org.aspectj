@@ -44,6 +44,7 @@ public class TypePatternMatcherTest extends TestCase {
     assertFalse("Map+ does not match String", tpm.matches(String.class));
   }
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     needToSkip = needToSkipPointcutParserTests();

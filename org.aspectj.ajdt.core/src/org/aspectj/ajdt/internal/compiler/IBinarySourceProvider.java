@@ -10,6 +10,10 @@
  *******************************************************************************/
 package org.aspectj.ajdt.internal.compiler;
 
+import org.aspectj.weaver.bcel.UnwovenClassFile;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -21,7 +25,7 @@ import java.util.Map;
  *         Used to manage incremental compilation of binary sources.
  */
 public interface IBinarySourceProvider {
-
-  Map /* fileName |-> List<UnwovenClassFile> */ getBinarySourcesForThisWeave();
+  @NotNull
+  Map<String, List<UnwovenClassFile>> /* fileName |-> List<UnwovenClassFile> */ getBinarySourcesForThisWeave();
 
 }

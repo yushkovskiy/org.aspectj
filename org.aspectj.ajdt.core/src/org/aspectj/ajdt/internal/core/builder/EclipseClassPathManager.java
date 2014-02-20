@@ -100,7 +100,7 @@ public class EclipseClassPathManager extends ClassPathManager {
 
   private class ClassFileReaderBackedClassFile extends ClassPathManager.ClassFile {
 
-    private ClassFileReader source;
+    private final ClassFileReader source;
     private InputStream is;
 
     public ClassFileReaderBackedClassFile(ClassFileReader cfr) {

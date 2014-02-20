@@ -16,6 +16,7 @@ import org.aspectj.util.FuzzyBoolean;
 import org.aspectj.weaver.*;
 import org.aspectj.weaver.ast.Expr;
 import org.aspectj.weaver.ast.Test;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.lang.reflect.Modifier;
@@ -27,6 +28,13 @@ import java.util.Map;
 public class PerCflow extends PerClause {
   private final boolean isBelow;
   private final Pointcut entry;
+
+  @NotNull
+  public static PerClause readPerClause(@NotNull VersionedDataInputStream s, ISourceContext context) throws IOException {
+    final PerCflow ret = new PerCflow(Pointcut.read(s, context), s.readBoolean());
+    ret.readLocation(context, s);
+    return ret;
+  }
 
   public PerCflow(Pointcut entry, boolean isBelow) {
     this.entry = entry;
@@ -51,11 +59,6 @@ public class PerCflow extends PerClause {
   }
 
   @Override
-  protected FuzzyBoolean matchInternal(Shadow shadow) {
-    return FuzzyBoolean.YES;
-  }
-
-  @Override
   public void resolveBindings(IScope scope, Bindings bindings) {
     // assert bindings == null;
     entry.resolve(scope);
@@ -66,13 +69,6 @@ public class PerCflow extends PerClause {
     final PerCflow ret = new PerCflow(entry.parameterizeWith(typeVariableMap, w), isBelow);
     ret.copyLocationFrom(this);
     return ret;
-  }
-
-  @Override
-  protected Test findResidueInternal(Shadow shadow, ExposedState state) {
-    final Expr myInstance = Expr.makeCallExpr(AjcMemberMaker.perCflowAspectOfMethod(inAspect), Expr.NONE, inAspect);
-    state.setAspectInstance(myInstance);
-    return Test.makeCall(AjcMemberMaker.perCflowHasAspectMethod(inAspect), Expr.NONE);
   }
 
   @Override
@@ -119,17 +115,11 @@ public class PerCflow extends PerClause {
   }
 
   @Override
-  public void write(CompressingDataOutputStream s) throws IOException {
+  public void write(@NotNull CompressingDataOutputStream s) throws IOException {
     PERCFLOW.write(s);
     entry.write(s);
     s.writeBoolean(isBelow);
     writeLocation(s);
-  }
-
-  public static PerClause readPerClause(VersionedDataInputStream s, ISourceContext context) throws IOException {
-    final PerCflow ret = new PerCflow(Pointcut.read(s, context), s.readBoolean());
-    ret.readLocation(context, s);
-    return ret;
   }
 
   @Override
@@ -168,6 +158,18 @@ public class PerCflow extends PerClause {
     result = 37 * result + ((inAspect == null) ? 0 : inAspect.hashCode());
     result = 37 * result + ((entry == null) ? 0 : entry.hashCode());
     return result;
+  }
+
+  @Override
+  protected FuzzyBoolean matchInternal(Shadow shadow) {
+    return FuzzyBoolean.YES;
+  }
+
+  @Override
+  protected Test findResidueInternal(Shadow shadow, ExposedState state) {
+    final Expr myInstance = Expr.makeCallExpr(AjcMemberMaker.perCflowAspectOfMethod(inAspect), Expr.NONE, inAspect);
+    state.setAspectInstance(myInstance);
+    return Test.makeCall(AjcMemberMaker.perCflowHasAspectMethod(inAspect), Expr.NONE);
   }
 
 }

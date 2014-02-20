@@ -27,8 +27,8 @@ import java.util.List;
  * The member finder looks after intertype declared members on a type, there is one member finder per type that was hit by an ITD.
  */
 public class InterTypeMemberFinder implements IMemberFinder {
-  private List interTypeFields = new ArrayList();
-  private List interTypeMethods = new ArrayList();
+  private final List interTypeFields = new ArrayList();
+  private final List interTypeMethods = new ArrayList();
 
   public SourceTypeBinding sourceTypeBinding;
 

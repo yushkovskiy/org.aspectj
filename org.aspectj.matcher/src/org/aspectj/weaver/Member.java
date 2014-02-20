@@ -8,6 +8,8 @@
  * ******************************************************************/
 package org.aspectj.weaver;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Collection;
 
 /**
@@ -18,20 +20,31 @@ import java.util.Collection;
  * @author Andy Clement
  */
 public interface Member extends Comparable<Member> {
-
+  @NotNull
   public static final Member[] NONE = new Member[0];
 
+  @NotNull
   public static final MemberKind METHOD = new MemberKind("METHOD", 1);
+  @NotNull
   public static final MemberKind FIELD = new MemberKind("FIELD", 2);
+  @NotNull
   public static final MemberKind CONSTRUCTOR = new MemberKind("CONSTRUCTOR", 3);
+  @NotNull
   public static final MemberKind STATIC_INITIALIZATION = new MemberKind("STATIC_INITIALIZATION", 4);
+  @NotNull
   public static final MemberKind POINTCUT = new MemberKind("POINTCUT", 5);
+  @NotNull
   public static final MemberKind ADVICE = new MemberKind("ADVICE", 6);
+  @NotNull
   public static final MemberKind HANDLER = new MemberKind("HANDLER", 7);
+  @NotNull
   public static final MemberKind MONITORENTER = new MemberKind("MONITORENTER", 8);
+  @NotNull
   public static final MemberKind MONITOREXIT = new MemberKind("MONITOREXIT", 9);
 
+  @NotNull
   public static final AnnotationAJ[][] NO_PARAMETER_ANNOTATIONXS = new AnnotationAJ[][]{};
+  @NotNull
   public static final ResolvedType[][] NO_PARAMETER_ANNOTATION_TYPES = new ResolvedType[][]{};
 
   /**
@@ -89,6 +102,6 @@ public interface Member extends Comparable<Member> {
   public ResolvedMember resolve(World world);
 
   @Override
-  public int compareTo(Member other);
+  public int compareTo(@NotNull Member other);
 
 }

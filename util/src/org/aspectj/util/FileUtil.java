@@ -1285,7 +1285,7 @@ public class FileUtil {
    * @param sink       List sink the List for String entries of the form {sourcePath}:line:column
    * @return String error if any, or add String entries to sink
    */
-  @NotNull
+  @Nullable
   public static String lineSeek(@Nullable String sought, @Nullable String sourcePath, boolean listAll, @NotNull ArrayList<String> sink) {
     if (LangUtil.isEmpty(sought) || LangUtil.isEmpty(sourcePath)) {
       return "nothing sought";

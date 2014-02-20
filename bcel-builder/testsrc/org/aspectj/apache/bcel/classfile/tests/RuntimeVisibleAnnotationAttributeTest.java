@@ -38,6 +38,7 @@ import org.aspectj.apache.bcel.util.SyntheticRepository;
 public class RuntimeVisibleAnnotationAttributeTest extends BcelTestCase {
 
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
   }
@@ -133,7 +134,7 @@ public class RuntimeVisibleAnnotationAttributeTest extends BcelTestCase {
     assertTrue(tfile.delete());
   }
 
-  private void verifyAnnotationStringElement(JavaClass clazz) {
+  private static void verifyAnnotationStringElement(JavaClass clazz) {
     final AnnotationGen[] anns = clazz.getAnnotations();
     assertTrue("should be one annotation but found " + anns.length, anns.length == 1);
     final AnnotationGen ann = anns[0];
@@ -206,7 +207,7 @@ public class RuntimeVisibleAnnotationAttributeTest extends BcelTestCase {
 
   }
 
-  private void checkValue(AnnotationGen a, String name, String tostring) {
+  private static void checkValue(AnnotationGen a, String name, String tostring) {
     for (final Iterator<NameValuePair> i = a.getValues().iterator(); i.hasNext(); ) {
       final NameValuePair element = i.next();
       if (element.getNameString().equals(name)) {
@@ -254,7 +255,7 @@ public class RuntimeVisibleAnnotationAttributeTest extends BcelTestCase {
     assertTrue(wipe("AnnotatedWithClassClass.class"));
   }
 
-  private void verifyClassAnnotation(JavaClass clazz) {
+  private static void verifyClassAnnotation(JavaClass clazz) {
     final AnnotationGen[] anns = clazz.getAnnotations();
     assertTrue("should be one annotation but found " + anns.length, anns.length == 1);
     final AnnotationGen ann = anns[0];
@@ -296,7 +297,7 @@ public class RuntimeVisibleAnnotationAttributeTest extends BcelTestCase {
     assertTrue(tfile.delete());
   }
 
-  public void verifyAnnotationEnumElement(JavaClass clazz) {
+  public static void verifyAnnotationEnumElement(JavaClass clazz) {
     final AnnotationGen[] anns = clazz.getAnnotations();
     assertTrue("should be one annotation but found " + anns.length, anns.length == 1);
     final AnnotationGen ann = anns[0];
@@ -348,7 +349,7 @@ public class RuntimeVisibleAnnotationAttributeTest extends BcelTestCase {
   }
 
 
-  private void checkCombinedAnnotation(AnnotationGen ann) {
+  private static void checkCombinedAnnotation(AnnotationGen ann) {
     assertTrue("should be called 'CombinedAnnotation' but was called " + ann.getTypeName(),
         ann.getTypeName().equals("CombinedAnnotation"));
     final List<NameValuePair> l = ann.getValues();
@@ -377,6 +378,7 @@ public class RuntimeVisibleAnnotationAttributeTest extends BcelTestCase {
   }
 
 
+  @Override
   protected void tearDown() throws Exception {
     super.tearDown();
   }

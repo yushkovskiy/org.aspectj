@@ -19,11 +19,12 @@ import org.aspectj.org.eclipse.jdt.core.compiler.IProblem;
 import org.aspectj.org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.aspectj.org.eclipse.jdt.internal.compiler.env.ICompilationUnit;
 import org.aspectj.org.eclipse.jdt.internal.compiler.util.Util;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
 public class EclipseSourceLocation implements ISourceLocation {
-  private static String NO_CONTEXT = "USE_NULL--NO_CONTEXT_AVAILABLE";
+  private static final String NO_CONTEXT = "USE_NULL--NO_CONTEXT_AVAILABLE";
   CompilationResult result;
   //	EclipseSourceContext eclipseContext;
   int startPos, endPos;
@@ -112,6 +113,7 @@ public class EclipseSourceLocation implements ISourceLocation {
   }
 
   @Override
+  @Nullable
   public String getContext() {
     if (null == context) {
       final ICompilationUnit compilationUnit = result.compilationUnit;

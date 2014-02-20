@@ -106,6 +106,7 @@ public final class ConstantInteger extends Constant implements SimpleConstant {
     return intValue;
   }
 
+  @Override
   public String getStringValue() {
     return Integer.toString(intValue);
   }

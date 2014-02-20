@@ -69,7 +69,7 @@ public class WorkingTestMain {
     TestUtil.runMain("out;../lib/test/testing-client.jar", "org.schmidmeier.unittests.cache.AllTimeCacheTests");
   }
 
-  private static String examplesDir = "../docs/dist/doc/examples/";
+  private static final String examplesDir = "../docs/dist/doc/examples/";
 
   private static void example(String[] argfiles, String[] classes) {
     final List args = new ArrayList();

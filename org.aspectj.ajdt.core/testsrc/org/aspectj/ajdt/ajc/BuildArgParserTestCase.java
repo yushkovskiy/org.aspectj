@@ -34,7 +34,7 @@ import org.aspectj.org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants
 public class BuildArgParserTestCase extends TestCase {
 
   private static final String TEST_DIR = AjdtAjcTests.TESTDATA_PATH + File.separator + "ajc" + File.separator;
-  private MessageWriter messageWriter = new MessageWriter(new PrintWriter(System.out), false);
+  private final MessageWriter messageWriter = new MessageWriter(new PrintWriter(System.out), false);
 
   public BuildArgParserTestCase(String name) {
     super(name);

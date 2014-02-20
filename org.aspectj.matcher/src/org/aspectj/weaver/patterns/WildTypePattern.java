@@ -19,6 +19,7 @@ import org.aspectj.bridge.MessageUtil;
 import org.aspectj.util.FileUtil;
 import org.aspectj.util.FuzzyBoolean;
 import org.aspectj.weaver.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -361,7 +362,7 @@ public class WildTypePattern extends TypePattern {
     return innerMatchesExactly(targetTypeName, isAnonymous, isNested);
   }
 
-  private int lastIndexOfDotOrDollar(String string) {
+  private static int lastIndexOfDotOrDollar(String string) {
     for (int pos = string.length() - 1; pos > -1; pos--) {
       final char ch = string.charAt(pos);
       if (ch == '.' || ch == '$') {
@@ -738,7 +739,7 @@ public class WildTypePattern extends TypePattern {
     }
   }
 
-  private UnresolvedType lookupTypeInScope(IScope scope, String typeName, IHasPosition location) {
+  private static UnresolvedType lookupTypeInScope(IScope scope, String typeName, IHasPosition location) {
     UnresolvedType type = null;
     while (ResolvedType.isMissing(type = scope.lookupType(typeName, location))) {
       final int lastDot = typeName.lastIndexOf('.');
@@ -773,7 +774,7 @@ public class WildTypePattern extends TypePattern {
     return ret;
   }
 
-  private ResolvedType lookupTypeInWorld(World world, String typeName) {
+  private static ResolvedType lookupTypeInWorld(World world, String typeName) {
     final UnresolvedType ut = UnresolvedType.forName(typeName);
     ResolvedType ret = world.resolve(ut, true);
     while (ret.isMissing()) {
@@ -1283,7 +1284,7 @@ public class WildTypePattern extends TypePattern {
   private static final byte VERSION = 1; // rev on change
 
   @Override
-  public void write(CompressingDataOutputStream s) throws IOException {
+  public void write(@NotNull CompressingDataOutputStream s) throws IOException {
     s.writeByte(TypePattern.WILD);
     s.writeByte(VERSION);
     s.writeShort(namePatterns.length);

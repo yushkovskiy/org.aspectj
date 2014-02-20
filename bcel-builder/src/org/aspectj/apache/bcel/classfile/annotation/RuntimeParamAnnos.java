@@ -46,6 +46,7 @@ public abstract class RuntimeParamAnnos extends Attribute {
     annotation_data = data;
   }
 
+  @Override
   public final void dump(DataOutputStream dos) throws IOException {
     super.dump(dos);
     writeAnnotations(dos);

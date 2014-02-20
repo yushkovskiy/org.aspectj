@@ -15,6 +15,7 @@ package org.aspectj.ajdt.ajc;
 import org.aspectj.ajdt.internal.core.builder.AjBuildConfig;
 import org.aspectj.bridge.*;
 import org.aspectj.org.eclipse.jdt.internal.compiler.batch.Main;
+import org.aspectj.org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
 import org.aspectj.org.eclipse.jdt.internal.compiler.impl.CompilerOptions;
 import org.aspectj.util.FileUtil;
 import org.aspectj.util.LangUtil;
@@ -42,8 +43,8 @@ public final class BuildArgParser extends Main {
    */
   @Nullable
   private final StringBuffer errorSink;
-
-  private IMessageHandler handler;
+  @NotNull
+  private final IMessageHandler handler;
 
   static {
     Main.bundleName = BUNDLE_NAME;
@@ -64,6 +65,56 @@ public final class BuildArgParser extends Main {
   @NotNull
   public static String getXOptionUsage() {
     return _bind("xoption.usage", new String[]{_bind("compiler.name", (String[]) null)});
+  }
+
+  @NotNull
+  public static List<String> getBootclasspath(@NotNull AjcConfigParser parser) {
+    final List<String> ret = new ArrayList<String>();
+
+    if (parser.bootclasspath == null) {
+      addClasspath(System.getProperty("sun.boot.class.path", ""), ret);
+    } else {
+      addClasspath(parser.bootclasspath, ret);
+    }
+    return ret;
+  }
+
+  /**
+   * If the classpath is not set, we use the environment's java.class.path, but remove the aspectjtools.jar entry from that list
+   * in order to prevent wierd bootstrap issues (refer to bug#39959).
+   */
+  @NotNull
+  public static List<String> getClasspath(@NotNull AjcConfigParser parser) {
+    List<String> ret = new ArrayList<>();
+
+    // if (parser.bootclasspath == null) {
+    // addClasspath(System.getProperty("sun.boot.class.path", ""), ret);
+    // } else {
+    // addClasspath(parser.bootclasspath, ret);
+    // }
+
+    String extdirs = parser.extdirs;
+    if (extdirs == null) {
+      extdirs = System.getProperty("java.ext.dirs", "");
+    }
+    addExtDirs(extdirs, ret);
+
+    if (parser.classpath == null) {
+      addClasspath(System.getProperty("java.class.path", ""), ret);
+      final List<String> fixedList = new ArrayList<>();
+      for (final Iterator it = ret.iterator(); it.hasNext(); ) {
+        final String entry = (String) it.next();
+        if (!entry.endsWith("aspectjtools.jar")) {
+          fixedList.add(entry);
+        }
+      }
+      ret = fixedList;
+    } else {
+      addClasspath(parser.classpath, ret);
+    }
+    // ??? eclipse seems to put outdir on the classpath
+    // ??? we're brave and believe we don't need it
+    return ret;
   }
 
   /**
@@ -147,14 +198,14 @@ public final class BuildArgParser extends Main {
       final List<String> javaArgList = new ArrayList<String>();
       // disable all special eclipse warnings by default - why???
       // ??? might want to instead override getDefaultOptions()
-      javaArgList.add("-warn:none");
+//      javaArgList.add("-warn:none");
       // these next four lines are some nonsense to fool the eclipse batch compiler
       // without these it will go searching for reasonable values from properties
       // TODO fix org.eclipse.jdt.internal.compiler.batch.Main so this hack isn't needed
       javaArgList.add("-classpath");
-      javaArgList.add(System.getProperty("user.dir"));
+      javaArgList.add(parser.classpath == null ? System.getProperty("user.dir") : parser.classpath);
       javaArgList.add("-bootclasspath");
-      javaArgList.add(System.getProperty("user.dir"));
+      javaArgList.add(parser.bootclasspath == null ? System.getProperty("user.dir") : parser.bootclasspath);
       javaArgList.addAll(parser.getUnparsedArgs());
       super.configure(javaArgList.toArray(new String[javaArgList.size()]));
 
@@ -242,6 +293,13 @@ public final class BuildArgParser extends Main {
   }
 
   @Override
+  public void initializeAnnotationProcessorManager() {
+    if (this.compilerOptions.complianceLevel < ClassFileConstants.JDK1_6 || !this.compilerOptions.processAnnotations)
+      return;
+    super.initializeAnnotationProcessorManager();
+  }
+
+  @Override
   public void printUsage() {
     System.out.println(getUsage());
     System.out.flush();
@@ -268,56 +326,6 @@ public final class BuildArgParser extends Main {
       errorSink.setLength(0);
     }
     return result;
-  }
-
-  @NotNull
-  public static List<String> getBootclasspath(@NotNull AjcConfigParser parser) {
-    final List<String> ret = new ArrayList<String>();
-
-    if (parser.bootclasspath == null) {
-      addClasspath(System.getProperty("sun.boot.class.path", ""), ret);
-    } else {
-      addClasspath(parser.bootclasspath, ret);
-    }
-    return ret;
-  }
-
-  /**
-   * If the classpath is not set, we use the environment's java.class.path, but remove the aspectjtools.jar entry from that list
-   * in order to prevent wierd bootstrap issues (refer to bug#39959).
-   */
-  @NotNull
-  public static List<String> getClasspath(@NotNull AjcConfigParser parser) {
-    List<String> ret = new ArrayList<>();
-
-    // if (parser.bootclasspath == null) {
-    // addClasspath(System.getProperty("sun.boot.class.path", ""), ret);
-    // } else {
-    // addClasspath(parser.bootclasspath, ret);
-    // }
-
-    String extdirs = parser.extdirs;
-    if (extdirs == null) {
-      extdirs = System.getProperty("java.ext.dirs", "");
-    }
-    addExtDirs(extdirs, ret);
-
-    if (parser.classpath == null) {
-      addClasspath(System.getProperty("java.class.path", ""), ret);
-      final List<String> fixedList = new ArrayList<>();
-      for (final Iterator it = ret.iterator(); it.hasNext(); ) {
-        final String entry = (String) it.next();
-        if (!entry.endsWith("aspectjtools.jar")) {
-          fixedList.add(entry);
-        }
-      }
-      ret = fixedList;
-    } else {
-      addClasspath(parser.classpath, ret);
-    }
-    // ??? eclipse seems to put outdir on the classpath
-    // ??? we're brave and believe we don't need it
-    return ret;
   }
 
   @SuppressWarnings("unchecked")
@@ -397,19 +405,19 @@ public final class BuildArgParser extends Main {
      * mode. Signals warnings or errors through handler set in constructor.
      */
     @Override
-    public void parseOption(@NotNull String arg, @NotNull LinkedList args) { // XXX use ListIterator.remove()
-      final int nextArgIndex = args.indexOf(arg) + 1; // XXX assumes unique
+    public void parseOption(@NotNull String arg, @NotNull LinkedList<Arg> args) { // XXX use ListIterator.remove()
+      final int nextArgIndex = indexOf(args, arg) + 1; // XXX assumes unique
       // trim arg?
       buildConfig.setXlazyTjp(true); // now default - MINOR could be pushed down and made default at a lower level
       if (LangUtil.isEmpty(arg)) {
         showWarning("empty arg found");
-      } else if (arg.equals("-inpath")) {
+        return;
+      }
+      if (arg.equals("-inpath")) {
         if (args.size() > nextArgIndex) {
           // buildConfig.getAjOptions().put(AjCompilerOptions.OPTION_Inpath, CompilerOptions.PRESERVE);
-
           final List<File> inPath = buildConfig.getInpath();
-          final StringTokenizer st = new StringTokenizer(((ConfigParser.Arg) args.get(nextArgIndex)).getValue(),
-              File.pathSeparator);
+          final StringTokenizer st = new StringTokenizer(args.get(nextArgIndex).getValue(), File.pathSeparator);
           while (st.hasMoreTokens()) {
             final String filename = st.nextToken();
             final File file = makeFile(filename);
@@ -426,12 +434,13 @@ public final class BuildArgParser extends Main {
           buildConfig.setInPath(inPath);
           args.remove(args.get(nextArgIndex));
         }
-      } else if (arg.equals("-injars")) {
+        return;
+      }
+      if (arg.equals("-injars")) {
         if (args.size() > nextArgIndex) {
           // buildConfig.getAjOptions().put(AjCompilerOptions.OPTION_InJARs, CompilerOptions.PRESERVE);
 
-          final StringTokenizer st = new StringTokenizer(((ConfigParser.Arg) args.get(nextArgIndex)).getValue(),
-              File.pathSeparator);
+          final StringTokenizer st = new StringTokenizer(args.get(nextArgIndex).getValue(), File.pathSeparator);
           while (st.hasMoreTokens()) {
             final String filename = st.nextToken();
             final File jarFile = makeFile(filename);
@@ -449,10 +458,11 @@ public final class BuildArgParser extends Main {
 
           args.remove(args.get(nextArgIndex));
         }
-      } else if (arg.equals("-aspectpath")) {
+        return;
+      }
+      if (arg.equals("-aspectpath")) {
         if (args.size() > nextArgIndex) {
-          final StringTokenizer st = new StringTokenizer(((ConfigParser.Arg) args.get(nextArgIndex)).getValue(),
-              File.pathSeparator);
+          final StringTokenizer st = new StringTokenizer(args.get(nextArgIndex).getValue(), File.pathSeparator);
           while (st.hasMoreTokens()) {
             final String filename = st.nextToken();
             final File jarFile = makeFile(filename);
@@ -465,13 +475,16 @@ public final class BuildArgParser extends Main {
 
           args.remove(args.get(nextArgIndex));
         }
-      } else if (arg.equals("-makeAjReflectable")) {
+        return;
+      }
+      if (arg.equals("-makeAjReflectable")) {
         buildConfig.setMakeReflectable(true);
-      } else if (arg.equals("-sourceroots")) {
+        return;
+      }
+      if (arg.equals("-sourceroots")) {
         if (args.size() > nextArgIndex) {
           final List<File> sourceRoots = new ArrayList<>();
-          final StringTokenizer st = new StringTokenizer(((ConfigParser.Arg) args.get(nextArgIndex)).getValue(),
-              File.pathSeparator);
+          final StringTokenizer st = new StringTokenizer(args.get(nextArgIndex).getValue(), File.pathSeparator);
           while (st.hasMoreTokens()) {
             final File f = makeFile(st.nextToken());
             if (f.isDirectory() && f.canRead()) {
@@ -487,10 +500,12 @@ public final class BuildArgParser extends Main {
         } else {
           showError("-sourceroots requires list of directories");
         }
-      } else if (arg.equals("-outjar")) {
+        return;
+      }
+      if (arg.equals("-outjar")) {
         if (args.size() > nextArgIndex) {
           // buildConfig.getAjOptions().put(AjCompilerOptions.OPTION_OutJAR, CompilerOptions.GENERATE);
-          final File jarFile = makeFile(((ConfigParser.Arg) args.get(nextArgIndex)).getValue());
+          final File jarFile = makeFile(args.get(nextArgIndex).getValue());
           if (!jarFile.isDirectory()) {
             try {
               if (!jarFile.exists()) {
@@ -507,27 +522,39 @@ public final class BuildArgParser extends Main {
         } else {
           showError("-outjar requires jar path argument");
         }
-      } else if (arg.equals("-outxml")) {
+        return;
+      }
+      if (arg.equals("-outxml")) {
         buildConfig.setOutxmlName(org.aspectj.bridge.Constants.AOP_AJC_XML);
-      } else if (arg.equals("-outxmlfile")) {
+        return;
+      }
+      if (arg.equals("-outxmlfile")) {
         if (args.size() > nextArgIndex) {
-          final String name = ((ConfigParser.Arg) args.get(nextArgIndex)).getValue();
+          final String name = args.get(nextArgIndex).getValue();
           buildConfig.setOutxmlName(name);
           args.remove(args.get(nextArgIndex));
         } else {
           showError("-outxmlfile requires file name argument");
         }
-      } else if (arg.equals("-log")) {
+        return;
+      }
+      if (arg.equals("-log")) {
         // remove it as it's already been handled in org.aspectj.tools.ajc.Main
         args.remove(args.get(nextArgIndex));
-      } else if (arg.equals("-messageHolder")) {
+        return;
+      }
+      if (arg.equals("-messageHolder")) {
         // remove it as it's already been handled in org.aspectj.tools.ajc.Main
         args.remove(args.get(nextArgIndex));
-      } else if (arg.equals("-incremental")) {
+        return;
+      }
+      if (arg.equals("-incremental")) {
         buildConfig.setIncrementalMode(true);
-      } else if (arg.equals("-XincrementalFile")) {
+        return;
+      }
+      if (arg.equals("-XincrementalFile")) {
         if (args.size() > nextArgIndex) {
-          final File file = makeFile(((ConfigParser.Arg) args.get(nextArgIndex)).getValue());
+          final File file = makeFile(args.get(nextArgIndex).getValue());
           buildConfig.setIncrementalFile(file);
           if (!file.canRead()) {
             showError("bad -XincrementalFile : " + file);
@@ -537,10 +564,14 @@ public final class BuildArgParser extends Main {
         } else {
           showError("-XincrementalFile requires file argument");
         }
-      } else if (arg.equals("-crossrefs")) {
+        return;
+      }
+      if (arg.equals("-crossrefs")) {
         buildConfig.setGenerateCrossRefsMode(true);
         buildConfig.setGenerateModelMode(true);
-      } else if (arg.startsWith("-checkRuntimeVersion:")) {
+        return;
+      }
+      if (arg.startsWith("-checkRuntimeVersion:")) {
         final String lcArg = arg.toLowerCase();
         if (lcArg.endsWith(":false")) {
           buildConfig.setCheckRuntimeVersion(false);
@@ -549,56 +580,94 @@ public final class BuildArgParser extends Main {
         } else {
           showError("bad value for -checkRuntimeVersion option, must be true or false");
         }
-      } else if (arg.equals("-emacssym")) {
+        return;
+      }
+      if (arg.equals("-emacssym")) {
         buildConfig.setEmacsSymMode(true);
         buildConfig.setGenerateModelMode(true);
-      } else if (arg.equals("-XjavadocsInModel")) {
+        return;
+      }
+      if (arg.equals("-XjavadocsInModel")) {
         buildConfig.setGenerateModelMode(true);
         buildConfig.setGenerateJavadocsInModelMode(true);
-      } else if (arg.equals("-Xdev:NoAtAspectJProcessing")) {
+        return;
+      }
+      if (arg.equals("-Xdev:NoAtAspectJProcessing")) {
         buildConfig.setNoAtAspectJAnnotationProcessing(true);
-      } else if (arg.equals("-XaddSerialVersionUID")) {
+        return;
+      }
+      if (arg.equals("-XaddSerialVersionUID")) {
         buildConfig.setAddSerialVerUID(true);
-      } else if (arg.equals("-xmlConfigured")) {
+        return;
+      }
+      if (arg.equals("-xmlConfigured")) {
         buildConfig.setXmlConfigured(true);
-      } else if (arg.equals("-Xdev:Pinpoint")) {
+        return;
+      }
+      if (arg.equals("-Xdev:Pinpoint")) {
         buildConfig.setXdevPinpointMode(true);
-      } else if (arg.startsWith("-Xjoinpoints:")) {
+        return;
+      }
+      if (arg.startsWith("-Xjoinpoints:")) {
         buildConfig.setXJoinpoints(arg.substring(13));
-      } else if (arg.equals("-noWeave") || arg.equals("-XnoWeave")) {
+        return;
+      }
+      if (arg.equals("-noWeave") || arg.equals("-XnoWeave")) {
         showWarning("the noweave option is no longer required and is being ignored");
-      } else if (arg.equals("-XterminateAfterCompilation")) {
+        return;
+      }
+      if (arg.equals("-XterminateAfterCompilation")) {
         buildConfig.setTerminateAfterCompilation(true);
-      } else if (arg.equals("-XserializableAspects")) {
+        return;
+      }
+      if (arg.equals("-XserializableAspects")) {
         buildConfig.setXserializableAspects(true);
-      } else if (arg.equals("-XlazyTjp")) {
+        return;
+      }
+      if (arg.equals("-XlazyTjp")) {
         // do nothing as this is now on by default
         showWarning("-XlazyTjp should no longer be used, build tjps lazily is now the default");
-      } else if (arg.startsWith("-Xreweavable")) {
+        return;
+      }
+      if (arg.startsWith("-Xreweavable")) {
         showWarning("-Xreweavable is on by default");
         if (arg.endsWith(":compress")) {
           showWarning("-Xreweavable:compress is no longer available - reweavable is now default");
         }
-      } else if (arg.startsWith("-Xset:")) {
+        return;
+      }
+      if (arg.startsWith("-Xset:")) {
         buildConfig.setXconfigurationInfo(arg.substring(6));
-      } else if (arg.startsWith("-aspectj.pushin=")) {
+        return;
+      }
+      if (arg.startsWith("-aspectj.pushin=")) {
         // a little dirty but this should never be used in the IDE
         try {
           System.setProperty("aspectj.pushin", arg.substring(16));
         } catch (Exception e) {
           e.printStackTrace();
         }
-      } else if (arg.startsWith("-XnotReweavable")) {
+        return;
+      }
+      if (arg.startsWith("-XnotReweavable")) {
         buildConfig.setXnotReweavable(true);
-      } else if (arg.equals("-XnoInline")) {
+        return;
+      }
+      if (arg.equals("-XnoInline")) {
         buildConfig.setXnoInline(true);
-      } else if (arg.equals("-XhasMember")) {
+        return;
+      }
+      if (arg.equals("-XhasMember")) {
         buildConfig.setXHasMemberSupport(true);
-      } else if (arg.startsWith("-showWeaveInfo")) {
+        return;
+      }
+      if (arg.startsWith("-showWeaveInfo")) {
         buildConfig.setShowWeavingInformation(true);
-      } else if (arg.equals("-Xlintfile")) {
+        return;
+      }
+      if (arg.equals("-Xlintfile")) {
         if (args.size() > nextArgIndex) {
-          final File lintSpecFile = makeFile(((ConfigParser.Arg) args.get(nextArgIndex)).getValue());
+          final File lintSpecFile = makeFile(args.get(nextArgIndex).getValue());
           // XXX relax restriction on props file suffix?
           if (lintSpecFile.canRead() && lintSpecFile.getName().endsWith(".properties")) {
             buildConfig.setLintSpecFile(lintSpecFile);
@@ -610,20 +679,26 @@ public final class BuildArgParser extends Main {
         } else {
           showError("-Xlintfile requires .properties file argument");
         }
-      } else if (arg.equals("-Xlint")) {
+        return;
+      }
+      if (arg.equals("-Xlint")) {
         // buildConfig.getAjOptions().put(
         // AjCompilerOptions.OPTION_Xlint,
         // CompilerOptions.GENERATE);
         buildConfig.setLintMode(AjBuildConfig.AJLINT_DEFAULT);
-      } else if (arg.startsWith("-Xlint:")) {
+        return;
+      }
+      if (arg.startsWith("-Xlint:")) {
         if (7 < arg.length()) {
           buildConfig.setLintMode(arg.substring(7));
         } else {
           showError("invalid lint option " + arg);
         }
-      } else if (arg.equals("-bootclasspath")) {
+        return;
+      }
+      if (arg.equals("-bootclasspath")) {
         if (args.size() > nextArgIndex) {
-          final String bcpArg = ((ConfigParser.Arg) args.get(nextArgIndex)).getValue();
+          final String bcpArg = args.get(nextArgIndex).getValue();
           final StringBuilder bcp = new StringBuilder();
           final StringTokenizer strTok = new StringTokenizer(bcpArg, File.pathSeparator);
           while (strTok.hasMoreTokens()) {
@@ -637,9 +712,11 @@ public final class BuildArgParser extends Main {
         } else {
           showError("-bootclasspath requires classpath entries");
         }
-      } else if (arg.equals("-classpath") || arg.equals("-cp")) {
+        return;
+      }
+      if (arg.equals("-classpath") || arg.equals("-cp")) {
         if (args.size() > nextArgIndex) {
-          final String cpArg = ((ConfigParser.Arg) args.get(nextArgIndex)).getValue();
+          final String cpArg = args.get(nextArgIndex).getValue();
           final StringBuilder cp = new StringBuilder();
           final StringTokenizer strTok = new StringTokenizer(cpArg, File.pathSeparator);
           while (strTok.hasMoreTokens()) {
@@ -653,9 +730,11 @@ public final class BuildArgParser extends Main {
         } else {
           showError("-classpath requires classpath entries");
         }
-      } else if (arg.equals("-extdirs")) {
+        return;
+      }
+      if (arg.equals("-extdirs")) {
         if (args.size() > nextArgIndex) {
-          final String extdirsArg = ((ConfigParser.Arg) args.get(nextArgIndex)).getValue();
+          final String extdirsArg = args.get(nextArgIndex).getValue();
           final StringBuilder ed = new StringBuilder();
           final StringTokenizer strTok = new StringTokenizer(extdirsArg, File.pathSeparator);
           while (strTok.hasMoreTokens()) {
@@ -670,7 +749,9 @@ public final class BuildArgParser extends Main {
           showError("-extdirs requires list of external directories");
         }
         // error on directory unless -d, -{boot}classpath, or -extdirs
-      } else if (arg.equals("-d")) {
+        return;
+      }
+      if (arg.equals("-d")) {
         dirLookahead(arg, args, nextArgIndex);
         // } else if (arg.equals("-classpath")) {
         // dirLookahead(arg, args, nextArgIndex);
@@ -678,11 +759,44 @@ public final class BuildArgParser extends Main {
         // dirLookahead(arg, args, nextArgIndex);
         // } else if (arg.equals("-extdirs")) {
         // dirLookahead(arg, args, nextArgIndex);
-      } else if (arg.equals("-proceedOnError")) {
+        return;
+      }
+      if (arg.equals("-proceedOnError")) {
         buildConfig.setProceedOnError(true);
-      } else if (new File(arg).isDirectory()) {
+        return;
+      }
+      if (arg.equals("-processorpath")) { // -processorpath <directories and ZIP archives separated by pathseporator
+        addPairToUnparsed(args, arg, nextArgIndex, "-processorpath requires list of external directories or zip archives");
+        return;
+      }
+      if (arg.equals("-processor")) { // -processor <class1[,class2,...]>
+        addPairToUnparsed(args, arg, nextArgIndex, "-processor requires list of processors' classes");
+        return;
+      }
+      if (arg.equals("-s")) { // -s <dir> destination directory for generated source files
+        addPairToUnparsed(args, arg, nextArgIndex, "-s requires directory");
+        return;
+      }
+      if (arg.equals("-classNames")) { // -classNames <className1[,className2,...]>
+        addPairToUnparsed(args, arg, nextArgIndex, "-classNames requires list of classes");
+        return;
+      }
+      if (arg.equals("-XXproc:ignore")) { // TODO(yshkvoskiy): remove it when IDEA will support correct 'proc' parameters
+        for (final Iterator<Arg> i = args.iterator(); i.hasNext(); ) {
+          if (i.next().getValue().startsWith("-proc:"))
+            i.remove();
+        }
+        for (final Iterator<String> i = unparsedArgs.iterator(); i.hasNext(); ) {
+          if (i.next().startsWith("-proc:"))
+            i.remove();
+        }
+        return;
+      }
+      if (new File(arg).isDirectory()) {
         showError("dir arg not permitted: " + arg);
-      } else if (arg.startsWith("-Xajruntimetarget")) {
+        return;
+      }
+      if (arg.startsWith("-Xajruntimetarget")) {
         if (arg.endsWith(":1.2")) {
           buildConfig.setTargetAspectjRuntimeLevel(Constants.RUNTIME_LEVEL_12);
         } else if (arg.endsWith(":1.5")) {
@@ -690,23 +804,33 @@ public final class BuildArgParser extends Main {
         } else {
           showError("-Xajruntimetarget:<level> only supports a target level of 1.2 or 1.5");
         }
-      } else if (arg.equals("-timers")) {
+        return;
+      }
+      if (arg.equals("-timers")) {
         buildConfig.setTiming(true);
         // swallow - it is dealt with in Main.runMain()
-      } else if (arg.equals("-1.5")) {
+        return;
+      }
+      if (arg.equals("-1.5")) {
         buildConfig.setBehaveInJava5Way(true);
         unparsedArgs.add("-1.5");
         // this would enable the '-source 1.5' to do the same as '-1.5' but doesnt sound quite right as
         // as an option right now as it doesnt mean we support 1.5 source code - people will get confused...
-      } else if (arg.equals("-1.6")) {
+        return;
+      }
+      if (arg.equals("-1.6")) {
         buildConfig.setBehaveInJava5Way(true);
         unparsedArgs.add("-1.6");
-      } else if (arg.equals("-1.7")) {
+        return;
+      }
+      if (arg.equals("-1.7")) {
         buildConfig.setBehaveInJava5Way(true);
         unparsedArgs.add("-1.7");
-      } else if (arg.equals("-source")) {
+        return;
+      }
+      if (arg.equals("-source")) {
         if (args.size() > nextArgIndex) {
-          final String level = ((ConfigParser.Arg) args.get(nextArgIndex)).getValue();
+          final String level = args.get(nextArgIndex).getValue();
           if (level.equals("1.5") || level.equals("5") || level.equals("1.6") || level.equals("6") || level.equals("1.7")
               || level.equals("7")) {
             buildConfig.setBehaveInJava5Way(true);
@@ -715,18 +839,19 @@ public final class BuildArgParser extends Main {
           unparsedArgs.add(level);
           args.remove(args.get(nextArgIndex));
         }
-      } else {
-        // argfile, @file parsed by superclass
-        // no eclipse options parsed:
-        // -d args, -help (handled),
-        // -classpath, -target, -1.3, -1.4, -source [1.3|1.4]
-        // -nowarn, -warn:[...], -deprecation, -noImportError,
-        // -g:[...], -preserveAllLocals,
-        // -referenceInfo, -encoding, -verbose, -log, -time
-        // -noExit, -repeat
-        // (Actually, -noExit grabbed by Main)
-        unparsedArgs.add(arg);
+        return;
       }
+
+      // argfile, @file parsed by superclass
+      // no eclipse options parsed:
+      // -d args, -help (handled),
+      // -classpath, -target, -1.3, -1.4, -source [1.3|1.4]
+      // -nowarn, -warn:[...], -deprecation, -noImportError,
+      // -g:[...], -preserveAllLocals,
+      // -referenceInfo, -encoding, -verbose, -log, -time
+      // -noExit, -repeat
+      // (Actually, -noExit grabbed by Main)
+      unparsedArgs.add(arg);
     }
 
     @Override
@@ -776,6 +901,28 @@ public final class BuildArgParser extends Main {
       } catch (IOException ioe) {
       }
       return new File(dir, name);
+    }
+
+    private void addPairToUnparsed(@NotNull LinkedList<Arg> args, @NotNull String arg, int nextArgIndex, @NotNull String errorMessage) {
+      if (args.size() <= nextArgIndex) {
+        showError(errorMessage);
+        return;
+      }
+      final Arg nextArg = args.get(nextArgIndex);
+      args.remove(nextArg);
+      unparsedArgs.add(arg);
+      unparsedArgs.add(nextArg.getValue());
+    }
+
+    private static int indexOf(@NotNull LinkedList<Arg> args, @NotNull String arg) {
+      int index = 0;
+      for (Arg argument : args) {
+        if (arg.equals(argument.getValue())) {
+          return index;
+        }
+        index++;
+      }
+      return -1;
     }
 
   }

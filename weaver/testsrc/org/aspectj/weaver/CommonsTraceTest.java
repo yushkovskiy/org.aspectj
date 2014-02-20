@@ -14,6 +14,7 @@ import org.aspectj.weaver.tools.CommonsTrace;
 
 public class CommonsTraceTest extends AbstractTraceTest {
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     trace = new CommonsTrace(getClass());

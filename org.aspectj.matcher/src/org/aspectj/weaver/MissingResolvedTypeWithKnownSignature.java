@@ -13,6 +13,7 @@ package org.aspectj.weaver;
 
 import org.aspectj.bridge.ISourceLocation;
 import org.aspectj.bridge.context.CompilationAndWeavingContext;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
@@ -178,23 +179,27 @@ public class MissingResolvedTypeWithKnownSignature extends ResolvedType {
   }
 
   @Override
-  public List getInterTypeMungers() {
-    return Collections.EMPTY_LIST;
+  @NotNull
+  public List<ConcreteTypeMunger> getInterTypeMungers() {
+    return Collections.emptyList();
   }
 
   @Override
+  @NotNull
   public List getInterTypeMungersIncludingSupers() {
-    return Collections.EMPTY_LIST;
+    return Collections.emptyList();
   }
 
   @Override
+  @NotNull
   public List getInterTypeParentMungers() {
-    return Collections.EMPTY_LIST;
+    return Collections.emptyList();
   }
 
   @Override
+  @NotNull
   public List getInterTypeParentMungersIncludingSupers() {
-    return Collections.EMPTY_LIST;
+    return Collections.emptyList();
   }
 
   @Override
@@ -202,7 +207,7 @@ public class MissingResolvedTypeWithKnownSignature extends ResolvedType {
     return;
   }
 
-  public void raiseWarningOnJoinPointSignature(String signature) {
+  public void raiseWarningOnJoinPointSignature(@NotNull String signature) {
     if (issuedJoinPointWarning) {
       return;
     }

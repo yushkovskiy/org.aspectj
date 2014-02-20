@@ -30,6 +30,7 @@ public class RuntimeInvisTypeAnnos extends RuntimeTypeAnnos {
     super(Constants.ATTR_RUNTIME_INVISIBLE_TYPE_ANNOTATIONS, true, nameIdx, len, cpool);
   }
 
+  @Override
   public void accept(ClassVisitor v) {
     v.visitRuntimeInvisibleTypeAnnotations(this);
   }

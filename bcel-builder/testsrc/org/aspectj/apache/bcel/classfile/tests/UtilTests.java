@@ -20,6 +20,7 @@ import junit.framework.TestCase;
 
 public class UtilTests extends TestCase {
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
   }
@@ -51,6 +52,7 @@ public class UtilTests extends TestCase {
     System.err.println(s);
   }
 
+  @Override
   protected void tearDown() throws Exception {
     super.tearDown();
   }

@@ -56,6 +56,8 @@ package org.aspectj.apache.bcel.util;
 
 import org.aspectj.apache.bcel.classfile.ClassParser;
 import org.aspectj.apache.bcel.classfile.JavaClass;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -76,25 +78,25 @@ import java.util.WeakHashMap;
  * @version $Id: SyntheticRepository.java,v 1.8 2009/09/09 19:56:20 aclement Exp $
  * @see org.aspectj.apache.bcel.Repository
  */
-public class SyntheticRepository implements Repository {
+public final class SyntheticRepository implements Repository {
+  @NotNull
   private static final String DEFAULT_PATH = ClassPath.getClassPath();
-
+  @NotNull
   private static final HashMap<ClassPath, SyntheticRepository> _instances = new HashMap<ClassPath, SyntheticRepository>(); // CLASSPATH
   // X
   // REPOSITORY
-
-  private ClassPath _path = null;
+  @NotNull
+  private final ClassPath _path;
+  @NotNull
   private final WeakHashMap<String, JavaClass> _loadedClasses = new WeakHashMap<String, JavaClass>(); // CLASSNAME X JAVACLASS
 
-  private SyntheticRepository(ClassPath path) {
-    _path = path;
-  }
-
+  @NotNull
   public static SyntheticRepository getInstance() {
     return getInstance(ClassPath.getSystemClassPath());
   }
 
-  public static SyntheticRepository getInstance(ClassPath classPath) {
+  @NotNull
+  public static SyntheticRepository getInstance(@NotNull ClassPath classPath) {
     SyntheticRepository rep = _instances.get(classPath);
 
     if (rep == null) {
@@ -105,10 +107,15 @@ public class SyntheticRepository implements Repository {
     return rep;
   }
 
+  private SyntheticRepository(@NotNull ClassPath path) {
+    _path = path;
+  }
+
   /**
    * Store a new JavaClass instance into this Repository.
    */
-  public void storeClass(JavaClass clazz) {
+  @Override
+  public void storeClass(@NotNull JavaClass clazz) {
     _loadedClasses.put(clazz.getClassName(), clazz);
     clazz.setRepository(this);
   }
@@ -116,21 +123,26 @@ public class SyntheticRepository implements Repository {
   /**
    * Remove class from repository
    */
-  public void removeClass(JavaClass clazz) {
+  @Override
+  public void removeClass(@NotNull JavaClass clazz) {
     _loadedClasses.remove(clazz.getClassName());
   }
 
   /**
    * Find an already defined (cached) JavaClass object by name.
    */
-  public JavaClass findClass(String className) {
+  @Override
+  @Nullable
+  public JavaClass findClass(@NotNull String className) {
     return _loadedClasses.get(className);
   }
 
   /**
    * Load a JavaClass object for the given class name using the CLASSPATH environment variable.
    */
-  public JavaClass loadClass(String className) throws ClassNotFoundException {
+  @Override
+  @NotNull
+  public JavaClass loadClass(@NotNull String className) throws ClassNotFoundException {
     if (className == null || className.equals("")) {
       throw new IllegalArgumentException("Invalid class name " + className);
     }
@@ -150,7 +162,9 @@ public class SyntheticRepository implements Repository {
    * @return JavaClass object for given runtime class
    * @see Class
    */
-  public JavaClass loadClass(Class clazz) throws ClassNotFoundException {
+  @Override
+  @NotNull
+  public JavaClass loadClass(@NotNull Class clazz) throws ClassNotFoundException {
     final String className = clazz.getName();
     String name = className;
     final int i = name.lastIndexOf('.');
@@ -162,7 +176,16 @@ public class SyntheticRepository implements Repository {
     return loadClass(clazz.getResourceAsStream(name + ".class"), className);
   }
 
-  private JavaClass loadClass(InputStream is, String className) throws ClassNotFoundException {
+  /**
+   * Clear all entries from cache.
+   */
+  @Override
+  public void clear() {
+    _loadedClasses.clear();
+  }
+
+  @NotNull
+  private JavaClass loadClass(@NotNull InputStream is, @NotNull String className) throws ClassNotFoundException {
     JavaClass clazz = findClass(className);
 
     if (clazz != null) {
@@ -183,12 +206,5 @@ public class SyntheticRepository implements Repository {
     }
 
     throw new ClassNotFoundException("SyntheticRepository could not load " + className);
-  }
-
-  /**
-   * Clear all entries from cache.
-   */
-  public void clear() {
-    _loadedClasses.clear();
   }
 }

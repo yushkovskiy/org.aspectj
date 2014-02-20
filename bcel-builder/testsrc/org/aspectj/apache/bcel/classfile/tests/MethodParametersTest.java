@@ -18,6 +18,7 @@ import org.aspectj.apache.bcel.classfile.MethodParameters;
 
 public class MethodParametersTest extends BcelTestCase {
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
   }

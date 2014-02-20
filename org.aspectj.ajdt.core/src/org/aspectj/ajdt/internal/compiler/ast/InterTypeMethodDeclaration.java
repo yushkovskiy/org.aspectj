@@ -30,6 +30,7 @@ import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.*;
 import org.aspectj.org.eclipse.jdt.internal.compiler.parser.Parser;
 import org.aspectj.org.eclipse.jdt.internal.compiler.problem.AbortCompilationUnit;
 import org.aspectj.weaver.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Modifier;
 
@@ -178,7 +179,7 @@ public class InterTypeMethodDeclaration extends InterTypeDeclaration {
   }
 
   @Override
-  public EclipseTypeMunger build(ClassScope classScope) {
+  public EclipseTypeMunger build(@NotNull ClassScope classScope) {
     final EclipseFactory factory = EclipseFactory.fromScopeLookupEnvironment(classScope);
 
     resolveOnType(classScope);

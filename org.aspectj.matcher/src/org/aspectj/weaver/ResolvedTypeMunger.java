@@ -26,6 +26,25 @@ import java.util.*;
  */
 public abstract class ResolvedTypeMunger {
 
+  // ---- fields
+
+  public static final Kind Field = new Kind("Field", 1);
+  public static final Kind Method = new Kind("Method", 2);
+  public static final Kind Constructor = new Kind("Constructor", 5);
+  // not serialized, only created during concretization of aspects
+  public static final Kind PerObjectInterface = new Kind("PerObjectInterface", 3);
+  public static final Kind PrivilegedAccess = new Kind("PrivilegedAccess", 4);
+  public static final Kind Parent = new Kind("Parent", 6);
+  // PTWIMPL not serialized, used during concretization of aspects
+  public static final Kind PerTypeWithinInterface = new Kind("PerTypeWithinInterface", 7);
+  public static final Kind AnnotationOnType = new Kind("AnnotationOnType", 8); // not serialized
+  public static final Kind MethodDelegate = new Kind("MethodDelegate", 9);// serialized, @AJ ITDs
+  public static final Kind FieldHost = new Kind("FieldHost", 10);// serialized, @AJ ITDs
+  public static final Kind MethodDelegate2 = new Kind("MethodDelegate2", 11);// serialized, @AJ ITDs
+  public static final Kind InnerClass = new Kind("InnerClass", 12);
+
+  public static final String SUPER_DISPATCH_NAME = "superDispatch";
+
   protected Kind kind;
   protected ResolvedMember signature;
 
@@ -48,6 +67,29 @@ public abstract class ResolvedTypeMunger {
   private ISourceLocation location;
 
   private ResolvedType onType = null;
+
+  // ----
+
+  public static ResolvedTypeMunger read(VersionedDataInputStream s, ISourceContext context) throws IOException {
+    final Kind kind = Kind.read(s);
+    if (kind == Field) {
+      return NewFieldTypeMunger.readField(s, context);
+    } else if (kind == Method) {
+      return NewMethodTypeMunger.readMethod(s, context);
+    } else if (kind == Constructor) {
+      return NewConstructorTypeMunger.readConstructor(s, context);
+    } else if (kind == MethodDelegate) {
+      return MethodDelegateTypeMunger.readMethod(s, context, false);
+    } else if (kind == FieldHost) {
+      return MethodDelegateTypeMunger.FieldHostTypeMunger.readFieldHost(s, context);
+    } else if (kind == MethodDelegate2) {
+      return MethodDelegateTypeMunger.readMethod(s, context, true);
+    } else if (kind == InnerClass) {
+      return NewMemberClassTypeMunger.readInnerClass(s, context);
+    } else {
+      throw new RuntimeException("unimplemented");
+    }
+  }
 
   public ResolvedTypeMunger(Kind kind, ResolvedMember signature) {
     this.kind = kind;
@@ -133,194 +175,11 @@ public abstract class ResolvedTypeMunger {
     // .superMethodsCalled + ")";
   }
 
-  // ----
-
-  public static ResolvedTypeMunger read(VersionedDataInputStream s, ISourceContext context) throws IOException {
-    final Kind kind = Kind.read(s);
-    if (kind == Field) {
-      return NewFieldTypeMunger.readField(s, context);
-    } else if (kind == Method) {
-      return NewMethodTypeMunger.readMethod(s, context);
-    } else if (kind == Constructor) {
-      return NewConstructorTypeMunger.readConstructor(s, context);
-    } else if (kind == MethodDelegate) {
-      return MethodDelegateTypeMunger.readMethod(s, context, false);
-    } else if (kind == FieldHost) {
-      return MethodDelegateTypeMunger.FieldHostTypeMunger.readFieldHost(s, context);
-    } else if (kind == MethodDelegate2) {
-      return MethodDelegateTypeMunger.readMethod(s, context, true);
-    } else if (kind == InnerClass) {
-      return NewMemberClassTypeMunger.readInnerClass(s, context);
-    } else {
-      throw new RuntimeException("unimplemented");
-    }
-  }
-
-  protected static Set<ResolvedMember> readSuperMethodsCalled(VersionedDataInputStream s) throws IOException {
-    final Set<ResolvedMember> ret = new HashSet<ResolvedMember>();
-    int n = -1;
-    if (s.isAtLeast169()) {
-      n = s.readByte();
-    } else {
-      n = s.readInt();
-    }
-    if (n < 0) {
-      throw new BCException("Problem deserializing type munger");
-    }
-    for (int i = 0; i < n; i++) {
-      ret.add(ResolvedMemberImpl.readResolvedMember(s, null));
-    }
-    return ret;
-  }
-
-  protected final void writeSuperMethodsCalled(CompressingDataOutputStream s) throws IOException {
-    if (superMethodsCalled == null || superMethodsCalled.size() == 0) {
-      s.writeByte(0);
-      return;
-    }
-    final List<ResolvedMember> ret = new ArrayList<ResolvedMember>(superMethodsCalled);
-    Collections.sort(ret);
-    final int n = ret.size();
-    s.writeByte(n);
-    for (ResolvedMember m : ret) {
-      m.write(s);
-    }
-  }
-
-  protected static ISourceLocation readSourceLocation(VersionedDataInputStream s) throws IOException {
-    // Location persistence for type mungers was added after 1.2.1 was shipped...
-    if (s.getMajorVersion() < AjAttribute.WeaverVersionInfo.WEAVER_VERSION_MAJOR_AJ150) {
-      return null;
-    }
-    SourceLocation ret = null;
-    ObjectInputStream ois = null;
-    try {
-      // This logic copes with the location missing from the attribute - an EOFException will
-      // occur on the next line and we ignore it.
-      byte b = 0;
-      // if we aren't on 1.6.9 or we are on 1.6.9 but not compressed, then read as object stream
-      if (!s.isAtLeast169() || (b = s.readByte()) == 0) {
-        ois = new ObjectInputStream(s);
-        final boolean validLocation = (Boolean) ois.readObject();
-        if (validLocation) {
-          final File f = (File) ois.readObject();
-          final Integer ii = (Integer) ois.readObject();
-          final Integer offset = (Integer) ois.readObject();
-          ret = new SourceLocation(f, ii.intValue());
-          ret.setOffset(offset.intValue());
-        }
-      } else {
-        final boolean validLocation = b == 2;
-        if (validLocation) {
-          final String path = s.readUtf8(s.readShort());
-          final File f = new File(path);
-          ret = new SourceLocation(f, s.readInt());
-          final int offset = s.readInt();
-          ret.setOffset(offset);
-        }
-      }
-
-    } catch (EOFException eof) {
-      return null; // This exception occurs if processing an 'old style' file where the
-      // type munger attributes don't include the source location.
-    } catch (IOException ioe) {
-      // Something went wrong, maybe this is an 'old style' file that doesnt attach locations to mungers?
-      // (but I thought that was just an EOFException?)
-      ioe.printStackTrace();
-      return null;
-    } catch (ClassNotFoundException e) {
-    } finally {
-      if (ois != null) {
-        ois.close();
-      }
-    }
-    return ret;
-  }
-
-  protected final void writeSourceLocation(CompressingDataOutputStream s) throws IOException {
-    if (s.canCompress()) {
-      s.writeByte(1 + (location == null ? 0 : 1)); // 1==compressed no location 2==compressed with location
-      if (location != null) {
-        s.writeCompressedPath(location.getSourceFile().getPath());
-        s.writeInt(location.getLine());
-        s.writeInt(location.getOffset());
-      }
-    } else {
-      s.writeByte(0);
-      final ObjectOutputStream oos = new ObjectOutputStream(s);
-      oos.writeObject(new Boolean(location != null));
-      if (location != null) {
-        oos.writeObject(location.getSourceFile());
-        oos.writeObject(new Integer(location.getLine()));
-        oos.writeObject(new Integer(location.getOffset()));
-      }
-      oos.flush();
-      oos.close();
-    }
-  }
-
   public abstract void write(CompressingDataOutputStream s) throws IOException;
 
   public Kind getKind() {
     return kind;
   }
-
-  public static class Kind extends TypeSafeEnum {
-    /* private */Kind(String name, int key) {
-      super(name, key);
-    }
-
-    public static Kind read(DataInputStream s) throws IOException {
-      final int key = s.readByte();
-      switch (key) {
-        case 1:
-          return Field;
-        case 2:
-          return Method;
-        case 5:
-          return Constructor;
-        case 9:
-          return MethodDelegate;
-        case 10:
-          return FieldHost;
-        case 11:
-          return MethodDelegate2;
-        case 12:
-          return InnerClass;
-      }
-      throw new BCException("bad kind: " + key);
-    }
-
-    @Override
-    public String toString() {
-      // we want MethodDelegate to appear as Method in WeaveInfo messages
-      // TODO we may want something for fieldhost ?
-      if (getName().startsWith(MethodDelegate.getName())) {// startsWith will cover MethodDelegate2 as well
-        return Method.toString();
-      } else {
-        return super.toString();
-      }
-    }
-  }
-
-  // ---- fields
-
-  public static final Kind Field = new Kind("Field", 1);
-  public static final Kind Method = new Kind("Method", 2);
-  public static final Kind Constructor = new Kind("Constructor", 5);
-  // not serialized, only created during concretization of aspects
-  public static final Kind PerObjectInterface = new Kind("PerObjectInterface", 3);
-  public static final Kind PrivilegedAccess = new Kind("PrivilegedAccess", 4);
-  public static final Kind Parent = new Kind("Parent", 6);
-  // PTWIMPL not serialized, used during concretization of aspects
-  public static final Kind PerTypeWithinInterface = new Kind("PerTypeWithinInterface", 7);
-  public static final Kind AnnotationOnType = new Kind("AnnotationOnType", 8); // not serialized
-  public static final Kind MethodDelegate = new Kind("MethodDelegate", 9);// serialized, @AJ ITDs
-  public static final Kind FieldHost = new Kind("FieldHost", 10);// serialized, @AJ ITDs
-  public static final Kind MethodDelegate2 = new Kind("MethodDelegate2", 11);// serialized, @AJ ITDs
-  public static final Kind InnerClass = new Kind("InnerClass", 12);
-
-  public static final String SUPER_DISPATCH_NAME = "superDispatch";
 
   public void setSuperMethodsCalled(Set<ResolvedMember> c) {
     this.superMethodsCalled = c;
@@ -358,43 +217,8 @@ public abstract class ResolvedTypeMunger {
     }
   }
 
-  protected static List<String> readInTypeAliases(VersionedDataInputStream s) throws IOException {
-    if (s.getMajorVersion() >= AjAttribute.WeaverVersionInfo.WEAVER_VERSION_MAJOR_AJ150) {
-      int count = -1;
-      if (s.isAtLeast169()) {
-        count = s.readByte();
-      } else {
-        count = s.readInt();
-      }
-      if (count != 0) {
-        final List<String> aliases = new ArrayList<String>();
-        for (int i = 0; i < count; i++) {
-          aliases.add(s.readUTF());
-        }
-        return aliases;
-      }
-    }
-    return null;
-  }
-
-  protected final void writeOutTypeAliases(DataOutputStream s) throws IOException {
-    // Write any type variable aliases
-    if (typeVariableAliases == null || typeVariableAliases.size() == 0) {
-      s.writeByte(0);
-    } else {
-      s.writeByte(typeVariableAliases.size());
-      for (String element : typeVariableAliases) {
-        s.writeUTF(element);
-      }
-    }
-  }
-
   public List<String> getTypeVariableAliases() {
     return typeVariableAliases;
-  }
-
-  protected void setTypeVariableAliases(List<String> typeVariableAliases) {
-    this.typeVariableAliases = typeVariableAliases;
   }
 
   public boolean hasTypeVariableAliases() {
@@ -483,6 +307,182 @@ public abstract class ResolvedTypeMunger {
 
   public UnresolvedType getDeclaringType() {
     return getSignature().getDeclaringType();
+  }
+
+  protected static Set<ResolvedMember> readSuperMethodsCalled(VersionedDataInputStream s) throws IOException {
+    final Set<ResolvedMember> ret = new HashSet<ResolvedMember>();
+    int n = -1;
+    if (s.isAtLeast169()) {
+      n = s.readByte();
+    } else {
+      n = s.readInt();
+    }
+    if (n < 0) {
+      throw new BCException("Problem deserializing type munger");
+    }
+    for (int i = 0; i < n; i++) {
+      ret.add(ResolvedMemberImpl.readResolvedMember(s, null));
+    }
+    return ret;
+  }
+
+  protected final void writeSuperMethodsCalled(CompressingDataOutputStream s) throws IOException {
+    if (superMethodsCalled == null || superMethodsCalled.size() == 0) {
+      s.writeByte(0);
+      return;
+    }
+    final List<ResolvedMember> ret = new ArrayList<ResolvedMember>(superMethodsCalled);
+    Collections.sort(ret);
+    final int n = ret.size();
+    s.writeByte(n);
+    for (ResolvedMember m : ret) {
+      m.write(s);
+    }
+  }
+
+  protected static ISourceLocation readSourceLocation(VersionedDataInputStream s) throws IOException {
+    // Location persistence for type mungers was added after 1.2.1 was shipped...
+    if (s.getMajorVersion() < AjAttribute.WeaverVersionInfo.WEAVER_VERSION_MAJOR_AJ150) {
+      return null;
+    }
+    SourceLocation ret = null;
+    ObjectInputStream ois = null;
+    try {
+      // This logic copes with the location missing from the attribute - an EOFException will
+      // occur on the next line and we ignore it.
+      byte b = 0;
+      // if we aren't on 1.6.9 or we are on 1.6.9 but not compressed, then read as object stream
+      if (!s.isAtLeast169() || (b = s.readByte()) == 0) {
+        ois = new ObjectInputStream(s);
+        final boolean validLocation = (Boolean) ois.readObject();
+        if (validLocation) {
+          final File f = (File) ois.readObject();
+          final Integer ii = (Integer) ois.readObject();
+          final Integer offset = (Integer) ois.readObject();
+          ret = new SourceLocation(f, ii.intValue());
+          ret.setOffset(offset.intValue());
+        }
+      } else {
+        final boolean validLocation = b == 2;
+        if (validLocation) {
+          final String path = s.readUtf8(s.readShort());
+          final File f = new File(path);
+          ret = new SourceLocation(f, s.readInt());
+          final int offset = s.readInt();
+          ret.setOffset(offset);
+        }
+      }
+    } catch (EOFException eof) {
+      return null; // This exception occurs if processing an 'old style' file where the
+      // type munger attributes don't include the source location.
+    } catch (IOException ioe) {
+      // Something went wrong, maybe this is an 'old style' file that doesnt attach locations to mungers?
+      // (but I thought that was just an EOFException?)
+      ioe.printStackTrace();
+      return null;
+    } catch (ClassNotFoundException e) {
+    } finally {
+      if (ois != null) {
+        ois.close();
+      }
+    }
+    return ret;
+  }
+
+  protected final void writeSourceLocation(CompressingDataOutputStream s) throws IOException {
+    if (s.canCompress()) {
+      s.writeByte(1 + (location == null ? 0 : 1)); // 1==compressed no location 2==compressed with location
+      if (location != null) {
+        s.writeCompressedPath(location.getSourceFile().getPath());
+        s.writeInt(location.getLine());
+        s.writeInt(location.getOffset());
+      }
+    } else {
+      s.writeByte(0);
+      final ObjectOutputStream oos = new ObjectOutputStream(s);
+      oos.writeObject(new Boolean(location != null));
+      if (location != null) {
+        oos.writeObject(location.getSourceFile());
+        oos.writeObject(new Integer(location.getLine()));
+        oos.writeObject(new Integer(location.getOffset()));
+      }
+      oos.flush();
+      oos.close();
+    }
+  }
+
+  protected static List<String> readInTypeAliases(VersionedDataInputStream s) throws IOException {
+    if (s.getMajorVersion() >= AjAttribute.WeaverVersionInfo.WEAVER_VERSION_MAJOR_AJ150) {
+      int count = -1;
+      if (s.isAtLeast169()) {
+        count = s.readByte();
+      } else {
+        count = s.readInt();
+      }
+      if (count != 0) {
+        final List<String> aliases = new ArrayList<String>();
+        for (int i = 0; i < count; i++) {
+          aliases.add(s.readUTF());
+        }
+        return aliases;
+      }
+    }
+    return null;
+  }
+
+  protected final void writeOutTypeAliases(DataOutputStream s) throws IOException {
+    // Write any type variable aliases
+    if (typeVariableAliases == null || typeVariableAliases.size() == 0) {
+      s.writeByte(0);
+    } else {
+      s.writeByte(typeVariableAliases.size());
+      for (String element : typeVariableAliases) {
+        s.writeUTF(element);
+      }
+    }
+  }
+
+  protected void setTypeVariableAliases(List<String> typeVariableAliases) {
+    this.typeVariableAliases = typeVariableAliases;
+  }
+
+  public static class Kind extends TypeSafeEnum {
+
+    public static Kind read(DataInputStream s) throws IOException {
+      final int key = s.readByte();
+      switch (key) {
+        case 1:
+          return Field;
+        case 2:
+          return Method;
+        case 5:
+          return Constructor;
+        case 9:
+          return MethodDelegate;
+        case 10:
+          return FieldHost;
+        case 11:
+          return MethodDelegate2;
+        case 12:
+          return InnerClass;
+      }
+      throw new BCException("bad kind: " + key);
+    }
+
+    /* private */Kind(String name, int key) {
+      super(name, key);
+    }
+
+    @Override
+    public String toString() {
+      // we want MethodDelegate to appear as Method in WeaveInfo messages
+      // TODO we may want something for fieldhost ?
+      if (getName().startsWith(MethodDelegate.getName())) {// startsWith will cover MethodDelegate2 as well
+        return Method.toString();
+      } else {
+        return super.toString();
+      }
+    }
   }
 
 }

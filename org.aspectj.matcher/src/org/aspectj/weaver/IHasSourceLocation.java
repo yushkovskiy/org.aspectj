@@ -13,8 +13,10 @@
 package org.aspectj.weaver;
 
 import org.aspectj.bridge.ISourceLocation;
+import org.jetbrains.annotations.Nullable;
 
 public interface IHasSourceLocation extends IHasPosition {
+  @Nullable
   ISourceContext getSourceContext();
 
   ISourceLocation getSourceLocation();

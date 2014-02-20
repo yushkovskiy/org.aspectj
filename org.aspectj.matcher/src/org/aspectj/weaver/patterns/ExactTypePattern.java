@@ -14,6 +14,7 @@ package org.aspectj.weaver.patterns;
 
 import org.aspectj.util.FuzzyBoolean;
 import org.aspectj.weaver.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -235,7 +236,7 @@ public class ExactTypePattern extends TypePattern {
   private static final byte EXACT_VERSION = 1; // rev if changed
 
   @Override
-  public void write(CompressingDataOutputStream out) throws IOException {
+  public void write(@NotNull CompressingDataOutputStream out) throws IOException {
     out.writeByte(TypePattern.EXACT);
     out.writeByte(EXACT_VERSION);
     out.writeCompressedSignature(type.getSignature());

@@ -36,6 +36,7 @@ public class ClassLoaderRepositoryTests extends TestCase {
   private Enumeration entries;
   private Map map;
 
+  @Override
   public void setUp() throws Exception {
     f = new File("../lib/aspectj/lib/aspectjtools.jar");
     assertTrue("Couldn't find aspectjtools to test.  Tried: " + f.getAbsolutePath(), f.exists());
@@ -45,6 +46,7 @@ public class ClassLoaderRepositoryTests extends TestCase {
     map = getSharedMap();
   }
 
+  @Override
   public void tearDown() {
     new ClassLoaderRepository((ClassLoader) null).reset();
   }
@@ -122,6 +124,7 @@ public class ClassLoaderRepositoryTests extends TestCase {
       }
     }
 
+    @Override
     public void run() {
       try {
         final ClassLoaderRepository rep = setupRepository();

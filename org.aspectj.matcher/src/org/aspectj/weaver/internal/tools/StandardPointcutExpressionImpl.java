@@ -86,7 +86,7 @@ public class StandardPointcutExpressionImpl implements StandardPointcutExpressio
     return matchesExecution(aMethod);
   }
 
-  public ShadowMatch matchesConstructorExecution(Constructor aConstructor) {
+  public static ShadowMatch matchesConstructorExecution(Constructor aConstructor) {
     return null;
     // return matchesExecution(aConstructor);
   }

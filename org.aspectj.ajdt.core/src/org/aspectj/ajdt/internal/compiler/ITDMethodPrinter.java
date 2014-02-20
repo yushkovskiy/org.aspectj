@@ -23,7 +23,7 @@ import java.lang.reflect.Modifier;
  * @author Andy Clement
  */
 class ITDMethodPrinter extends CommonPrinter {
-  private InterTypeMethodDeclaration methodDeclaration;
+  private final InterTypeMethodDeclaration methodDeclaration;
 
   ITDMethodPrinter(InterTypeMethodDeclaration methodDeclaration, MethodScope methodscope) {
     super(methodscope);

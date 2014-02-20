@@ -1210,6 +1210,7 @@ public final class LazyClassGen {
 
     final List<Map.Entry<BcelShadow, Field>> entries = new ArrayList<Map.Entry<BcelShadow, Field>>(tjpFields.entrySet());
     Collections.sort(entries, new Comparator<Map.Entry<BcelShadow, Field>>() {
+      @Override
       public int compare(Map.Entry<BcelShadow, Field> a, Map.Entry<BcelShadow, Field> b) {
         return (a.getValue()).getName().compareTo((b.getValue()).getName());
       }

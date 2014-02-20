@@ -33,6 +33,7 @@ import org.aspectj.org.eclipse.jdt.internal.core.builder.JavaBuilder;
 import org.aspectj.weaver.Lint;
 import org.aspectj.weaver.bcel.BcelWeaver;
 import org.aspectj.weaver.bcel.BcelWorld;
+import org.aspectj.weaver.bcel.UnwovenClassFile;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
@@ -40,6 +41,7 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -48,41 +50,21 @@ import java.util.*;
  *         <p/>
  *         This is the builder class used by AJDT, and that the org.eclipse.ajdt.core plugin references.
  */
-public class AspectJBuilder extends JavaBuilder implements ICompilerAdapterFactory {
+public final class AspectJBuilder extends JavaBuilder implements ICompilerAdapterFactory {
 
   // One builder instance per project (important)
+  @Nullable
   private BcelWeaver myWeaver = null;
+  @Nullable
   private BcelWorld myBcelWorld = null;
+  @Nullable
   private EclipseClassPathManager cpManager = null;
+  @Nullable
   private UnwovenResultCollector unwovenResultCollector = null;
+  @Nullable
   private OutputFileNameProvider fileNameProvider = null;
 
   private boolean isBatchBuild = false;
-
-  /*
-   * (non-Javadoc)
-   *
-   * @see org.eclipse.core.internal.events.InternalBuilder#build(int, java.util.Map, org.eclipse.core.runtime.IProgressMonitor)
-   */
-  @Override
-  protected IProject[] build(int kind, Map ignored, IProgressMonitor monitor) throws CoreException {
-    // super method always causes construction of a new XXXImageBuilder, which
-    // causes construction of a new Compiler, so we will be detected as the
-    // adapter.
-    CompilerAdapter.setCompilerAdapterFactory(this);
-    return super.build(kind, ignored, monitor);
-  }
-
-  protected BatchImageBuilder getBatchImageBuilder() {
-    isBatchBuild = true;
-    return new AjBatchImageBuilder(this);
-  }
-
-  @Override
-  protected IncrementalImageBuilder getIncrementalImageBuilder() {
-    isBatchBuild = false;
-    return new AjIncrementalImageBuilder(this);
-  }
 
   /*
    * (non-Javadoc)
@@ -139,10 +121,39 @@ public class AspectJBuilder extends JavaBuilder implements ICompilerAdapterFacto
   /*
    * (non-Javadoc)
    *
+   * @see org.eclipse.core.internal.events.InternalBuilder#build(int, java.util.Map, org.eclipse.core.runtime.IProgressMonitor)
+   */
+  @Override
+  @NotNull
+  protected IProject[] build(int kind, Map ignored, IProgressMonitor monitor) throws CoreException {
+    // super method always causes construction of a new XXXImageBuilder, which
+    // causes construction of a new Compiler, so we will be detected as the
+    // adapter.
+    CompilerAdapter.setCompilerAdapterFactory(this);
+    return super.build(kind, ignored, monitor);
+  }
+
+  @NotNull
+  protected BatchImageBuilder getBatchImageBuilder() {
+    isBatchBuild = true;
+    return new AjBatchImageBuilder(this);
+  }
+
+  @Override
+  @NotNull
+  protected IncrementalImageBuilder getIncrementalImageBuilder() {
+    isBatchBuild = false;
+    return new AjIncrementalImageBuilder(this);
+  }
+
+  /*
+   * (non-Javadoc)
+   *
    * @see org.eclipse.jdt.internal.core.builder.JavaBuilder#createBuildNotifier(org.eclipse.core.runtime.IProgressMonitor,
    * org.eclipse.core.resources.IProject)
    */
   @Override
+  @NotNull
   protected BuildNotifier createBuildNotifier(IProgressMonitor monitor, IProject currentProject) {
     return new AjBuildNotifier(monitor, currentProject);
   }
@@ -179,8 +190,8 @@ public class AspectJBuilder extends JavaBuilder implements ICompilerAdapterFacto
   }
 
   private static class UnwovenResultCollector implements IIntermediateResultsRequestor {
-
-    private Collection results = new ArrayList();
+    @NotNull
+    private final Collection<InterimCompilationResult> results = new ArrayList<>();
 
     /*
      * (non-Javadoc)
@@ -189,11 +200,12 @@ public class AspectJBuilder extends JavaBuilder implements ICompilerAdapterFacto
      * InterimCompilationResult)
      */
     @Override
-    public void acceptResult(InterimCompilationResult intRes) {
+    public void acceptResult(@NotNull InterimCompilationResult intRes) {
       results.add(intRes);
     }
 
-    public Collection getIntermediateResults() {
+    @NotNull
+    public Collection<InterimCompilationResult> getIntermediateResults() {
       return results;
     }
 
@@ -204,7 +216,7 @@ public class AspectJBuilder extends JavaBuilder implements ICompilerAdapterFacto
   // itself.
   private static class UnhandledMessageHandler implements IMessageHandler {
 
-    private IProject project;
+    private final IProject project;
 
     public UnhandledMessageHandler(IProject p) {
       this.project = p;
@@ -276,6 +288,7 @@ public class AspectJBuilder extends JavaBuilder implements ICompilerAdapterFacto
      * org.eclipse.jdt.internal.compiler.CompilationResult)
      */
     @Override
+    @NotNull
     public String getOutputClassFileName(char[] eclipseClassFileName, CompilationResult result) {
       // In the AJDT implementation, the name provided here will be ignored, we write the results
       // out in xxxImageBuilder.acceptResult() instead.
@@ -289,7 +302,7 @@ public class AspectJBuilder extends JavaBuilder implements ICompilerAdapterFacto
   }
 
   // default impl class until the implementation is extended to cope with inpath, injars
-  private static class NullBinarySourceProvider implements IBinarySourceProvider {
+  private static final class NullBinarySourceProvider implements IBinarySourceProvider {
 
     /*
      * (non-Javadoc)
@@ -297,8 +310,9 @@ public class AspectJBuilder extends JavaBuilder implements ICompilerAdapterFacto
      * @see org.aspectj.ajdt.internal.compiler.IBinarySourceProvider#getBinarySourcesForThisWeave()
      */
     @Override
-    public Map getBinarySourcesForThisWeave() {
-      return new HashMap();
+    @NotNull
+    public Map<String, List<UnwovenClassFile>> getBinarySourcesForThisWeave() {
+      return new HashMap<>();
     }
 
   }

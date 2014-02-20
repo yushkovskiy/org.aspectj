@@ -17,8 +17,9 @@ import org.aspectj.weaver.patterns.AndOrNotTestCase;
 
 public class BcelAndOrNotTestCase extends AndOrNotTestCase {
 
-	public World getWorld() {
-		return new BcelWorld();
-	}
+  @Override
+  public World getWorld() {
+    return new BcelWorld();
+  }
 
 }

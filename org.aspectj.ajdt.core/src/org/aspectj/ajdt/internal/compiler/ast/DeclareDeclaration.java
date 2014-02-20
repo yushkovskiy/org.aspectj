@@ -27,6 +27,8 @@ import org.aspectj.org.eclipse.jdt.internal.compiler.parser.Parser;
 import org.aspectj.weaver.AjAttribute;
 import org.aspectj.weaver.UnresolvedType;
 import org.aspectj.weaver.patterns.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -99,7 +101,7 @@ public class DeclareDeclaration extends AjMethodDeclaration {
    * method as the anchor for the declared annotation
    */
   @Override
-  public void generateCode(ClassScope classScope, ClassFile classFile) {
+  public void generateCode(@NotNull ClassScope classScope, @NotNull ClassFile classFile) {
     if (shouldBeSynthetic()) {
       this.binding.modifiers |= Flags.AccSynthetic;
     }
@@ -110,20 +112,12 @@ public class DeclareDeclaration extends AjMethodDeclaration {
     return;
   }
 
-  protected boolean shouldDelegateCodeGeneration() {
-    return true;
-  }
-
-  protected boolean shouldBeSynthetic() {
-    return true;
-  }
-
   @Override
-  public void parseStatements(Parser parser, CompilationUnitDeclaration unit) {
+  public void parseStatements(@NotNull Parser parser, @NotNull CompilationUnitDeclaration unit) {
     // do nothing
   }
 
-  public void resolveStatements(ClassScope upperScope) {
+  public void resolveStatements(@NotNull ClassScope upperScope) {
     // do nothing
   }
 
@@ -138,6 +132,7 @@ public class DeclareDeclaration extends AjMethodDeclaration {
   // // return true;
   // }
 
+  @Nullable
   public Declare build(ClassScope classScope) {
     if (declareDecl == null) {
       return null;
@@ -150,7 +145,8 @@ public class DeclareDeclaration extends AjMethodDeclaration {
   }
 
   @Override
-  public StringBuffer print(int tab, StringBuffer output) {
+  @NotNull
+  public StringBuffer print(int tab, @NotNull StringBuffer output) {
     printIndent(tab, output);
     if (declareDecl == null) {
       output.append("<declare>");
@@ -160,16 +156,8 @@ public class DeclareDeclaration extends AjMethodDeclaration {
     return output;
   }
 
-  /**
-   * We need the ajc$declare method that is created to represent this declare to be marked as synthetic
-   */
   @Override
-  protected int generateInfoAttributes(ClassFile classFile) {
-    return super.generateInfoAttributes(classFile, true);
-  }
-
-  @Override
-  public void postParse(TypeDeclaration typeDec) {
+  public void postParse(@NotNull TypeDeclaration typeDec) {
     super.postParse(typeDec);
     final int declareSequenceNumberInType = ((AspectDeclaration) typeDec).declareCounter++;
     // FIXME asc the name should perhaps include the hashcode of the pattern (type/sig) for binary compatibility reasons!
@@ -187,5 +175,21 @@ public class DeclareDeclaration extends AjMethodDeclaration {
     sb.append("_");
     sb.append(declareSequenceNumberInType);
     this.selector = sb.toString().toCharArray();
+  }
+
+  protected boolean shouldDelegateCodeGeneration() {
+    return true;
+  }
+
+  protected boolean shouldBeSynthetic() {
+    return true;
+  }
+
+  /**
+   * We need the ajc$declare method that is created to represent this declare to be marked as synthetic
+   */
+  @Override
+  protected int generateInfoAttributes(@NotNull ClassFile classFile) {
+    return super.generateInfoAttributes(classFile, true);
   }
 }

@@ -135,6 +135,7 @@ public class BcelAnnotation extends AbstractAnnotationAJ {
   /**
    * {@inheritDoc}
    */
+  @Override
   public String getStringFormOfValue(String name) {
     final List<NameValuePair> annotationValues = this.bcelAnnotation.getValues();
     if (annotationValues == null || annotationValues.size() == 0) {

@@ -54,6 +54,8 @@
 
 package org.aspectj.apache.bcel.util;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Implementors should provide access to a ClassLoader instance.  The reference can be passed around and cached
  * but will not cause the code that caches it to have a hard reference to the classloader, so it is easier
@@ -61,7 +63,7 @@ package org.aspectj.apache.bcel.util;
  * more sophisticated implementations could keep a WeakReference to the loader.
  */
 public interface ClassLoaderReference {
-
+  @NotNull
   java.lang.ClassLoader getClassLoader();
 
 }

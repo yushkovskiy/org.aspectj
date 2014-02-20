@@ -46,6 +46,7 @@ public class DefaultCacheKeyResolver implements CacheKeyResolver {
    * @param aspects the aspects
    * @return a unique string for URLClassloaders, otherwise a non-unique classname
    */
+  @Override
   public String createClassLoaderScope(ClassLoader cl, List<String> aspects) {
     final String name = cl != null ? cl.getClass().getSimpleName() : "unknown";
 
@@ -79,10 +80,12 @@ public class DefaultCacheKeyResolver implements CacheKeyResolver {
     return String.valueOf(crc32.getValue());
   }
 
+  @Override
   public String getGeneratedRegex() {
     return ".*" + GENERATED_SUFFIX;
   }
 
+  @Override
   public String getWeavedRegex() {
     return ".*" + WEAVED_SUFFIX;
   }
@@ -94,6 +97,7 @@ public class DefaultCacheKeyResolver implements CacheKeyResolver {
    * @param key to convert
    * @return className, e.g. "com.foo.Bar"
    */
+  @Override
   public String keyToClass(String key) {
     if (key.endsWith(GENERATED_SUFFIX)) {
       return key.replaceAll(GENERATED_SUFFIX + "$", "");
@@ -104,12 +108,14 @@ public class DefaultCacheKeyResolver implements CacheKeyResolver {
     return key;
   }
 
+  @Override
   public CachedClassReference weavedKey(String className, byte[] original_bytes) {
     final String hash = crc(original_bytes);
     return new CachedClassReference(className + "." + hash + WEAVED_SUFFIX, className);
 
   }
 
+  @Override
   public CachedClassReference generatedKey(String className) {
     return new CachedClassReference(className + GENERATED_SUFFIX, className);
   }

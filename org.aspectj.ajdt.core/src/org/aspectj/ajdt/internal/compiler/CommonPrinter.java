@@ -19,7 +19,7 @@ import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.*;
 public class CommonPrinter {
 
   StringBuilder output;
-  private int tab = 0;
+  private final int tab = 0;
   MethodScope mscope;
   AbstractMethodDeclaration declaration;
   protected int expressionLevel = 0;

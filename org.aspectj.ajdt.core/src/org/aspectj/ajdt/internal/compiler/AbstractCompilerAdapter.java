@@ -14,6 +14,7 @@ package org.aspectj.ajdt.internal.compiler;
 import org.aspectj.org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.aspectj.org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.aspectj.org.eclipse.jdt.internal.compiler.env.ICompilationUnit;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -22,41 +23,42 @@ import java.util.List;
  */
 public abstract class AbstractCompilerAdapter implements ICompilerAdapter {
 
-  public abstract List /*InterimResult*/ getResultsPendingWeave();
+  @NotNull
+  public abstract List<InterimCompilationResult> /*InterimResult*/ getResultsPendingWeave();
 
-  public abstract void acceptResult(CompilationResult result);
+  public abstract void acceptResult(@NotNull CompilationResult result);
 
   @Override
   public abstract void afterAnalysing(CompilationUnitDeclaration unit);
 
   @Override
-  public abstract void afterCompiling(CompilationUnitDeclaration[] units);
+  public abstract void afterCompiling(@NotNull CompilationUnitDeclaration[] units);
 
   @Override
-  public abstract void afterDietParsing(CompilationUnitDeclaration[] units);
+  public abstract void afterDietParsing(@NotNull CompilationUnitDeclaration[] units);
 
   @Override
-  public abstract void afterGenerating(CompilationUnitDeclaration unit);
+  public abstract void afterGenerating(@NotNull CompilationUnitDeclaration unit);
 
   @Override
-  public abstract void afterProcessing(CompilationUnitDeclaration unit, int unitIndex);
+  public abstract void afterProcessing(@NotNull CompilationUnitDeclaration unit, int unitIndex);
 
   @Override
   public abstract void afterResolving(CompilationUnitDeclaration unit);
 
   @Override
-  public abstract void beforeAnalysing(CompilationUnitDeclaration unit);
+  public abstract void beforeAnalysing(@NotNull CompilationUnitDeclaration unit);
 
   @Override
-  public abstract void beforeCompiling(ICompilationUnit[] sourceUnits);
+  public abstract void beforeCompiling(@NotNull ICompilationUnit[] sourceUnits);
 
   @Override
-  public abstract void beforeGenerating(CompilationUnitDeclaration unit);
+  public abstract void beforeGenerating(@NotNull CompilationUnitDeclaration unit);
 
   @Override
-  public abstract void beforeProcessing(CompilationUnitDeclaration unit);
+  public abstract void beforeProcessing(@NotNull CompilationUnitDeclaration unit);
 
   @Override
-  public abstract void beforeResolving(CompilationUnitDeclaration unit);
+  public abstract void beforeResolving(@NotNull CompilationUnitDeclaration unit);
 
 }

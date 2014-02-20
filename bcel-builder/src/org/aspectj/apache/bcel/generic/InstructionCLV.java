@@ -14,12 +14,14 @@ public class InstructionCLV extends InstructionLV {
     super(opcode, localVariableIndex);
   }
 
+  @Override
   public void setIndex(int localVariableIndex) {
     if (localVariableIndex != getIndex()) {
       throw new ClassGenException("Do not attempt to modify the index to '" + localVariableIndex + "' for this constant instruction: " + this);
     }
   }
 
+  @Override
   public boolean canSetIndex() {
     return false;
   }

@@ -26,7 +26,7 @@ import java.io.IOException;
  */
 public abstract class AbstractSignaturePattern implements ISignaturePattern {
 
-  protected void writePlaceholderLocation(CompressingDataOutputStream s) throws IOException {
+  protected static void writePlaceholderLocation(CompressingDataOutputStream s) throws IOException {
     s.writeInt(0);
     s.writeInt(0);
   }

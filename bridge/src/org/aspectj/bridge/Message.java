@@ -67,12 +67,12 @@ public class Message implements IMessage {
    * @throws IllegalArgumentException if message is null and thrown is null or has a null message, or if kind is null and thrown
    *                                  is null.
    */
-  public Message(@Nullable String message, @NotNull String details, @NotNull IMessage.Kind kind, @Nullable ISourceLocation sourceLocation, @Nullable Throwable thrown,
+  public Message(@Nullable String message, @Nullable String details, @NotNull IMessage.Kind kind, @Nullable ISourceLocation sourceLocation, @Nullable Throwable thrown,
                  @Nullable ISourceLocation[] extraSourceLocations) {
     this(message, details, kind, sourceLocation, thrown, extraSourceLocations, false, 0, -1, -1);
   }
 
-  public Message(@Nullable String message, @NotNull String details, @NotNull Kind kind, @Nullable ISourceLocation sLoc, @Nullable Throwable thrown,
+  public Message(@Nullable String message, @Nullable String details, @NotNull Kind kind, @Nullable ISourceLocation sLoc, @Nullable Throwable thrown,
                  @Nullable ISourceLocation[] otherLocs, boolean declared, int id, int sourcestart, int sourceend) {
     this.details = details;
     this.id = id;

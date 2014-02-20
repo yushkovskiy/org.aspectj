@@ -27,7 +27,7 @@ import java.util.Iterator;
 public class ClassFileBasedByteCodeProvider
     implements UnwovenClassFileWithThirdPartyManagedBytecode.IByteCodeProvider {
 
-  private ClassFile cf;
+  private final ClassFile cf;
 
   public ClassFileBasedByteCodeProvider(ClassFile cf) {
     this.cf = cf;

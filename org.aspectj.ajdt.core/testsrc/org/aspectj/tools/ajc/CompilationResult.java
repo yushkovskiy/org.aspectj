@@ -34,14 +34,14 @@ import org.aspectj.bridge.IMessage;
  */
 public class CompilationResult {
 
-  private String[] args;
-  private String stdOut;
-  private String stdErr;
-  private List<IMessage> infoMessages;
-  private List<IMessage> errorMessages;
-  private List<IMessage> warningMessages;
-  private List<IMessage> failMessages;
-  private List<IMessage> weaveMessages;
+  private final String[] args;
+  private final String stdOut;
+  private final String stdErr;
+  private final List<IMessage> infoMessages;
+  private final List<IMessage> errorMessages;
+  private final List<IMessage> warningMessages;
+  private final List<IMessage> failMessages;
+  private final List<IMessage> weaveMessages;
 
   /**
    * Build a compilation result - called by the Ajc.compile and

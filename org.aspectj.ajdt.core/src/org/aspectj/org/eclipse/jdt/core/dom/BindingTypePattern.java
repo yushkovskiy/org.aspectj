@@ -13,7 +13,7 @@ import java.util.List;
 
 public class BindingTypePattern extends IdentifierTypePattern {
 
-  private FormalBinding formalBinding;
+  private final FormalBinding formalBinding;
 
   public BindingTypePattern(AST ast, FormalBinding formalBinding) {
     super(ast, null);

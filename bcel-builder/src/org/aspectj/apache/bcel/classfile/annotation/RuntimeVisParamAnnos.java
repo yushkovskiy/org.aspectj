@@ -35,10 +35,12 @@ public class RuntimeVisParamAnnos extends RuntimeParamAnnos {
     readParameterAnnotations(dis, cpool);
   }
 
+  @Override
   public void accept(ClassVisitor v) {
     v.visitRuntimeVisibleParameterAnnotations(this);
   }
 
+  @Override
   public Attribute copy(ConstantPool constant_pool) {
     throw new RuntimeException("Not implemented yet!");
   }

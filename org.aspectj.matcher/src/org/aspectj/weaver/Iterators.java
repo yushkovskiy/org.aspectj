@@ -12,6 +12,9 @@
 
 package org.aspectj.weaver;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.*;
 
 public final class Iterators {
@@ -94,8 +97,8 @@ public final class Iterators {
    * Creates an iterator that will return the elements of a specified array, in order. Like Arrays.asList(o).iterator(), without
    * all that pesky safety.
    */
-
-  public static <T> Iterator<T> array(final T[] o) {
+  @NotNull
+  public static <T> Iterator<T> array(@Nullable final T[] o) {
     return new Iterator<T>() {
       int i = 0;
       int len = (o == null) ? 0 : o.length;
@@ -328,7 +331,8 @@ public final class Iterators {
   /**
    * creates an iterator I based on a base iterator A and an object O. Returns the elements returned by A, followed by O.
    */
-  public static <T> Iterator<T> snoc(final Iterator<T> first, final T last) {
+  @NotNull
+  public static <T> Iterator<T> snoc(@NotNull final Iterator<T> first, final T last) {
     return new Iterator<T>() {
       T last1 = last;
 

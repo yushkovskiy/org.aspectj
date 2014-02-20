@@ -8,25 +8,28 @@
  * ******************************************************************/
 package org.aspectj.weaver.bcel;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import org.aspectj.apache.bcel.classfile.ClassParser;
+import org.aspectj.apache.bcel.classfile.JavaClass;
+import org.aspectj.asm.AsmManager;
+import org.aspectj.asm.IProgramElement;
+import org.aspectj.asm.internal.AspectJElementHierarchy;
+import org.aspectj.bridge.*;
+import org.aspectj.bridge.context.CompilationAndWeavingContext;
+import org.aspectj.bridge.context.ContextToken;
+import org.aspectj.util.FileUtil;
+import org.aspectj.util.FuzzyBoolean;
+import org.aspectj.weaver.*;
+import org.aspectj.weaver.AjAttribute.WeaverVersionInfo;
+import org.aspectj.weaver.model.AsmRelationshipProvider;
+import org.aspectj.weaver.patterns.*;
+import org.aspectj.weaver.tools.Trace;
+import org.aspectj.weaver.tools.TraceFactory;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+
+import java.io.*;
+import java.util.*;
 import java.util.jar.Attributes;
 import java.util.jar.Attributes.Name;
 import java.util.jar.JarEntry;
@@ -36,78 +39,21 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-import org.aspectj.apache.bcel.classfile.ClassParser;
-import org.aspectj.apache.bcel.classfile.JavaClass;
-import org.aspectj.asm.AsmManager;
-import org.aspectj.asm.IProgramElement;
-import org.aspectj.asm.internal.AspectJElementHierarchy;
-import org.aspectj.bridge.IMessage;
-import org.aspectj.bridge.ISourceLocation;
-import org.aspectj.bridge.Message;
-import org.aspectj.bridge.MessageUtil;
-import org.aspectj.bridge.SourceLocation;
-import org.aspectj.bridge.WeaveMessage;
-import org.aspectj.bridge.context.CompilationAndWeavingContext;
-import org.aspectj.bridge.context.ContextToken;
-import org.aspectj.util.FileUtil;
-import org.aspectj.util.FuzzyBoolean;
-import org.aspectj.weaver.Advice;
-import org.aspectj.weaver.AdviceKind;
-import org.aspectj.weaver.AjAttribute.WeaverVersionInfo;
-import org.aspectj.weaver.AnnotationAJ;
-import org.aspectj.weaver.AnnotationOnTypeMunger;
-import org.aspectj.weaver.BCException;
-import org.aspectj.weaver.CompressingDataOutputStream;
-import org.aspectj.weaver.ConcreteTypeMunger;
-import org.aspectj.weaver.CrosscuttingMembersSet;
-import org.aspectj.weaver.CustomMungerFactory;
-import org.aspectj.weaver.IClassFileProvider;
-import org.aspectj.weaver.IUnwovenClassFile;
-import org.aspectj.weaver.IWeaveRequestor;
-import org.aspectj.weaver.NewParentTypeMunger;
-import org.aspectj.weaver.ReferenceType;
-import org.aspectj.weaver.ReferenceTypeDelegate;
-import org.aspectj.weaver.ResolvedType;
-import org.aspectj.weaver.ResolvedTypeMunger;
-import org.aspectj.weaver.Shadow;
-import org.aspectj.weaver.ShadowMunger;
-import org.aspectj.weaver.UnresolvedType;
-import org.aspectj.weaver.WeaverMessages;
-import org.aspectj.weaver.WeaverStateInfo;
-import org.aspectj.weaver.World;
-import org.aspectj.weaver.model.AsmRelationshipProvider;
-import org.aspectj.weaver.patterns.AndPointcut;
-import org.aspectj.weaver.patterns.BindingPattern;
-import org.aspectj.weaver.patterns.BindingTypePattern;
-import org.aspectj.weaver.patterns.ConcreteCflowPointcut;
-import org.aspectj.weaver.patterns.DeclareAnnotation;
-import org.aspectj.weaver.patterns.DeclareParents;
-import org.aspectj.weaver.patterns.DeclareTypeErrorOrWarning;
-import org.aspectj.weaver.patterns.FastMatchInfo;
-import org.aspectj.weaver.patterns.IfPointcut;
-import org.aspectj.weaver.patterns.KindedPointcut;
-import org.aspectj.weaver.patterns.NameBindingPointcut;
-import org.aspectj.weaver.patterns.NotPointcut;
-import org.aspectj.weaver.patterns.OrPointcut;
-import org.aspectj.weaver.patterns.Pointcut;
-import org.aspectj.weaver.patterns.PointcutRewriter;
-import org.aspectj.weaver.patterns.WithinPointcut;
-import org.aspectj.weaver.tools.Trace;
-import org.aspectj.weaver.tools.TraceFactory;
-
 /**
  * @author PARC
  * @author Andy Clement
  * @author Alexandre Vasseur
  */
-public class BcelWeaver {
-
+public final class BcelWeaver {
+  @NotNull
   public static final String CLOSURE_CLASS_PREFIX = "$Ajc";
+  @NotNull
   public static final String SYNTHETIC_CLASS_POSTFIX = "$ajc";
 
   private static Trace trace = TraceFactory.getTraceFactory().getTrace(BcelWeaver.class);
-
+  @NotNull
   private transient final BcelWorld world;
+  @NotNull
   private final CrosscuttingMembersSet xcutSet;
 
   private boolean inReweavableMode = false;
@@ -116,9 +62,13 @@ public class BcelWeaver {
   private transient List<String> deletedTypenames = new ArrayList<String>();
 
   // These four are setup by prepareForWeave
+  @Nullable
   private transient List<ShadowMunger> shadowMungerList = null;
+  @Nullable
   private transient List<ConcreteTypeMunger> typeMungerList = null;
+  @Nullable
   private transient List<ConcreteTypeMunger> lateTypeMungerList = null;
+  @Nullable
   private transient List<DeclareParents> declareParentsList = null;
 
   private Manifest manifest = null;
@@ -127,9 +77,12 @@ public class BcelWeaver {
   private boolean isBatchWeave = true;
 
   private ZipOutputStream zipOutputStream;
+  @Nullable
   private CustomMungerFactory customMungerFactory;
+  @Nullable
+  private Set<IProgramElement> candidatesForRemoval = null;
 
-  public BcelWeaver(BcelWorld world) {
+  public BcelWeaver(@NotNull BcelWorld world) {
     super();
     if (trace.isTraceEnabled()) {
       trace.enter("<init>", this, world);
@@ -147,6 +100,7 @@ public class BcelWeaver {
    * @param aspectName
    * @return aspect
    */
+  @NotNull
   public ResolvedType addLibraryAspect(String aspectName) {
     if (trace.isTraceEnabled()) {
       trace.enter("addLibraryAspect", this, aspectName);
@@ -178,7 +132,6 @@ public class BcelWeaver {
 
     // System.out.println("type: " + type + " for " + aspectName);
     if (type.isAspect()) {
-
       // Bug 119657 ensure we use the unwoven aspect
       final WeaverStateInfo wsi = type.getWeaverState();
       if (wsi != null && wsi.isReweavable()) {
@@ -228,7 +181,7 @@ public class BcelWeaver {
   /**
    * @param inFile directory containing classes or zip/jar class archive
    */
-  public void addLibraryJarFile(File inFile) throws IOException {
+  public void addLibraryJarFile(@NotNull File inFile) throws IOException {
     List<ResolvedType> addedAspects = null;
     if (inFile.isDirectory()) {
       addedAspects = addAspectsFromDirectory(inFile);
@@ -240,104 +193,6 @@ public class BcelWeaver {
     }
   }
 
-  private List<ResolvedType> addAspectsFromJarFile(File inFile) throws FileNotFoundException, IOException {
-    final ZipInputStream inStream = new ZipInputStream(new FileInputStream(inFile)); // ??? buffered
-    final List<ResolvedType> addedAspects = new ArrayList<ResolvedType>();
-    try {
-      while (true) {
-        final ZipEntry entry = inStream.getNextEntry();
-        if (entry == null) {
-          break;
-        }
-
-        if (entry.isDirectory() || !entry.getName().endsWith(".class")) {
-          continue;
-        }
-
-        // FIXME ASC performance? of this alternative soln.
-        final int size = (int) entry.getSize();
-        final ClassParser parser = new ClassParser(new ByteArrayInputStream(FileUtil.readAsByteArray(inStream)), entry.getName());
-        final JavaClass jc = parser.parse();
-        inStream.closeEntry();
-
-        final ResolvedType type = world.addSourceObjectType(jc, false).getResolvedTypeX();
-        type.setBinaryPath(inFile.getAbsolutePath());
-        if (type.isAspect()) {
-          addedAspects.add(type);
-        } else {
-          world.demote(type);
-        }
-
-      }
-    } finally {
-      inStream.close();
-    }
-    return addedAspects;
-  }
-
-  /**
-   * Look for .class files that represent aspects in the supplied directory - return the list of accumulated aspects.
-   *
-   * @param directory the directory in which to look for Aspect .class files
-   * @return the list of discovered aspects
-   * @throws FileNotFoundException
-   * @throws IOException
-   */
-  private List<ResolvedType> addAspectsFromDirectory(File directory) throws FileNotFoundException, IOException {
-    final List<ResolvedType> addedAspects = new ArrayList<ResolvedType>();
-    final File[] classFiles = FileUtil.listFiles(directory, new FileFilter() {
-      public boolean accept(File pathname) {
-        return pathname.getName().endsWith(".class");
-      }
-    });
-    for (File classFile : classFiles) {
-      final FileInputStream fis = new FileInputStream(classFile);
-      final byte[] classBytes = FileUtil.readAsByteArray(fis);
-      final ResolvedType aspectType = isAspect(classBytes, classFile.getAbsolutePath(), directory);
-      if (aspectType != null) {
-        addedAspects.add(aspectType);
-      }
-      fis.close();
-    }
-    return addedAspects;
-  }
-
-  /**
-   * Determine if the supplied bytes represent an aspect, if they do then create a ResolvedType instance for the aspect and return
-   * it, otherwise return null
-   *
-   * @param classbytes the classbytes that might represent an aspect
-   * @param name       the name of the class
-   * @param directory  directory which contained the class file
-   * @return a ResolvedType if the classbytes represent an aspect, otherwise null
-   */
-  private ResolvedType isAspect(byte[] classbytes, String name, File dir) throws IOException {
-    final ClassParser parser = new ClassParser(new ByteArrayInputStream(classbytes), name);
-    final JavaClass jc = parser.parse();
-    final ResolvedType type = world.addSourceObjectType(jc, false).getResolvedTypeX();
-    final String typeName = type.getName().replace('.', File.separatorChar);
-    final int end = name.lastIndexOf(typeName + ".class");
-    String binaryPath = null;
-    // if end is -1 then something weird happened, the class file is not in
-    // the correct place, something like
-    // bin/A.class when the declaration for A specifies it is in a package.
-    if (end == -1) {
-      binaryPath = dir.getAbsolutePath();
-    } else {
-      binaryPath = name.substring(0, end - 1);
-    }
-    type.setBinaryPath(binaryPath);
-    if (type.isAspect()) {
-      return type;
-    } else {
-      // immediately demote the type we just added since it will have
-      // have been stuffed into the permanent map (assumed to be
-      // an aspect)
-      world.demote(type);
-      return null;
-    }
-  }
-
   // // The ANT copy task should be used to copy resources across.
   // private final static boolean
   // CopyResourcesFromInpathDirectoriesToOutput=false;
@@ -346,11 +201,13 @@ public class BcelWeaver {
    * Add any .class files in the directory to the outdir. Anything other than .class files in the directory (or its
    * subdirectories) are considered resources and are also copied.
    */
+  @NotNull
   public List<UnwovenClassFile> addDirectoryContents(File inFile, File outDir) throws IOException {
     final List<UnwovenClassFile> addedClassFiles = new ArrayList<UnwovenClassFile>();
 
     // Get a list of all files (i.e. everything that isnt a directory)
     final File[] files = FileUtil.listFiles(inFile, new FileFilter() {
+      @Override
       public boolean accept(File f) {
         final boolean accept = !f.isDirectory();
         return accept;
@@ -368,7 +225,8 @@ public class BcelWeaver {
   /**
    * Adds all class files in the jar
    */
-  public List<UnwovenClassFile> addJarFile(File inFile, File outDir, boolean canBeDirectory) {
+  @NotNull
+  public List<UnwovenClassFile> addJarFile(@NotNull File inFile, File outDir, boolean canBeDirectory) {
     // System.err.println("? addJarFile(" + inFile + ", " + outDir + ")");
     final List<UnwovenClassFile> addedClassFiles = new ArrayList<UnwovenClassFile>();
     needToReweaveWorld = true;
@@ -379,7 +237,6 @@ public class BcelWeaver {
       if (inFile.isDirectory() && canBeDirectory) {
         addedClassFiles.addAll(addDirectoryContents(inFile, outDir));
       } else {
-
         inJar = new JarFile(inFile);
         try {
           addManifest(inJar.getManifest());
@@ -447,6 +304,7 @@ public class BcelWeaver {
   /**
    * Should be addOrReplace
    */
+  @NotNull
   public ReferenceType addClassFile(UnwovenClassFile classFile, boolean fromInpath) {
     addedClasses.add(classFile);
     final ReferenceType type = world.addSourceObjectType(classFile.getJavaClass(), false).getResolvedTypeX();
@@ -544,6 +402,7 @@ public class BcelWeaver {
     // a bit of alteration...
 
     Collections.sort(shadowMungerList, new Comparator<ShadowMunger>() {
+      @Override
       public int compare(ShadowMunger sm1, ShadowMunger sm2) {
         if (sm1.getSourceLocation() == null) {
           return (sm2.getSourceLocation() == null ? 0 : 1);
@@ -565,6 +424,609 @@ public class BcelWeaver {
     }
   }
 
+  public void setCustomMungerFactory(@Nullable CustomMungerFactory factory) {
+    customMungerFactory = factory;
+  }
+
+  public void addManifest(Manifest newManifest) {
+    // System.out.println("? addManifest() newManifest=" + newManifest);
+    if (manifest == null) {
+      manifest = newManifest;
+    }
+  }
+
+  public Manifest getManifest(boolean shouldCreate) {
+    if (manifest == null && shouldCreate) {
+      final String WEAVER_MANIFEST_VERSION = "1.0";
+      final Attributes.Name CREATED_BY = new Name("Created-By");
+      final String WEAVER_CREATED_BY = "AspectJ Compiler";
+
+      manifest = new Manifest();
+
+      final Attributes attributes = manifest.getMainAttributes();
+      attributes.put(Name.MANIFEST_VERSION, WEAVER_MANIFEST_VERSION);
+      attributes.put(CREATED_BY, WEAVER_CREATED_BY);
+    }
+
+    return manifest;
+  }
+
+  // ---- weaving
+
+  // FOR TESTING
+  @TestOnly
+  @NotNull
+  public Collection<String> weave(@NotNull File file) throws IOException {
+    final OutputStream os = FileUtil.makeOutputStream(file);
+    this.zipOutputStream = new ZipOutputStream(os);
+    prepareForWeave();
+    final Collection<String> c = weave(new IClassFileProvider() {
+
+      @Override
+      public boolean isApplyAtAspectJMungersOnly() {
+        return false;
+      }
+
+      @Override
+      @NotNull
+      public Iterator<UnwovenClassFile> getClassFileIterator() {
+        return addedClasses.iterator();
+      }
+
+      @Override
+      @NotNull
+      public IWeaveRequestor getRequestor() {
+        return new IWeaveRequestor() {
+          @Override
+          public void acceptResult(@NotNull IUnwovenClassFile result) {
+            try {
+              writeZipEntry(result.getFilename(), result.getBytes());
+            } catch (IOException ex) {
+            }
+          }
+
+          @Override
+          public void processingReweavableState() {
+          }
+
+          @Override
+          public void addingTypeMungers() {
+          }
+
+          @Override
+          public void weavingAspects() {
+          }
+
+          @Override
+          public void weavingClasses() {
+          }
+
+          @Override
+          public void weaveCompleted() {
+          }
+        };
+      }
+    });
+    // /* BUG 40943*/
+    // dumpResourcesToOutJar();
+    zipOutputStream.close(); // this flushes and closes the acutal file
+    return c;
+  }
+
+  // variation of "weave" that sources class files from an external source.
+  @NotNull
+  public Collection<String> weave(@NotNull IClassFileProvider input) throws IOException {
+    if (trace.isTraceEnabled()) {
+      trace.enter("weave", this, input);
+    }
+    final ContextToken weaveToken = CompilationAndWeavingContext.enteringPhase(CompilationAndWeavingContext.WEAVING, "");
+    final Collection<String> wovenClassNames = new ArrayList<String>();
+    final IWeaveRequestor requestor = input.getRequestor();
+
+    if (world.getModel() != null && world.isMinimalModel()) {
+      candidatesForRemoval = new HashSet<IProgramElement>();
+    }
+    if (world.getModel() != null && !isBatchWeave) {
+      final AsmManager manager = world.getModelAsAsmManager();
+      for (final Iterator<UnwovenClassFile> i = input.getClassFileIterator(); i.hasNext(); ) {
+        final UnwovenClassFile classFile = i.next();
+        // remove all relationships where this file being woven is
+        // the target of the relationship
+        manager.removeRelationshipsTargettingThisType(classFile.getClassName());
+      }
+    }
+
+    // Go through the types and ensure any 'damaged' during compile time are
+    // repaired prior to weaving
+    for (final Iterator<UnwovenClassFile> i = input.getClassFileIterator(); i.hasNext(); ) {
+      final UnwovenClassFile classFile = i.next();
+      final String className = classFile.getClassName();
+      final ResolvedType theType = world.resolve(className);
+      if (theType != null) {
+        theType.ensureConsistent();
+      }
+    }
+
+    // special case for AtAspectJMungerOnly - see #113587
+    if (input.isApplyAtAspectJMungersOnly()) {
+      final ContextToken atAspectJMungersOnly = CompilationAndWeavingContext.enteringPhase(
+          CompilationAndWeavingContext.PROCESSING_ATASPECTJTYPE_MUNGERS_ONLY, "");
+      requestor.weavingAspects();
+      // ContextToken aspectToken =
+      CompilationAndWeavingContext.enteringPhase(CompilationAndWeavingContext.WEAVING_ASPECTS, "");
+      for (final Iterator<UnwovenClassFile> i = input.getClassFileIterator(); i.hasNext(); ) {
+        final UnwovenClassFile classFile = i.next();
+        final String className = classFile.getClassName();
+        final ResolvedType theType = world.resolve(className);
+        if (theType.isAnnotationStyleAspect()) {
+          final BcelObjectType classType = BcelWorld.getBcelObjectType(theType);
+          if (classType == null) {
+            throw new BCException("Can't find bcel delegate for " + className + " type=" + theType.getClass());
+          }
+          final LazyClassGen clazz = classType.getLazyClassGen();
+          final BcelPerClauseAspectAdder selfMunger = new BcelPerClauseAspectAdder(theType, theType.getPerClause().getKind());
+          selfMunger.forceMunge(clazz, true);
+          classType.finishedWith();
+          final UnwovenClassFile[] newClasses = getClassFilesFor(clazz);
+          for (int news = 0; news < newClasses.length; news++) {
+            requestor.acceptResult(newClasses[news]);
+          }
+          wovenClassNames.add(classFile.getClassName());
+        }
+      }
+      requestor.weaveCompleted();
+      CompilationAndWeavingContext.leavingPhase(atAspectJMungersOnly);
+      return wovenClassNames;
+    }
+
+    requestor.processingReweavableState();
+    final ContextToken reweaveToken = CompilationAndWeavingContext.enteringPhase(
+        CompilationAndWeavingContext.PROCESSING_REWEAVABLE_STATE, "");
+    prepareToProcessReweavableState();
+    // clear all state from files we'll be reweaving
+    for (final Iterator<UnwovenClassFile> i = input.getClassFileIterator(); i.hasNext(); ) {
+      final UnwovenClassFile classFile = i.next();
+      final String className = classFile.getClassName();
+      final BcelObjectType classType = getClassType(className);
+
+      // null return from getClassType() means the delegate is an eclipse
+      // source type - so
+      // there *cant* be any reweavable state... (he bravely claimed...)
+      if (classType != null) {
+        final ContextToken tok = CompilationAndWeavingContext.enteringPhase(
+            CompilationAndWeavingContext.PROCESSING_REWEAVABLE_STATE, className);
+        processReweavableStateIfPresent(className, classType);
+        CompilationAndWeavingContext.leavingPhase(tok);
+      }
+    }
+
+    CompilationAndWeavingContext.leavingPhase(reweaveToken);
+
+    final ContextToken typeMungingToken = CompilationAndWeavingContext.enteringPhase(
+        CompilationAndWeavingContext.PROCESSING_TYPE_MUNGERS, "");
+    requestor.addingTypeMungers();
+
+    // We process type mungers in two groups, first mungers that change the
+    // type
+    // hierarchy, then 'normal' ITD type mungers.
+
+    // Process the types in a predictable order (rather than the order
+    // encountered).
+    // For class A, the order is superclasses of A then superinterfaces of A
+    // (and this mechanism is applied recursively)
+    final List<String> typesToProcess = new ArrayList<String>();
+    for (final Iterator<UnwovenClassFile> iter = input.getClassFileIterator(); iter.hasNext(); ) {
+      final UnwovenClassFile clf = iter.next();
+      typesToProcess.add(clf.getClassName());
+    }
+    while (typesToProcess.size() > 0) {
+      weaveParentsFor(typesToProcess, typesToProcess.get(0), null);
+    }
+
+    for (final Iterator<UnwovenClassFile> i = input.getClassFileIterator(); i.hasNext(); ) {
+      final UnwovenClassFile classFile = i.next();
+      final String className = classFile.getClassName();
+      addNormalTypeMungers(className);
+    }
+
+    CompilationAndWeavingContext.leavingPhase(typeMungingToken);
+
+    requestor.weavingAspects();
+    final ContextToken aspectToken = CompilationAndWeavingContext.enteringPhase(CompilationAndWeavingContext.WEAVING_ASPECTS, "");
+    // first weave into aspects
+    for (final Iterator<UnwovenClassFile> i = input.getClassFileIterator(); i.hasNext(); ) {
+      final UnwovenClassFile classFile = i.next();
+      final String className = classFile.getClassName();
+      final ResolvedType theType = world.resolve(className);
+      if (theType.isAspect()) {
+        final BcelObjectType classType = BcelWorld.getBcelObjectType(theType);
+        if (classType == null) {
+          // Sometimes.. if the Bcel Delegate couldn't be found then a
+          // problem occurred at compile time - on
+          // a previous compiler run. In this case I assert the
+          // delegate will still be an EclipseSourceType
+          // and we can ignore the problem here (the original compile
+          // error will be reported again from
+          // the eclipse source type) - pr113531
+          final ReferenceTypeDelegate theDelegate = ((ReferenceType) theType).getDelegate();
+          if (theDelegate.getClass().getName().endsWith("EclipseSourceType")) {
+            continue;
+          }
+
+          throw new BCException("Can't find bcel delegate for " + className + " type=" + theType.getClass());
+        }
+        weaveAndNotify(classFile, classType, requestor);
+        wovenClassNames.add(className);
+      }
+    }
+
+    CompilationAndWeavingContext.leavingPhase(aspectToken);
+
+    requestor.weavingClasses();
+    final ContextToken classToken = CompilationAndWeavingContext.enteringPhase(CompilationAndWeavingContext.WEAVING_CLASSES, "");
+    // then weave into non-aspects
+    for (final Iterator<UnwovenClassFile> i = input.getClassFileIterator(); i.hasNext(); ) {
+      final UnwovenClassFile classFile = i.next();
+      final String className = classFile.getClassName();
+      final ResolvedType theType = world.resolve(className);
+      if (!theType.isAspect()) {
+        final BcelObjectType classType = BcelWorld.getBcelObjectType(theType);
+        if (classType == null) {
+          // bug 119882 - see above comment for bug 113531
+          final ReferenceTypeDelegate theDelegate = ((ReferenceType) theType).getDelegate();
+
+          // TODO urgh - put a method on the interface to check this,
+          // string compare is hideous
+          if (theDelegate.getClass().getName().endsWith("EclipseSourceType")) {
+            continue;
+          }
+
+          throw new BCException("Can't find bcel delegate for " + className + " type=" + theType.getClass());
+        }
+        weaveAndNotify(classFile, classType, requestor);
+        wovenClassNames.add(className);
+      }
+    }
+    CompilationAndWeavingContext.leavingPhase(classToken);
+
+    addedClasses.clear();
+    deletedTypenames.clear();
+
+    requestor.weaveCompleted();
+    CompilationAndWeavingContext.leavingPhase(weaveToken);
+    if (trace.isTraceEnabled()) {
+      trace.exit("weave", wovenClassNames);
+    }
+    if (world.getModel() != null && world.isMinimalModel()) {
+      candidatesForRemoval.clear();
+    }
+    return wovenClassNames;
+  }
+
+  public void allWeavingComplete() {
+    warnOnUnmatchedAdvice();
+  }
+
+  public void prepareToProcessReweavableState() {
+  }
+
+  public void processReweavableStateIfPresent(String className, BcelObjectType classType) {
+    // If the class is marked reweavable, check any aspects around when it
+    // was built are in this world
+    final WeaverStateInfo wsi = classType.getWeaverState();
+    // System.out.println(">> processReweavableStateIfPresent " + className + " wsi=" + wsi);
+    if (wsi != null && wsi.isReweavable()) { // Check all necessary types
+      // are around!
+      world.showMessage(IMessage.INFO, WeaverMessages.format(WeaverMessages.PROCESSING_REWEAVABLE, className, classType
+          .getSourceLocation().getSourceFile()), null, null);
+      final Set<String> aspectsPreviouslyInWorld = wsi.getAspectsAffectingType();
+      // keep track of them just to ensure unique missing aspect error
+      // reporting
+      final Set<String> alreadyConfirmedReweavableState = new HashSet<String>();
+      for (String requiredTypeSignature : aspectsPreviouslyInWorld) {
+        // for (Iterator iter = aspectsPreviouslyInWorld.iterator(); iter.hasNext();) {
+        // String requiredTypeName = (String) iter.next();
+        if (!alreadyConfirmedReweavableState.contains(requiredTypeSignature)) {
+          final ResolvedType rtx = world.resolve(UnresolvedType.forSignature(requiredTypeSignature), true);
+          final boolean exists = !rtx.isMissing();
+          if (!exists) {
+            world.getLint().missingAspectForReweaving.signal(new String[]{rtx.getName(), className},
+                classType.getSourceLocation(), null);
+            // world.showMessage(IMessage.ERROR, WeaverMessages.format(WeaverMessages.MISSING_REWEAVABLE_TYPE,
+            // requiredTypeName, className), classType.getSourceLocation(), null);
+          } else {
+            if (world.isOverWeaving()) {
+              // System.out.println(">> Removing " + requiredTypeName + " from weaving process: "
+              // + xcutSet.deleteAspect(rtx));
+            } else {
+              // weaved in aspect that are not declared in aop.xml
+              // trigger an error for now
+              // may cause headhache for LTW and packaged lib
+              // without aop.xml in
+              // see #104218
+              if (!xcutSet.containsAspect(rtx)) {
+                world.showMessage(IMessage.ERROR, WeaverMessages.format(
+                    WeaverMessages.REWEAVABLE_ASPECT_NOT_REGISTERED, rtx.getName(), className), null, null);
+              } else if (!world.getMessageHandler().isIgnoring(IMessage.INFO)) {
+                world.showMessage(IMessage.INFO, WeaverMessages.format(WeaverMessages.VERIFIED_REWEAVABLE_TYPE,
+                    rtx.getName(), rtx.getSourceLocation().getSourceFile()), null, null);
+              }
+            }
+            alreadyConfirmedReweavableState.add(requiredTypeSignature);
+          }
+        }
+      }
+      // old:
+      // classType.setJavaClass(Utility.makeJavaClass(classType.getJavaClass
+      // ().getFileName(), wsi.getUnwovenClassFileData()));
+      // new: reweavable default with clever diff
+      if (!world.isOverWeaving()) {
+        final byte[] bytes = wsi.getUnwovenClassFileData(classType.getJavaClass().getBytes());
+        final WeaverVersionInfo wvi = classType.getWeaverVersionAttribute();
+        final JavaClass newJavaClass = Utility.makeJavaClass(classType.getJavaClass().getFileName(), bytes);
+        classType.setJavaClass(newJavaClass, true);
+        classType.getResolvedTypeX().ensureConsistent();
+      }
+      // } else {
+      // classType.resetState();
+    }
+  }
+
+  /**
+   * helper method - will return NULL if the underlying delegate is an EclipseSourceType and not a BcelObjectType
+   */
+  @Nullable
+  public BcelObjectType getClassType(String forClass) {
+    return BcelWorld.getBcelObjectType(world.resolve(forClass));
+  }
+
+  public void addParentTypeMungers(String typeName) {
+    weaveParentTypeMungers(world.resolve(typeName));
+  }
+
+  public void addNormalTypeMungers(String typeName) {
+    weaveNormalTypeMungers(world.resolve(typeName));
+  }
+
+  @NotNull
+  public UnwovenClassFile[] getClassFilesFor(LazyClassGen clazz) {
+    final List<UnwovenClassFile.ChildClass> childClasses = clazz.getChildClasses(world);
+    final UnwovenClassFile[] ret = new UnwovenClassFile[1 + childClasses.size()];
+    ret[0] = new UnwovenClassFile(clazz.getFileName(), clazz.getClassName(), clazz.getJavaClassBytesIncludingReweavable(world));
+    int index = 1;
+    for (final Iterator<UnwovenClassFile.ChildClass> iter = childClasses.iterator(); iter.hasNext(); ) {
+      final UnwovenClassFile.ChildClass element = iter.next();
+      final UnwovenClassFile childClass = new UnwovenClassFile(clazz.getFileName() + "$" + element.name, element.bytes);
+      ret[index++] = childClass;
+    }
+    return ret;
+  }
+
+  /**
+   * Weaves new parents and annotations onto a type ("declare parents" and "declare @type")
+   * <p/>
+   * Algorithm: 1. First pass, do parents then do annotations. During this pass record: - any parent mungers that don't match but
+   * have a non-wild annotation type pattern - any annotation mungers that don't match 2. Multiple subsequent passes which go over
+   * the munger lists constructed in the first pass, repeatedly applying them until nothing changes. FIXME asc confirm that
+   * algorithm is optimal ??
+   */
+  public void weaveParentTypeMungers(@NotNull ResolvedType onType) {
+    if (onType.isRawType() || onType.isParameterizedType()) {
+      onType = onType.getGenericType();
+    }
+    onType.clearInterTypeMungers();
+
+    List<DeclareParents> decpToRepeat = new ArrayList<DeclareParents>();
+
+    boolean aParentChangeOccurred = false;
+    boolean anAnnotationChangeOccurred = false;
+    // First pass - apply all decp mungers
+    for (DeclareParents decp : declareParentsList) {
+      final boolean typeChanged = applyDeclareParents(decp, onType);
+      if (typeChanged) {
+        aParentChangeOccurred = true;
+      } else {
+        decpToRepeat.add(decp);
+      }
+    }
+
+    // Still first pass - apply all dec @type mungers
+    for (DeclareAnnotation decA : xcutSet.getDeclareAnnotationOnTypes()) {
+      final boolean typeChanged = applyDeclareAtType(decA, onType, true);
+      if (typeChanged) {
+        anAnnotationChangeOccurred = true;
+      }
+    }
+
+    while ((aParentChangeOccurred || anAnnotationChangeOccurred) && !decpToRepeat.isEmpty()) {
+      anAnnotationChangeOccurred = aParentChangeOccurred = false;
+      final List<DeclareParents> decpToRepeatNextTime = new ArrayList<DeclareParents>();
+      for (final Iterator<DeclareParents> iter = decpToRepeat.iterator(); iter.hasNext(); ) {
+        final DeclareParents decp = iter.next();
+        final boolean typeChanged = applyDeclareParents(decp, onType);
+        if (typeChanged) {
+          aParentChangeOccurred = true;
+        } else {
+          decpToRepeatNextTime.add(decp);
+        }
+      }
+
+      for (DeclareAnnotation decA : xcutSet.getDeclareAnnotationOnTypes()) {
+        final boolean typeChanged = applyDeclareAtType(decA, onType, false);
+        if (typeChanged) {
+          anAnnotationChangeOccurred = true;
+        }
+      }
+      decpToRepeat = decpToRepeatNextTime;
+    }
+  }
+
+  public void weaveNormalTypeMungers(@NotNull ResolvedType onType) {
+    final ContextToken tok = CompilationAndWeavingContext.enteringPhase(CompilationAndWeavingContext.PROCESSING_TYPE_MUNGERS,
+        onType.getName());
+    if (onType.isRawType() || onType.isParameterizedType()) {
+      onType = onType.getGenericType();
+    }
+    for (ConcreteTypeMunger m : typeMungerList) {
+      if (!m.isLateMunger() && m.matches(onType)) {
+        onType.addInterTypeMunger(m, false);
+      }
+    }
+    CompilationAndWeavingContext.leavingPhase(tok);
+  }
+
+  // exposed for ClassLoader dynamic weaving
+  @Nullable
+  public LazyClassGen weaveWithoutDump(UnwovenClassFile classFile, BcelObjectType classType) throws IOException {
+    return weave(classFile, classType, false);
+  }
+
+  public void setReweavableMode(boolean xNotReweavable) {
+    inReweavableMode = !xNotReweavable;
+    WeaverStateInfo.setReweavableModeDefaults(!xNotReweavable, false, true);
+  }
+
+  public boolean isReweavable() {
+    return inReweavableMode;
+  }
+
+  @NotNull
+  public World getWorld() {
+    return world;
+  }
+
+  public void tidyUp() {
+    if (trace.isTraceEnabled()) {
+      trace.enter("tidyUp", this);
+    }
+    shadowMungerList = null; // setup by prepareForWeave
+    typeMungerList = null; // setup by prepareForWeave
+    lateTypeMungerList = null; // setup by prepareForWeave
+    declareParentsList = null; // setup by prepareForWeave
+    if (trace.isTraceEnabled()) {
+      trace.exit("tidyUp");
+    }
+  }
+
+  public void write(@NotNull CompressingDataOutputStream dos) throws IOException {
+    xcutSet.write(dos);
+  }
+
+  // only called for testing
+  @TestOnly
+  public void setShadowMungers(@NotNull List<ShadowMunger> shadowMungers) {
+    shadowMungerList = shadowMungers;
+  }
+
+  // FOR TESTING
+  @TestOnly
+  @Nullable
+  LazyClassGen weave(UnwovenClassFile classFile, BcelObjectType classType) throws IOException {
+    final LazyClassGen ret = weave(classFile, classType, true);
+    return ret;
+  }
+
+  @NotNull
+  private List<ResolvedType> addAspectsFromJarFile(File inFile) throws FileNotFoundException, IOException {
+    final ZipInputStream inStream = new ZipInputStream(new FileInputStream(inFile)); // ??? buffered
+    final List<ResolvedType> addedAspects = new ArrayList<ResolvedType>();
+    try {
+      while (true) {
+        final ZipEntry entry = inStream.getNextEntry();
+        if (entry == null) {
+          break;
+        }
+
+        if (entry.isDirectory() || !entry.getName().endsWith(".class")) {
+          continue;
+        }
+
+        // FIXME ASC performance? of this alternative soln.
+        final int size = (int) entry.getSize();
+        final ClassParser parser = new ClassParser(new ByteArrayInputStream(FileUtil.readAsByteArray(inStream)), entry.getName());
+        final JavaClass jc = parser.parse();
+        inStream.closeEntry();
+
+        final ResolvedType type = world.addSourceObjectType(jc, false).getResolvedTypeX();
+        type.setBinaryPath(inFile.getAbsolutePath());
+        if (type.isAspect()) {
+          addedAspects.add(type);
+        } else {
+          world.demote(type);
+        }
+      }
+    } finally {
+      inStream.close();
+    }
+    return addedAspects;
+  }
+
+  /**
+   * Look for .class files that represent aspects in the supplied directory - return the list of accumulated aspects.
+   *
+   * @param directory the directory in which to look for Aspect .class files
+   * @return the list of discovered aspects
+   * @throws FileNotFoundException
+   * @throws IOException
+   */
+  @NotNull
+  private List<ResolvedType> addAspectsFromDirectory(File directory) throws FileNotFoundException, IOException {
+    final List<ResolvedType> addedAspects = new ArrayList<ResolvedType>();
+    final File[] classFiles = FileUtil.listFiles(directory, new FileFilter() {
+      @Override
+      public boolean accept(File pathname) {
+        return pathname.getName().endsWith(".class");
+      }
+    });
+    for (File classFile : classFiles) {
+      final FileInputStream fis = new FileInputStream(classFile);
+      final byte[] classBytes = FileUtil.readAsByteArray(fis);
+      final ResolvedType aspectType = isAspect(classBytes, classFile.getAbsolutePath(), directory);
+      if (aspectType != null) {
+        addedAspects.add(aspectType);
+      }
+      fis.close();
+    }
+    return addedAspects;
+  }
+
+  /**
+   * Determine if the supplied bytes represent an aspect, if they do then create a ResolvedType instance for the aspect and return
+   * it, otherwise return null
+   *
+   * @param classbytes the classbytes that might represent an aspect
+   * @param name       the name of the class
+   * @param dir        directory which contained the class file
+   * @return a ResolvedType if the classbytes represent an aspect, otherwise null
+   */
+  @Nullable
+  private ResolvedType isAspect(byte[] classbytes, String name, File dir) throws IOException {
+    final ClassParser parser = new ClassParser(new ByteArrayInputStream(classbytes), name);
+    final JavaClass jc = parser.parse();
+    final ResolvedType type = world.addSourceObjectType(jc, false).getResolvedTypeX();
+    final String typeName = type.getName().replace('.', File.separatorChar);
+    final int end = name.lastIndexOf(typeName + ".class");
+    String binaryPath = null;
+    // if end is -1 then something weird happened, the class file is not in
+    // the correct place, something like
+    // bin/A.class when the declaration for A specifies it is in a package.
+    if (end == -1) {
+      binaryPath = dir.getAbsolutePath();
+    } else {
+      binaryPath = name.substring(0, end - 1);
+    }
+    type.setBinaryPath(binaryPath);
+    if (type.isAspect()) {
+      return type;
+    } else {
+      // immediately demote the type we just added since it will have
+      // have been stuffed into the permanent map (assumed to be
+      // an aspect)
+      world.demote(type);
+      return null;
+    }
+  }
+
   private void addCustomMungers() {
     if (customMungerFactory != null) {
       for (final Iterator<UnwovenClassFile> i = addedClasses.iterator(); i.hasNext(); ) {
@@ -583,10 +1045,6 @@ public class BcelWeaver {
         }
       }
     }
-  }
-
-  public void setCustomMungerFactory(CustomMungerFactory factory) {
-    customMungerFactory = factory;
   }
 
   /*
@@ -647,7 +1105,8 @@ public class BcelWeaver {
     }
   }
 
-  private Pointcut shareEntriesFromMap(Pointcut p, Map<Pointcut, Pointcut> pcMap) {
+  @NotNull
+  private Pointcut shareEntriesFromMap(@NotNull Pointcut p, Map<Pointcut, Pointcut> pcMap) {
     // some things cant be shared...
     if (p instanceof NameBindingPointcut) {
       return p;
@@ -878,6 +1337,7 @@ public class BcelWeaver {
     return true;
   }
 
+  @Nullable
   private Pointcut findFirstPointcutIn(Pointcut toSearch, Class toLookFor) {
     if (toSearch instanceof NotPointcut) {
       return null;
@@ -899,7 +1359,7 @@ public class BcelWeaver {
   /**
    * @param userPointcut
    */
-  private void raiseNegationBindingError(Pointcut userPointcut) {
+  private void raiseNegationBindingError(@NotNull Pointcut userPointcut) {
     world.showMessage(IMessage.ERROR, WeaverMessages.format(WeaverMessages.NEGATION_DOESNT_ALLOW_BINDING), userPointcut
         .getSourceContext().makeSourceLocation(userPointcut), null);
   }
@@ -933,275 +1393,6 @@ public class BcelWeaver {
   private void raiseUnboundFormalError(String name, Pointcut userPointcut) {
     world.showMessage(IMessage.ERROR, WeaverMessages.format(WeaverMessages.UNBOUND_FORMAL, name),
         userPointcut.getSourceLocation(), null);
-  }
-
-  public void addManifest(Manifest newManifest) {
-    // System.out.println("? addManifest() newManifest=" + newManifest);
-    if (manifest == null) {
-      manifest = newManifest;
-    }
-  }
-
-  public Manifest getManifest(boolean shouldCreate) {
-    if (manifest == null && shouldCreate) {
-      final String WEAVER_MANIFEST_VERSION = "1.0";
-      final Attributes.Name CREATED_BY = new Name("Created-By");
-      final String WEAVER_CREATED_BY = "AspectJ Compiler";
-
-      manifest = new Manifest();
-
-      final Attributes attributes = manifest.getMainAttributes();
-      attributes.put(Name.MANIFEST_VERSION, WEAVER_MANIFEST_VERSION);
-      attributes.put(CREATED_BY, WEAVER_CREATED_BY);
-    }
-
-    return manifest;
-  }
-
-  // ---- weaving
-
-  // FOR TESTING
-  public Collection<String> weave(File file) throws IOException {
-    final OutputStream os = FileUtil.makeOutputStream(file);
-    this.zipOutputStream = new ZipOutputStream(os);
-    prepareForWeave();
-    final Collection<String> c = weave(new IClassFileProvider() {
-
-      public boolean isApplyAtAspectJMungersOnly() {
-        return false;
-      }
-
-      public Iterator<UnwovenClassFile> getClassFileIterator() {
-        return addedClasses.iterator();
-      }
-
-      public IWeaveRequestor getRequestor() {
-        return new IWeaveRequestor() {
-          public void acceptResult(IUnwovenClassFile result) {
-            try {
-              writeZipEntry(result.getFilename(), result.getBytes());
-            } catch (IOException ex) {
-            }
-          }
-
-          public void processingReweavableState() {
-          }
-
-          public void addingTypeMungers() {
-          }
-
-          public void weavingAspects() {
-          }
-
-          public void weavingClasses() {
-          }
-
-          public void weaveCompleted() {
-          }
-        };
-      }
-    });
-    // /* BUG 40943*/
-    // dumpResourcesToOutJar();
-    zipOutputStream.close(); // this flushes and closes the acutal file
-    return c;
-  }
-
-  private Set<IProgramElement> candidatesForRemoval = null;
-
-  // variation of "weave" that sources class files from an external source.
-  public Collection<String> weave(IClassFileProvider input) throws IOException {
-    if (trace.isTraceEnabled()) {
-      trace.enter("weave", this, input);
-    }
-    final ContextToken weaveToken = CompilationAndWeavingContext.enteringPhase(CompilationAndWeavingContext.WEAVING, "");
-    final Collection<String> wovenClassNames = new ArrayList<String>();
-    final IWeaveRequestor requestor = input.getRequestor();
-
-    if (world.getModel() != null && world.isMinimalModel()) {
-      candidatesForRemoval = new HashSet<IProgramElement>();
-    }
-    if (world.getModel() != null && !isBatchWeave) {
-      final AsmManager manager = world.getModelAsAsmManager();
-      for (final Iterator<UnwovenClassFile> i = input.getClassFileIterator(); i.hasNext(); ) {
-        final UnwovenClassFile classFile = i.next();
-        // remove all relationships where this file being woven is
-        // the target of the relationship
-        manager.removeRelationshipsTargettingThisType(classFile.getClassName());
-      }
-    }
-
-    // Go through the types and ensure any 'damaged' during compile time are
-    // repaired prior to weaving
-    for (final Iterator<UnwovenClassFile> i = input.getClassFileIterator(); i.hasNext(); ) {
-      final UnwovenClassFile classFile = i.next();
-      final String className = classFile.getClassName();
-      final ResolvedType theType = world.resolve(className);
-      if (theType != null) {
-        theType.ensureConsistent();
-      }
-    }
-
-    // special case for AtAspectJMungerOnly - see #113587
-    if (input.isApplyAtAspectJMungersOnly()) {
-      final ContextToken atAspectJMungersOnly = CompilationAndWeavingContext.enteringPhase(
-          CompilationAndWeavingContext.PROCESSING_ATASPECTJTYPE_MUNGERS_ONLY, "");
-      requestor.weavingAspects();
-      // ContextToken aspectToken =
-      CompilationAndWeavingContext.enteringPhase(CompilationAndWeavingContext.WEAVING_ASPECTS, "");
-      for (final Iterator<UnwovenClassFile> i = input.getClassFileIterator(); i.hasNext(); ) {
-        final UnwovenClassFile classFile = i.next();
-        final String className = classFile.getClassName();
-        final ResolvedType theType = world.resolve(className);
-        if (theType.isAnnotationStyleAspect()) {
-          final BcelObjectType classType = BcelWorld.getBcelObjectType(theType);
-          if (classType == null) {
-            throw new BCException("Can't find bcel delegate for " + className + " type=" + theType.getClass());
-          }
-          final LazyClassGen clazz = classType.getLazyClassGen();
-          final BcelPerClauseAspectAdder selfMunger = new BcelPerClauseAspectAdder(theType, theType.getPerClause().getKind());
-          selfMunger.forceMunge(clazz, true);
-          classType.finishedWith();
-          final UnwovenClassFile[] newClasses = getClassFilesFor(clazz);
-          for (int news = 0; news < newClasses.length; news++) {
-            requestor.acceptResult(newClasses[news]);
-          }
-          wovenClassNames.add(classFile.getClassName());
-        }
-      }
-      requestor.weaveCompleted();
-      CompilationAndWeavingContext.leavingPhase(atAspectJMungersOnly);
-      return wovenClassNames;
-    }
-
-    requestor.processingReweavableState();
-    final ContextToken reweaveToken = CompilationAndWeavingContext.enteringPhase(
-        CompilationAndWeavingContext.PROCESSING_REWEAVABLE_STATE, "");
-    prepareToProcessReweavableState();
-    // clear all state from files we'll be reweaving
-    for (final Iterator<UnwovenClassFile> i = input.getClassFileIterator(); i.hasNext(); ) {
-      final UnwovenClassFile classFile = i.next();
-      final String className = classFile.getClassName();
-      final BcelObjectType classType = getClassType(className);
-
-      // null return from getClassType() means the delegate is an eclipse
-      // source type - so
-      // there *cant* be any reweavable state... (he bravely claimed...)
-      if (classType != null) {
-        final ContextToken tok = CompilationAndWeavingContext.enteringPhase(
-            CompilationAndWeavingContext.PROCESSING_REWEAVABLE_STATE, className);
-        processReweavableStateIfPresent(className, classType);
-        CompilationAndWeavingContext.leavingPhase(tok);
-      }
-    }
-
-    CompilationAndWeavingContext.leavingPhase(reweaveToken);
-
-    final ContextToken typeMungingToken = CompilationAndWeavingContext.enteringPhase(
-        CompilationAndWeavingContext.PROCESSING_TYPE_MUNGERS, "");
-    requestor.addingTypeMungers();
-
-    // We process type mungers in two groups, first mungers that change the
-    // type
-    // hierarchy, then 'normal' ITD type mungers.
-
-    // Process the types in a predictable order (rather than the order
-    // encountered).
-    // For class A, the order is superclasses of A then superinterfaces of A
-    // (and this mechanism is applied recursively)
-    final List<String> typesToProcess = new ArrayList<String>();
-    for (final Iterator<UnwovenClassFile> iter = input.getClassFileIterator(); iter.hasNext(); ) {
-      final UnwovenClassFile clf = iter.next();
-      typesToProcess.add(clf.getClassName());
-    }
-    while (typesToProcess.size() > 0) {
-      weaveParentsFor(typesToProcess, typesToProcess.get(0), null);
-    }
-
-    for (final Iterator<UnwovenClassFile> i = input.getClassFileIterator(); i.hasNext(); ) {
-      final UnwovenClassFile classFile = i.next();
-      final String className = classFile.getClassName();
-      addNormalTypeMungers(className);
-    }
-
-    CompilationAndWeavingContext.leavingPhase(typeMungingToken);
-
-    requestor.weavingAspects();
-    final ContextToken aspectToken = CompilationAndWeavingContext.enteringPhase(CompilationAndWeavingContext.WEAVING_ASPECTS, "");
-    // first weave into aspects
-    for (final Iterator<UnwovenClassFile> i = input.getClassFileIterator(); i.hasNext(); ) {
-      final UnwovenClassFile classFile = i.next();
-      final String className = classFile.getClassName();
-      final ResolvedType theType = world.resolve(className);
-      if (theType.isAspect()) {
-        final BcelObjectType classType = BcelWorld.getBcelObjectType(theType);
-        if (classType == null) {
-
-          // Sometimes.. if the Bcel Delegate couldn't be found then a
-          // problem occurred at compile time - on
-          // a previous compiler run. In this case I assert the
-          // delegate will still be an EclipseSourceType
-          // and we can ignore the problem here (the original compile
-          // error will be reported again from
-          // the eclipse source type) - pr113531
-          final ReferenceTypeDelegate theDelegate = ((ReferenceType) theType).getDelegate();
-          if (theDelegate.getClass().getName().endsWith("EclipseSourceType")) {
-            continue;
-          }
-
-          throw new BCException("Can't find bcel delegate for " + className + " type=" + theType.getClass());
-        }
-        weaveAndNotify(classFile, classType, requestor);
-        wovenClassNames.add(className);
-      }
-    }
-
-    CompilationAndWeavingContext.leavingPhase(aspectToken);
-
-    requestor.weavingClasses();
-    final ContextToken classToken = CompilationAndWeavingContext.enteringPhase(CompilationAndWeavingContext.WEAVING_CLASSES, "");
-    // then weave into non-aspects
-    for (final Iterator<UnwovenClassFile> i = input.getClassFileIterator(); i.hasNext(); ) {
-      final UnwovenClassFile classFile = i.next();
-      final String className = classFile.getClassName();
-      final ResolvedType theType = world.resolve(className);
-      if (!theType.isAspect()) {
-        final BcelObjectType classType = BcelWorld.getBcelObjectType(theType);
-        if (classType == null) {
-
-          // bug 119882 - see above comment for bug 113531
-          final ReferenceTypeDelegate theDelegate = ((ReferenceType) theType).getDelegate();
-
-          // TODO urgh - put a method on the interface to check this,
-          // string compare is hideous
-          if (theDelegate.getClass().getName().endsWith("EclipseSourceType")) {
-            continue;
-          }
-
-          throw new BCException("Can't find bcel delegate for " + className + " type=" + theType.getClass());
-        }
-        weaveAndNotify(classFile, classType, requestor);
-        wovenClassNames.add(className);
-      }
-    }
-    CompilationAndWeavingContext.leavingPhase(classToken);
-
-    addedClasses.clear();
-    deletedTypenames.clear();
-
-    requestor.weaveCompleted();
-    CompilationAndWeavingContext.leavingPhase(weaveToken);
-    if (trace.isTraceEnabled()) {
-      trace.exit("weave", wovenClassNames);
-    }
-    if (world.getModel() != null && world.isMinimalModel()) {
-      candidatesForRemoval.clear();
-    }
-    return wovenClassNames;
-  }
-
-  public void allWeavingComplete() {
-    warnOnUnmatchedAdvice();
   }
 
   /**
@@ -1324,71 +1515,6 @@ public class BcelWeaver {
     resolvedTypeToWeave.tagAsTypeHierarchyComplete();
   }
 
-  public void prepareToProcessReweavableState() {
-  }
-
-  public void processReweavableStateIfPresent(String className, BcelObjectType classType) {
-    // If the class is marked reweavable, check any aspects around when it
-    // was built are in this world
-    final WeaverStateInfo wsi = classType.getWeaverState();
-    // System.out.println(">> processReweavableStateIfPresent " + className + " wsi=" + wsi);
-    if (wsi != null && wsi.isReweavable()) { // Check all necessary types
-      // are around!
-      world.showMessage(IMessage.INFO, WeaverMessages.format(WeaverMessages.PROCESSING_REWEAVABLE, className, classType
-          .getSourceLocation().getSourceFile()), null, null);
-      final Set<String> aspectsPreviouslyInWorld = wsi.getAspectsAffectingType();
-      // keep track of them just to ensure unique missing aspect error
-      // reporting
-      final Set<String> alreadyConfirmedReweavableState = new HashSet<String>();
-      for (String requiredTypeSignature : aspectsPreviouslyInWorld) {
-        // for (Iterator iter = aspectsPreviouslyInWorld.iterator(); iter.hasNext();) {
-        // String requiredTypeName = (String) iter.next();
-        if (!alreadyConfirmedReweavableState.contains(requiredTypeSignature)) {
-          final ResolvedType rtx = world.resolve(UnresolvedType.forSignature(requiredTypeSignature), true);
-          final boolean exists = !rtx.isMissing();
-          if (!exists) {
-            world.getLint().missingAspectForReweaving.signal(new String[]{rtx.getName(), className},
-                classType.getSourceLocation(), null);
-            // world.showMessage(IMessage.ERROR, WeaverMessages.format(WeaverMessages.MISSING_REWEAVABLE_TYPE,
-            // requiredTypeName, className), classType.getSourceLocation(), null);
-          } else {
-            if (world.isOverWeaving()) {
-              // System.out.println(">> Removing " + requiredTypeName + " from weaving process: "
-              // + xcutSet.deleteAspect(rtx));
-            } else {
-              // weaved in aspect that are not declared in aop.xml
-              // trigger an error for now
-              // may cause headhache for LTW and packaged lib
-              // without aop.xml in
-              // see #104218
-              if (!xcutSet.containsAspect(rtx)) {
-                world.showMessage(IMessage.ERROR, WeaverMessages.format(
-                    WeaverMessages.REWEAVABLE_ASPECT_NOT_REGISTERED, rtx.getName(), className), null, null);
-              } else if (!world.getMessageHandler().isIgnoring(IMessage.INFO)) {
-                world.showMessage(IMessage.INFO, WeaverMessages.format(WeaverMessages.VERIFIED_REWEAVABLE_TYPE,
-                    rtx.getName(), rtx.getSourceLocation().getSourceFile()), null, null);
-              }
-            }
-            alreadyConfirmedReweavableState.add(requiredTypeSignature);
-          }
-        }
-      }
-      // old:
-      // classType.setJavaClass(Utility.makeJavaClass(classType.getJavaClass
-      // ().getFileName(), wsi.getUnwovenClassFileData()));
-      // new: reweavable default with clever diff
-      if (!world.isOverWeaving()) {
-        final byte[] bytes = wsi.getUnwovenClassFileData(classType.getJavaClass().getBytes());
-        final WeaverVersionInfo wvi = classType.getWeaverVersionAttribute();
-        final JavaClass newJavaClass = Utility.makeJavaClass(classType.getJavaClass().getFileName(), bytes);
-        classType.setJavaClass(newJavaClass, true);
-        classType.getResolvedTypeX().ensureConsistent();
-      }
-      // } else {
-      // classType.resetState();
-    }
-  }
-
   private void weaveAndNotify(UnwovenClassFile classFile, BcelObjectType classType, IWeaveRequestor requestor) throws IOException {
     trace.enter("weaveAndNotify", this, new Object[]{classFile, classType, requestor});
 
@@ -1416,93 +1542,6 @@ public class BcelWeaver {
     CompilationAndWeavingContext.leavingPhase(tok);
 
     trace.exit("weaveAndNotify");
-  }
-
-  /**
-   * helper method - will return NULL if the underlying delegate is an EclipseSourceType and not a BcelObjectType
-   */
-  public BcelObjectType getClassType(String forClass) {
-    return BcelWorld.getBcelObjectType(world.resolve(forClass));
-  }
-
-  public void addParentTypeMungers(String typeName) {
-    weaveParentTypeMungers(world.resolve(typeName));
-  }
-
-  public void addNormalTypeMungers(String typeName) {
-    weaveNormalTypeMungers(world.resolve(typeName));
-  }
-
-  public UnwovenClassFile[] getClassFilesFor(LazyClassGen clazz) {
-    final List<UnwovenClassFile.ChildClass> childClasses = clazz.getChildClasses(world);
-    final UnwovenClassFile[] ret = new UnwovenClassFile[1 + childClasses.size()];
-    ret[0] = new UnwovenClassFile(clazz.getFileName(), clazz.getClassName(), clazz.getJavaClassBytesIncludingReweavable(world));
-    int index = 1;
-    for (final Iterator<UnwovenClassFile.ChildClass> iter = childClasses.iterator(); iter.hasNext(); ) {
-      final UnwovenClassFile.ChildClass element = iter.next();
-      final UnwovenClassFile childClass = new UnwovenClassFile(clazz.getFileName() + "$" + element.name, element.bytes);
-      ret[index++] = childClass;
-    }
-    return ret;
-  }
-
-  /**
-   * Weaves new parents and annotations onto a type ("declare parents" and "declare @type")
-   * <p/>
-   * Algorithm: 1. First pass, do parents then do annotations. During this pass record: - any parent mungers that don't match but
-   * have a non-wild annotation type pattern - any annotation mungers that don't match 2. Multiple subsequent passes which go over
-   * the munger lists constructed in the first pass, repeatedly applying them until nothing changes. FIXME asc confirm that
-   * algorithm is optimal ??
-   */
-  public void weaveParentTypeMungers(ResolvedType onType) {
-    if (onType.isRawType() || onType.isParameterizedType()) {
-      onType = onType.getGenericType();
-    }
-    onType.clearInterTypeMungers();
-
-    List<DeclareParents> decpToRepeat = new ArrayList<DeclareParents>();
-
-    boolean aParentChangeOccurred = false;
-    boolean anAnnotationChangeOccurred = false;
-    // First pass - apply all decp mungers
-    for (DeclareParents decp : declareParentsList) {
-      final boolean typeChanged = applyDeclareParents(decp, onType);
-      if (typeChanged) {
-        aParentChangeOccurred = true;
-      } else {
-        decpToRepeat.add(decp);
-      }
-    }
-
-    // Still first pass - apply all dec @type mungers
-    for (DeclareAnnotation decA : xcutSet.getDeclareAnnotationOnTypes()) {
-      final boolean typeChanged = applyDeclareAtType(decA, onType, true);
-      if (typeChanged) {
-        anAnnotationChangeOccurred = true;
-      }
-    }
-
-    while ((aParentChangeOccurred || anAnnotationChangeOccurred) && !decpToRepeat.isEmpty()) {
-      anAnnotationChangeOccurred = aParentChangeOccurred = false;
-      final List<DeclareParents> decpToRepeatNextTime = new ArrayList<DeclareParents>();
-      for (final Iterator<DeclareParents> iter = decpToRepeat.iterator(); iter.hasNext(); ) {
-        final DeclareParents decp = iter.next();
-        final boolean typeChanged = applyDeclareParents(decp, onType);
-        if (typeChanged) {
-          aParentChangeOccurred = true;
-        } else {
-          decpToRepeatNextTime.add(decp);
-        }
-      }
-
-      for (DeclareAnnotation decA : xcutSet.getDeclareAnnotationOnTypes()) {
-        final boolean typeChanged = applyDeclareAtType(decA, onType, false);
-        if (typeChanged) {
-          anAnnotationChangeOccurred = true;
-        }
-      }
-      decpToRepeat = decpToRepeatNextTime;
-    }
   }
 
   /**
@@ -1613,33 +1652,8 @@ public class BcelWeaver {
     return didSomething;
   }
 
-  public void weaveNormalTypeMungers(ResolvedType onType) {
-    final ContextToken tok = CompilationAndWeavingContext.enteringPhase(CompilationAndWeavingContext.PROCESSING_TYPE_MUNGERS,
-        onType.getName());
-    if (onType.isRawType() || onType.isParameterizedType()) {
-      onType = onType.getGenericType();
-    }
-    for (ConcreteTypeMunger m : typeMungerList) {
-      if (!m.isLateMunger() && m.matches(onType)) {
-        onType.addInterTypeMunger(m, false);
-      }
-    }
-    CompilationAndWeavingContext.leavingPhase(tok);
-  }
-
-  // exposed for ClassLoader dynamic weaving
-  public LazyClassGen weaveWithoutDump(UnwovenClassFile classFile, BcelObjectType classType) throws IOException {
-    return weave(classFile, classType, false);
-  }
-
-  // FOR TESTING
-  LazyClassGen weave(UnwovenClassFile classFile, BcelObjectType classType) throws IOException {
-    final LazyClassGen ret = weave(classFile, classType, true);
-    return ret;
-  }
-
+  @Nullable
   private LazyClassGen weave(UnwovenClassFile classFile, BcelObjectType classType, boolean dump) throws IOException {
-
     try {
       if (classType.isSynthetic()) { // Don't touch synthetic classes
         if (dump) {
@@ -1654,7 +1668,6 @@ public class BcelWeaver {
           world.getMessageHandler().handleMessage(
               MessageUtil.info("Type '" + resolvedClassType.getName()
                   + "' not woven due to exclusion via XML weaver exclude section"));
-
         }
         if (dump) {
           dumpUnchanged(classFile);
@@ -1766,7 +1779,6 @@ public class BcelWeaver {
 
               walkUpRemovingEmptyTypesAndPossiblyEmptySourceFile(hierarchy, tname, parent);
             }
-
           }
         }
       }
@@ -1979,40 +1991,5 @@ public class BcelWeaver {
       }
     }
     return result;
-  }
-
-  public void setReweavableMode(boolean xNotReweavable) {
-    inReweavableMode = !xNotReweavable;
-    WeaverStateInfo.setReweavableModeDefaults(!xNotReweavable, false, true);
-  }
-
-  public boolean isReweavable() {
-    return inReweavableMode;
-  }
-
-  public World getWorld() {
-    return world;
-  }
-
-  public void tidyUp() {
-    if (trace.isTraceEnabled()) {
-      trace.enter("tidyUp", this);
-    }
-    shadowMungerList = null; // setup by prepareForWeave
-    typeMungerList = null; // setup by prepareForWeave
-    lateTypeMungerList = null; // setup by prepareForWeave
-    declareParentsList = null; // setup by prepareForWeave
-    if (trace.isTraceEnabled()) {
-      trace.exit("tidyUp");
-    }
-  }
-
-  public void write(CompressingDataOutputStream dos) throws IOException {
-    xcutSet.write(dos);
-  }
-
-  // only called for testing
-  public void setShadowMungers(List<ShadowMunger> shadowMungers) {
-    shadowMungerList = shadowMungers;
   }
 }

@@ -15,6 +15,7 @@ import org.aspectj.util.FuzzyBoolean;
 import org.aspectj.weaver.CompressingDataOutputStream;
 import org.aspectj.weaver.ResolvedType;
 import org.aspectj.weaver.World;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Map;
@@ -57,7 +58,7 @@ public class NoTypePattern extends TypePattern {
   }
 
   @Override
-  public void write(CompressingDataOutputStream s) throws IOException {
+  public void write(@NotNull CompressingDataOutputStream s) throws IOException {
     s.writeByte(NO_KEY);
   }
 

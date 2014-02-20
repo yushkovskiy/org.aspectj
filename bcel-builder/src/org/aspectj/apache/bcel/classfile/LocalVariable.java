@@ -121,6 +121,7 @@ public final class LocalVariable implements Constants, Cloneable, Node {
    *
    * @param v Visitor object
    */
+  @Override
   public void accept(ClassVisitor v) {
     v.visitLocalVariable(this);
   }

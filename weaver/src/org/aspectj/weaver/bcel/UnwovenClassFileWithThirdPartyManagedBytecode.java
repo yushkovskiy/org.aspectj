@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -18,19 +18,20 @@ package org.aspectj.weaver.bcel;
  */
 public class UnwovenClassFileWithThirdPartyManagedBytecode extends UnwovenClassFile {
 
-	IByteCodeProvider provider;
+  IByteCodeProvider provider;
 
-	public interface IByteCodeProvider {
-		byte[] getBytes();
-	}
+  public interface IByteCodeProvider {
+    byte[] getBytes();
+  }
 
-	// OPTIMIZE make classname an input char[]
-	public UnwovenClassFileWithThirdPartyManagedBytecode(String filename, String classname, IByteCodeProvider provider) {
-		super(filename, classname, null);
-		this.provider = provider;
-	}
+  // OPTIMIZE make classname an input char[]
+  public UnwovenClassFileWithThirdPartyManagedBytecode(String filename, String classname, IByteCodeProvider provider) {
+    super(filename, classname, null);
+    this.provider = provider;
+  }
 
-	public byte[] getBytes() {
-		return provider.getBytes();
-	}
+  @Override
+  public byte[] getBytes() {
+    return provider.getBytes();
+  }
 }

@@ -22,10 +22,12 @@ import org.aspectj.apache.bcel.classfile.annotation.TypeAnnotationGen;
 
 public class TypeAnnotationsTest extends BcelTestCase {
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
   }
 
+  @Override
   public Attribute getAttribute(Attribute[] attrs, byte tag) {
     for (Attribute attr : attrs) {
       if (attr.getTag() == tag) {
@@ -235,7 +237,7 @@ public class TypeAnnotationsTest extends BcelTestCase {
     return rvta.getTypeAnnotations();
   }
 
-  private void checkTypePath(TypeAnnotationGen ta, int[] expectedTypePath) {
+  private static void checkTypePath(TypeAnnotationGen ta, int[] expectedTypePath) {
     final int[] typepath = ta.getTypePath();
     if (expectedTypePath == TypeAnnotationGen.NO_TYPE_PATH || expectedTypePath == null) {
       if (typepath != TypeAnnotationGen.NO_TYPE_PATH) {
@@ -251,7 +253,7 @@ public class TypeAnnotationsTest extends BcelTestCase {
     }
   }
 
-  private void checkLocalVarTarget(TypeAnnotationGen ta, int[] expectedLocalVarTarget) {
+  private static void checkLocalVarTarget(TypeAnnotationGen ta, int[] expectedLocalVarTarget) {
     final int[] localVarTarget = ta.getLocalVarTarget();
     assertEquals(expectedLocalVarTarget.length, localVarTarget.length);
     for (int i = 0; i < expectedLocalVarTarget.length; i++) {
@@ -282,90 +284,90 @@ public class TypeAnnotationsTest extends BcelTestCase {
     assertEquals(expectedAnnotationText, ta.getAnnotation().toShortString());
   }
 
-  private void checkTypeAnnotationExceptionParameter(TypeAnnotationGen ta, int expectedExceptionTableIndex, String expectedAnnotationText) {
+  private static void checkTypeAnnotationExceptionParameter(TypeAnnotationGen ta, int expectedExceptionTableIndex, String expectedAnnotationText) {
     assertEquals(TypeAnnotationGen.EXCEPTION_PARAMETER, ta.getTargetType());
     assertEquals(expectedExceptionTableIndex, ta.getExceptionTableIndex());
     assertEquals(expectedAnnotationText, ta.getAnnotation().toShortString());
   }
 
-  private void checkTypeAnnotationInstanceOf(TypeAnnotationGen ta, int expectedOffset, String expectedAnnotationText) {
+  private static void checkTypeAnnotationInstanceOf(TypeAnnotationGen ta, int expectedOffset, String expectedAnnotationText) {
     assertEquals(TypeAnnotationGen.INSTANCEOF, ta.getTargetType());
     assertEquals(expectedOffset, ta.getOffset());
     assertEquals(expectedAnnotationText, ta.getAnnotation().toShortString());
   }
 
-  private void checkTypeAnnotationNew(TypeAnnotationGen ta, int expectedOffset, String expectedAnnotationText) {
+  private static void checkTypeAnnotationNew(TypeAnnotationGen ta, int expectedOffset, String expectedAnnotationText) {
     assertEquals(TypeAnnotationGen.NEW, ta.getTargetType());
     assertEquals(expectedOffset, ta.getOffset());
     assertEquals(expectedAnnotationText, ta.getAnnotation().toShortString());
   }
 
-  private void checkTypeAnnotationConstructorReference(TypeAnnotationGen ta, int expectedOffset, String expectedAnnotationText) {
+  private static void checkTypeAnnotationConstructorReference(TypeAnnotationGen ta, int expectedOffset, String expectedAnnotationText) {
     assertEquals(TypeAnnotationGen.CONSTRUCTOR_REFERENCE, ta.getTargetType());
     assertEquals(expectedOffset, ta.getOffset());
     assertEquals(expectedAnnotationText, ta.getAnnotation().toShortString());
   }
 
-  private void checkTypeAnnotationMethodReference(TypeAnnotationGen ta, int expectedOffset, String expectedAnnotationText) {
+  private static void checkTypeAnnotationMethodReference(TypeAnnotationGen ta, int expectedOffset, String expectedAnnotationText) {
     assertEquals(TypeAnnotationGen.METHOD_REFERENCE, ta.getTargetType());
     assertEquals(expectedOffset, ta.getOffset());
     assertEquals(expectedAnnotationText, ta.getAnnotation().toShortString());
   }
 
-  private void checkTypeAnnotationField(TypeAnnotationGen ta, String expectedAnnotationText) {
+  private static void checkTypeAnnotationField(TypeAnnotationGen ta, String expectedAnnotationText) {
     assertEquals(TypeAnnotationGen.FIELD, ta.getTargetType());
     assertEquals(expectedAnnotationText, ta.getAnnotation().toShortString());
   }
 
-  private void checkTypeAnnotationMethodReturn(TypeAnnotationGen ta, String expectedAnnotationText) {
+  private static void checkTypeAnnotationMethodReturn(TypeAnnotationGen ta, String expectedAnnotationText) {
     assertEquals(TypeAnnotationGen.METHOD_RETURN, ta.getTargetType());
     assertEquals(expectedAnnotationText, ta.getAnnotation().toShortString());
   }
 
-  private void checkTypeAnnotationMethodFormalParameter(TypeAnnotationGen ta, int expectedFormalParameterIndex, String expectedAnnotationText) {
+  private static void checkTypeAnnotationMethodFormalParameter(TypeAnnotationGen ta, int expectedFormalParameterIndex, String expectedAnnotationText) {
     assertEquals(TypeAnnotationGen.METHOD_FORMAL_PARAMETER, ta.getTargetType());
     assertEquals(expectedFormalParameterIndex, ta.getMethodFormalParameterIndex());
     assertEquals(expectedAnnotationText, ta.getAnnotation().toShortString());
   }
 
-  private void checkTypeAnnotationThrows(TypeAnnotationGen ta, int expectedThrowsTypeIndex, String expectedAnnotationText) {
+  private static void checkTypeAnnotationThrows(TypeAnnotationGen ta, int expectedThrowsTypeIndex, String expectedAnnotationText) {
     assertEquals(TypeAnnotationGen.THROWS, ta.getTargetType());
     assertEquals(expectedThrowsTypeIndex, ta.getThrowsTypeIndex());
     assertEquals(expectedAnnotationText, ta.getAnnotation().toShortString());
   }
 
-  private void checkTypeAnnotationMethodReceiver(TypeAnnotationGen ta, String expectedAnnotationText) {
+  private static void checkTypeAnnotationMethodReceiver(TypeAnnotationGen ta, String expectedAnnotationText) {
     assertEquals(TypeAnnotationGen.METHOD_RECEIVER, ta.getTargetType());
     assertEquals(expectedAnnotationText, ta.getAnnotation().toShortString());
   }
 
-  private void checkTypeAnnotationClassExtends(TypeAnnotationGen ta, int expectedSupertypeIndex, String expectedAnnotationText) {
+  private static void checkTypeAnnotationClassExtends(TypeAnnotationGen ta, int expectedSupertypeIndex, String expectedAnnotationText) {
     assertEquals(TypeAnnotationGen.CLASS_EXTENDS, ta.getTargetType());
     assertEquals(expectedSupertypeIndex, ta.getSupertypeIndex());
     assertEquals(expectedAnnotationText, ta.getAnnotation().toShortString());
   }
 
-  private void checkTypeAnnotationClassTypeParameter(TypeAnnotationGen ta, int expectedTypeParameterIndex, String expectedAnnotationText) {
+  private static void checkTypeAnnotationClassTypeParameter(TypeAnnotationGen ta, int expectedTypeParameterIndex, String expectedAnnotationText) {
     assertEquals(TypeAnnotationGen.CLASS_TYPE_PARAMETER, ta.getTargetType());
     assertEquals(expectedTypeParameterIndex, ta.getTypeParameterIndex());
     assertEquals(expectedAnnotationText, ta.getAnnotation().toShortString());
   }
 
-  private void checkTypeAnnotationClassTypeParameterBound(TypeAnnotationGen ta, int expectedTypeParameterIndex, int expectedBoundIndex, String expectedAnnotationText) {
+  private static void checkTypeAnnotationClassTypeParameterBound(TypeAnnotationGen ta, int expectedTypeParameterIndex, int expectedBoundIndex, String expectedAnnotationText) {
     assertEquals(TypeAnnotationGen.CLASS_TYPE_PARAMETER_BOUND, ta.getTargetType());
     assertEquals(expectedTypeParameterIndex, ta.getTypeParameterIndex());
     assertEquals(expectedBoundIndex, ta.getBoundIndex());
     assertEquals(expectedAnnotationText, ta.getAnnotation().toShortString());
   }
 
-  private void checkTypeAnnotationMethodTypeParameterBound(TypeAnnotationGen ta, int expectedTypeParameterIndex, int expectedBoundIndex, String expectedAnnotationText) {
+  private static void checkTypeAnnotationMethodTypeParameterBound(TypeAnnotationGen ta, int expectedTypeParameterIndex, int expectedBoundIndex, String expectedAnnotationText) {
     assertEquals(TypeAnnotationGen.METHOD_TYPE_PARAMETER_BOUND, ta.getTargetType());
     assertEquals(expectedTypeParameterIndex, ta.getTypeParameterIndex());
     assertEquals(expectedBoundIndex, ta.getBoundIndex());
     assertEquals(expectedAnnotationText, ta.getAnnotation().toShortString());
   }
 
-  private void checkTypeAnnotationMethodTypeParameter(TypeAnnotationGen ta, int expectedTypeParameterIndex, String expectedAnnotationText) {
+  private static void checkTypeAnnotationMethodTypeParameter(TypeAnnotationGen ta, int expectedTypeParameterIndex, String expectedAnnotationText) {
     assertEquals(TypeAnnotationGen.METHOD_TYPE_PARAMETER, ta.getTargetType());
     assertEquals(expectedTypeParameterIndex, ta.getTypeParameterIndex());
     assertEquals(expectedAnnotationText, ta.getAnnotation().toShortString());

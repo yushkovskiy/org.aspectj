@@ -25,8 +25,8 @@ import java.util.Iterator;
 import java.util.Map;
 
 public class PrivilegedHandler implements IPrivilegedHandler {
-  private AspectDeclaration inAspect;
-  private Map accessors = new HashMap();
+  private final AspectDeclaration inAspect;
+  private final Map accessors = new HashMap();
 
   public PrivilegedHandler(AspectDeclaration inAspect) {
     this.inAspect = inAspect;

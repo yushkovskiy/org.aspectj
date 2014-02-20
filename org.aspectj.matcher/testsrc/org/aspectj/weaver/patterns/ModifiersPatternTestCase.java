@@ -57,7 +57,7 @@ public class ModifiersPatternTestCase extends PatternsTestCase {
     checkMatch("private !static !strictfp", none, publicStaticMatches);
   }
 
-  private ModifiersPattern makeModifiersPattern(String pattern) {
+  private static ModifiersPattern makeModifiersPattern(String pattern) {
     return new PatternParser(pattern).parseModifiersPattern();
   }
 
@@ -67,7 +67,7 @@ public class ModifiersPatternTestCase extends PatternsTestCase {
     checkMatch(p, shouldFail, false);
   }
 
-  private void checkMatch(ModifiersPattern p, int[] matches, boolean shouldMatch) {
+  private static void checkMatch(ModifiersPattern p, int[] matches, boolean shouldMatch) {
     for (int i = 0; i < matches.length; i++) {
       final boolean result = p.matches(matches[i]);
       final String msg = "matches " + p + " to " + Modifier.toString(matches[i]) + " expected ";

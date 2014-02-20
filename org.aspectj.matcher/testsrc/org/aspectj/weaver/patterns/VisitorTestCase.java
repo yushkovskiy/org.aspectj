@@ -42,7 +42,7 @@ public class VisitorTestCase extends TestCase {
     rt.close();
   }
 
-  private void feed(LineNumberReader r, Set set) throws Exception {
+  private static void feed(LineNumberReader r, Set set) throws Exception {
     for (String line = r.readLine(); line != null; line = r.readLine()) {
       set.add(line);
     }

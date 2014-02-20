@@ -25,6 +25,8 @@ import org.aspectj.org.eclipse.jdt.internal.compiler.codegen.Opcodes;
 import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.*;
 import org.aspectj.org.eclipse.jdt.internal.compiler.parser.Parser;
 import org.aspectj.weaver.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Modifier;
 
@@ -36,13 +38,13 @@ import java.lang.reflect.Modifier;
  *
  * @author Jim Hugunin
  */
-public class InterTypeFieldDeclaration extends InterTypeDeclaration {
+public final class InterTypeFieldDeclaration extends InterTypeDeclaration {
   public Expression initialization;
   private TypeBinding realFieldType;
 
   // public InterTypeFieldBinding interBinding;
 
-  public InterTypeFieldDeclaration(CompilationResult result, TypeReference onType) {
+  public InterTypeFieldDeclaration(@NotNull CompilationResult result, TypeReference onType) {
     super(result, onType);
   }
 
@@ -56,12 +58,7 @@ public class InterTypeFieldDeclaration extends InterTypeDeclaration {
   }
 
   @Override
-  protected char[] getPrefix() {
-    return (NameMangler.ITD_PREFIX + "interField$").toCharArray();
-  }
-
-  @Override
-  public void resolveOnType(ClassScope classScope) {
+  public void resolveOnType(@NotNull ClassScope classScope) {
     super.resolveOnType(classScope);
     if (ignoreFurtherInvestigation) {
       return;
@@ -75,11 +72,10 @@ public class InterTypeFieldDeclaration extends InterTypeDeclaration {
       scope.problemReporter().signalError(sourceStart, sourceEnd,
           "static intertype field declarations cannot refer to type variables from the target generic type");
     }
-
   }
 
   @Override
-  public void resolve(ClassScope upperScope) {
+  public void resolve(@NotNull ClassScope upperScope) {
     if (munger == null) {
       ignoreFurtherInvestigation = true;
     }
@@ -215,7 +211,8 @@ public class InterTypeFieldDeclaration extends InterTypeDeclaration {
    * }
    */
   @Override
-  public EclipseTypeMunger build(ClassScope classScope) {
+  @Nullable
+  public EclipseTypeMunger build(@NotNull ClassScope classScope) {
     final EclipseFactory world = EclipseFactory.fromScopeLookupEnvironment(classScope);
     resolveOnType(classScope);
 
@@ -273,12 +270,8 @@ public class InterTypeFieldDeclaration extends InterTypeDeclaration {
     return new EclipseTypeMunger(world, myMunger, aspectType, this);
   }
 
-  private AjAttribute makeAttribute() {
-    return new AjAttribute.TypeMunger(munger);
-  }
-
   @Override
-  public void generateCode(ClassScope classScope, ClassFile classFile) {
+  public void generateCode(@NotNull ClassScope classScope, @NotNull ClassFile classFile) {
     if (ignoreFurtherInvestigation) {
       return;
     }
@@ -290,7 +283,24 @@ public class InterTypeFieldDeclaration extends InterTypeDeclaration {
     // interBinding.writer.generateMethod(this, classScope, classFile);
   }
 
-  private void generateDispatchMethods(ClassScope classScope, ClassFile classFile) {
+  @Override
+  @NotNull
+  protected char[] getPrefix() {
+    return (NameMangler.ITD_PREFIX + "interField$").toCharArray();
+  }
+
+  @Override
+  @Nullable
+  protected Shadow.Kind getShadowKindForBody() {
+    return null;
+  }
+
+  @NotNull
+  private AjAttribute makeAttribute() {
+    return new AjAttribute.TypeMunger(munger);
+  }
+
+  private void generateDispatchMethods(@NotNull ClassScope classScope, @NotNull ClassFile classFile) {
     final EclipseFactory world = EclipseFactory.fromScopeLookupEnvironment(classScope);
     final ResolvedMember sig = munger.getSignature();
     final UnresolvedType aspectType = world.fromBinding(classScope.referenceContext.binding);
@@ -298,8 +308,8 @@ public class InterTypeFieldDeclaration extends InterTypeDeclaration {
     generateDispatchMethod(world, sig, aspectType, classScope, classFile, false);
   }
 
-  private void generateDispatchMethod(EclipseFactory world, ResolvedMember sig, UnresolvedType aspectType, ClassScope classScope,
-                                      ClassFile classFile, boolean isGetter) {
+  private void generateDispatchMethod(@NotNull EclipseFactory world, ResolvedMember sig, UnresolvedType aspectType, ClassScope classScope,
+                                      @NotNull ClassFile classFile, boolean isGetter) {
     final MethodBinding binding;
     if (isGetter) {
       binding = world.makeMethodBinding(AjcMemberMaker.interFieldGetDispatcher(sig, aspectType),
@@ -366,20 +376,19 @@ public class InterTypeFieldDeclaration extends InterTypeDeclaration {
     classFile.completeMethodInfo(binding, methodAttributeOffset, attributeNumber);
   }
 
-  private static void generateInterfaceReadBody(MethodBinding binding, MethodBinding readMethod, CodeStream codeStream) {
+  private static void generateInterfaceReadBody(@NotNull MethodBinding binding, @NotNull MethodBinding readMethod, @NotNull CodeStream codeStream) {
     codeStream.aload_0();
     codeStream.invoke(Opcodes.OPC_invokeinterface, readMethod, null);
   }
 
-  private static void generateInterfaceWriteBody(MethodBinding binding, MethodBinding writeMethod, CodeStream codeStream) {
+  private static void generateInterfaceWriteBody(@NotNull MethodBinding binding, @NotNull MethodBinding writeMethod, @NotNull CodeStream codeStream) {
     codeStream.aload_0();
     codeStream.load(writeMethod.parameters[0], 1);
     codeStream.invoke(Opcodes.OPC_invokeinterface, writeMethod, null);
   }
 
-  private static void generateClassReadBody(MethodBinding binding, FieldBinding field, CodeStream codeStream) {
+  private static void generateClassReadBody(@NotNull MethodBinding binding, @NotNull FieldBinding field, @NotNull CodeStream codeStream) {
     if (field.isPrivate() || !field.canBeSeenBy(binding.declaringClass.fPackage)) {
-
       PrivilegedHandler handler = (PrivilegedHandler) Scope.findPrivilegedHandler(binding.declaringClass);
       if (handler == null) {
         // one is now required!
@@ -408,7 +417,7 @@ public class InterTypeFieldDeclaration extends InterTypeDeclaration {
     }
   }
 
-  private static void generateClassWriteBody(MethodBinding binding, FieldBinding field, CodeStream codeStream) {
+  private static void generateClassWriteBody(@NotNull MethodBinding binding, @NotNull FieldBinding field, @NotNull CodeStream codeStream) {
     if (field.isPrivate() || !field.canBeSeenBy(binding.declaringClass.fPackage)) {
       final PrivilegedFieldBinding fBinding = (PrivilegedFieldBinding) Scope.findPrivilegedHandler(binding.declaringClass)
           .getPrivilegedAccessField(field, null);
@@ -430,11 +439,6 @@ public class InterTypeFieldDeclaration extends InterTypeDeclaration {
       codeStream.load(field.type, 1);
       codeStream.fieldAccess(Opcodes.OPC_putfield, field, null);
     }
-  }
-
-  @Override
-  protected Shadow.Kind getShadowKindForBody() {
-    return null;
   }
 
 }

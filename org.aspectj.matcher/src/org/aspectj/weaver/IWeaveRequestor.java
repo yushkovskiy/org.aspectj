@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.aspectj.weaver;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author colyer
  *         <p/>
@@ -22,7 +24,7 @@ public interface IWeaveRequestor {
   /*
    * A class file resulting from a weave (yes, even though the type name says "unwoven"...).
    */
-  void acceptResult(IUnwovenClassFile result);
+  void acceptResult(@NotNull IUnwovenClassFile result);
 
   // various notifications to the requestor about our progress...
   void processingReweavableState();

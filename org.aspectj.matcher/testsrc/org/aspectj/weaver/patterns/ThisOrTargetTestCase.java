@@ -137,11 +137,11 @@ public class ThisOrTargetTestCase extends TestCase {
 
   }
 
-  private void checkMatches(ShadowMatch sMatch, Object thisObj, Object targetObj, Object[] args) {
+  private static void checkMatches(ShadowMatch sMatch, Object thisObj, Object targetObj, Object[] args) {
     assertTrue("match expected", sMatch.matchesJoinPoint(thisObj, targetObj, args).matches());
   }
 
-  private void checkNoMatch(ShadowMatch sMatch, Object thisObj, Object targetObj, Object[] args) {
+  private static void checkNoMatch(ShadowMatch sMatch, Object thisObj, Object targetObj, Object[] args) {
     assertFalse("no match expected", sMatch.matchesJoinPoint(thisObj, targetObj, args).matches());
   }
 

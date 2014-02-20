@@ -17,8 +17,9 @@ import org.aspectj.weaver.patterns.SignaturePatternTestCase;
 
 public class BcelSignaturePatternTestCase extends SignaturePatternTestCase {
 
-	public World getWorld() {
-		return new BcelWorld();
-	}
+  @Override
+  public World getWorld() {
+    return new BcelWorld();
+  }
 
 }

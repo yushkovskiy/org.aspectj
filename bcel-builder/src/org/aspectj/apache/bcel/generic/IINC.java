@@ -78,6 +78,7 @@ public class IINC extends InstructionLV {
     return ((lvar > org.aspectj.apache.bcel.Constants.MAX_BYTE) || (Math.abs(c) > Byte.MAX_VALUE));
   }
 
+  @Override
   public void dump(DataOutputStream out) throws IOException {
     if (wide()) {
       out.writeByte(WIDE);
@@ -91,6 +92,7 @@ public class IINC extends InstructionLV {
     }
   }
 
+  @Override
   public int getLength() {
     if (wide()) {
       return 6;
@@ -99,6 +101,7 @@ public class IINC extends InstructionLV {
     }
   }
 
+  @Override
   public String toString(boolean verbose) {
     return super.toString(verbose) + " " + c;
   }

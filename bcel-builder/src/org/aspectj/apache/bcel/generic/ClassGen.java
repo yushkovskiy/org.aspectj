@@ -583,12 +583,14 @@ public class ClassGen extends Modifiers implements Cloneable {
   }
 
   private static class FieldComparator implements Comparator<Field> {
+    @Override
     public int compare(Field f0, Field f1) {
       return f0.getName().compareTo(f1.getName());
     }
   }
 
   private static class ConstructorComparator implements Comparator<Method> {
+    @Override
     public int compare(Method m0, Method m1) {
       // can ignore the name...
       return (m0).getSignature().compareTo(m1.getSignature());
@@ -596,6 +598,7 @@ public class ClassGen extends Modifiers implements Cloneable {
   }
 
   private static class MethodComparator implements Comparator<Method> {
+    @Override
     public int compare(Method m0, Method m1) {
       int result = m0.getName().compareTo(m1.getName());
       if (result == 0) {

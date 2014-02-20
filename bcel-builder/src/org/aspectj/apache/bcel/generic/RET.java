@@ -81,6 +81,7 @@ public class RET extends Instruction {
     // this.wide = index > org.aspectj.apache.bcel.Constants.MAX_BYTE;
   }
 
+  @Override
   public void dump(DataOutputStream out) throws IOException {
     if (wide) {
       out.writeByte(Constants.WIDE);
@@ -93,6 +94,7 @@ public class RET extends Instruction {
     }
   }
 
+  @Override
   public int getLength() {
     if (wide) {
       return 4;
@@ -101,19 +103,23 @@ public class RET extends Instruction {
     }
   }
 
+  @Override
   public final int getIndex() {
     return index;
   }
 
+  @Override
   public final void setIndex(int index) {
     this.index = index;
     this.wide = index > Constants.MAX_BYTE;
   }
 
+  @Override
   public String toString(boolean verbose) {
     return super.toString(verbose) + " " + index;
   }
 
+  @Override
   public Type getType(ConstantPool cp) {
     return ReturnaddressType.NO_TARGET;
   }

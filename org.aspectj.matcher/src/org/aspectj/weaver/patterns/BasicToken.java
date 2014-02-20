@@ -53,7 +53,7 @@ public final class BasicToken implements IToken {
     return end;
   }
 
-  public String getFileName() {
+  public static String getFileName() {
     return "unknown";
   }
 

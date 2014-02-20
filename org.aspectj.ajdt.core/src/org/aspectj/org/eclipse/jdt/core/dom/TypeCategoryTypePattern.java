@@ -13,7 +13,7 @@ import java.util.List;
 
 public class TypeCategoryTypePattern extends TypePattern {
 
-  private int typeCategory;
+  private final int typeCategory;
 
   public static final int CLASS = org.aspectj.weaver.patterns.TypeCategoryTypePattern.CLASS;
   public static final int INTERFACE = org.aspectj.weaver.patterns.TypeCategoryTypePattern.INTERFACE;

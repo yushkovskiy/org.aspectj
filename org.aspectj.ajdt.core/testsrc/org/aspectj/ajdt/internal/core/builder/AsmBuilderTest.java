@@ -25,7 +25,7 @@ import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.BlockScope;
 
 public class AsmBuilderTest extends TestCase {
 
-  private AsmHierarchyBuilder builder = new AsmHierarchyBuilder();
+  private final AsmHierarchyBuilder builder = new AsmHierarchyBuilder();
 
   public static Test suite() {
     final TestSuite suite = new TestSuite(AsmBuilderTest.class.getName());

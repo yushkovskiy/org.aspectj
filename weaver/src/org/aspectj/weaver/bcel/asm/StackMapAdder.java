@@ -79,6 +79,7 @@ public class StackMapAdder {
 
 
     // Implementation of getCommonSuperClass() that avoids Class.forName()
+    @Override
     protected String getCommonSuperClass(final String type1, final String type2) {
 
       ResolvedType resolvedType1 = world.resolve(UnresolvedType.forName(type1.replace('/', '.')));

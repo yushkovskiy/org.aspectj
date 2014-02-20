@@ -16,6 +16,7 @@ import org.aspectj.ajdt.internal.compiler.lookup.*;
 import org.aspectj.org.eclipse.jdt.core.compiler.CharOperation;
 import org.aspectj.org.eclipse.jdt.internal.compiler.ClassFile;
 import org.aspectj.org.eclipse.jdt.internal.compiler.CompilationResult;
+import org.aspectj.org.eclipse.jdt.internal.compiler.IAttribute;
 import org.aspectj.org.eclipse.jdt.internal.compiler.ast.Annotation;
 import org.aspectj.org.eclipse.jdt.internal.compiler.ast.Clinit;
 import org.aspectj.org.eclipse.jdt.internal.compiler.ast.MethodDeclaration;
@@ -46,6 +47,7 @@ public final class AspectDeclaration extends TypeDeclaration {
   // public IAjDeclaration[] ajDeclarations;
 
   // private AjAttribute.Aspect aspectAttribute;
+  @Nullable
   public PerClause perClause;
   public ResolvedMember aspectOfMethod;
   public ResolvedMember ptwGetWithinTypeNameMethod;
@@ -108,7 +110,7 @@ public final class AspectDeclaration extends TypeDeclaration {
           // XXX this only works for aspects that come from source
           methods[i] = new MethodBinding(m, binding) {
             @Override
-            public boolean canBeSeenBy(InvocationSite invocationSite, Scope scope) {
+            public boolean canBeSeenBy(@NotNull InvocationSite invocationSite, @NotNull Scope scope) {
               return false;
             }
           };
@@ -203,7 +205,7 @@ public final class AspectDeclaration extends TypeDeclaration {
   }
 
   @Override
-  public void generateCode(ClassFile enclosingClassFile) {
+  public void generateCode(@Nullable ClassFile enclosingClassFile) {
     if (ignoreFurtherInvestigation) {
       if (binding == null) {
         return;
@@ -262,7 +264,7 @@ public final class AspectDeclaration extends TypeDeclaration {
     return true;
   }
 
-  public void processIntertypeMemberTypes(ClassScope classScope) {
+  public void processIntertypeMemberTypes(@NotNull ClassScope classScope) {
     factory = EclipseFactory.fromScopeLookupEnvironment(scope);
     if (memberTypes != null) {
       for (int i = 0; i < memberTypes.length; i++) {
@@ -277,7 +279,7 @@ public final class AspectDeclaration extends TypeDeclaration {
     }
   }
 
-  public void buildInterTypeAndPerClause(ClassScope classScope) {
+  public void buildInterTypeAndPerClause(@NotNull ClassScope classScope) {
     factory = EclipseFactory.fromScopeLookupEnvironment(scope);
     if (isPrivileged) {
       binding.privilegedHandler = new PrivilegedHandler(this);
@@ -310,7 +312,8 @@ public final class AspectDeclaration extends TypeDeclaration {
   }
 
   @Override
-  public StringBuffer printHeader(int indent, StringBuffer output) {
+  @NotNull
+  public StringBuffer printHeader(int indent, @NotNull StringBuffer output) {
     // since all aspects are made public we want to print the
     // modifiers that were supplied in the original source code
     printModifiers(this.declaredModifiers, output);
@@ -349,7 +352,7 @@ public final class AspectDeclaration extends TypeDeclaration {
 
   @Override
   @SuppressWarnings("unchecked")
-  protected void generateAttributes(ClassFile classFile) {
+  protected void generateAttributes(@NotNull ClassFile classFile) {
     if (!isAbstract()) {
       generatePerSupportMembers(classFile);
     }
@@ -387,6 +390,7 @@ public final class AspectDeclaration extends TypeDeclaration {
     super.generateAttributes(classFile);
   }
 
+  @NotNull
   protected static List<EclipseAttributeAdapter> makeEffectiveSignatureAttribute(ResolvedMember sig, Shadow.Kind kind, boolean weaveBody) {
     final List<EclipseAttributeAdapter> l = new ArrayList<EclipseAttributeAdapter>(1);
     l.add(new EclipseAttributeAdapter(new AjAttribute.EffectiveSignatureAttribute(sig, kind, weaveBody)));
@@ -397,7 +401,7 @@ public final class AspectDeclaration extends TypeDeclaration {
    * A pointcut might have already added the attribute, let's not add it again.
    */
   @SuppressWarnings("unchecked")
-  private static void addVersionAttributeIfNecessary(ClassFile classFile) {
+  private static void addVersionAttributeIfNecessary(@NotNull ClassFile classFile) {
     for (final Iterator iter = classFile.extraAttributes.iterator(); iter.hasNext(); ) {
       final EclipseAttributeAdapter element = (EclipseAttributeAdapter) iter.next();
       if (CharOperation.equals(element.getNameChars(), weaverVersionChars)) {
@@ -407,7 +411,7 @@ public final class AspectDeclaration extends TypeDeclaration {
     classFile.extraAttributes.add(new EclipseAttributeAdapter(new AjAttribute.WeaverVersionInfo()));
   }
 
-  private void generateInlineAccessMembers(ClassFile classFile) {
+  private void generateInlineAccessMembers(@NotNull ClassFile classFile) {
     for (final Iterator<SuperAccessMethodPair> i = superAccessForInline.values().iterator(); i.hasNext(); ) {
       final AccessForInlineVisitor.SuperAccessMethodPair pair = i.next();
       generateSuperAccessMethod(classFile, pair.accessMethod, pair.originalMethod);
@@ -418,7 +422,7 @@ public final class AspectDeclaration extends TypeDeclaration {
     }
   }
 
-  private void generatePerSupportMembers(ClassFile classFile) {
+  private void generatePerSupportMembers(@NotNull ClassFile classFile) {
     if (isAbstract()) {
       return;
     }
@@ -462,12 +466,12 @@ public final class AspectDeclaration extends TypeDeclaration {
     }
   }
 
-  private void generateMethod(ClassFile classFile, ResolvedMember member, BodyGenerator gen) {
+  private void generateMethod(@NotNull ClassFile classFile, @NotNull ResolvedMember member, @NotNull BodyGenerator gen) {
     final EclipseFactory world = EclipseFactory.fromScopeLookupEnvironment(this.scope);
     generateMethod(classFile, world.makeMethodBinding(member), gen);
   }
 
-  private void generateMethod(ClassFile classFile, MethodBinding methodBinding, BodyGenerator gen) {
+  private void generateMethod(@NotNull ClassFile classFile, @NotNull MethodBinding methodBinding, @NotNull BodyGenerator gen) {
     generateMethod(classFile, methodBinding, null, gen);
   }
 
@@ -478,14 +482,15 @@ public final class AspectDeclaration extends TypeDeclaration {
    * methods are able to masquerade as any join point (a field set, field get or method call). The effective signature attribute
    * is 'unwrapped' in BcelClassWeaver.matchInvokeInstruction()
    */
-  private void generateMethod(ClassFile classFile, MethodBinding methodBinding, List additionalAttributes, BodyGenerator gen) {
+  private void generateMethod(@NotNull ClassFile classFile, @NotNull MethodBinding methodBinding,
+                              @Nullable List<? extends IAttribute> additionalAttributes, @NotNull BodyGenerator gen) {
     // EclipseFactory world = EclipseFactory.fromScopeLookupEnvironment(this.scope);
     classFile.generateMethodInfoHeader(methodBinding);
     final int methodAttributeOffset = classFile.contentsOffset;
 
     int attributeNumber;
     if (additionalAttributes != null) { // mini optimization
-      final List attrs = new ArrayList();
+      final List<IAttribute> attrs = new ArrayList<>();
       attrs.addAll(AstUtil.getAjSyntheticAttribute());
       attrs.addAll(additionalAttributes);
       attributeNumber = classFile.generateMethodInfoAttributes(methodBinding, attrs);
@@ -927,7 +932,7 @@ public final class AspectDeclaration extends TypeDeclaration {
         });
   }
 
-  private void generatePerSingletonAspectOfMethod(ClassFile classFile) {
+  private void generatePerSingletonAspectOfMethod(@NotNull ClassFile classFile) {
     final EclipseFactory world = EclipseFactory.fromScopeLookupEnvironment(this.scope);
     generateMethod(classFile, aspectOfMethod, new BodyGenerator() {
       @Override
@@ -1033,7 +1038,7 @@ public final class AspectDeclaration extends TypeDeclaration {
 
   }
 
-  private void generateInlineAccessMethod(ClassFile classFile, final Binding binding, final ResolvedMember member) {
+  private void generateInlineAccessMethod(@NotNull ClassFile classFile, @NotNull final Binding binding, @NotNull final ResolvedMember member) {
     if (binding instanceof InlineAccessFieldBinding) {
       generateInlineAccessors(classFile, (InlineAccessFieldBinding) binding, member);
     } else {
@@ -1041,7 +1046,8 @@ public final class AspectDeclaration extends TypeDeclaration {
     }
   }
 
-  private void generateInlineAccessors(ClassFile classFile, final InlineAccessFieldBinding accessField, final ResolvedMember field) {
+  private void generateInlineAccessors(@NotNull ClassFile classFile, @NotNull final InlineAccessFieldBinding accessField,
+                                       @NotNull final ResolvedMember field) {
     final FieldBinding fieldBinding = factory.makeFieldBinding(field);
 
     generateMethod(classFile, accessField.reader, makeEffectiveSignatureAttribute(field, Shadow.FieldGet, false),
@@ -1082,7 +1088,8 @@ public final class AspectDeclaration extends TypeDeclaration {
 
   }
 
-  private void generateInlineAccessMethod(ClassFile classFile, final MethodBinding accessMethod, final ResolvedMember method) {
+  private void generateInlineAccessMethod(@NotNull ClassFile classFile, @NotNull final MethodBinding accessMethod,
+                                          @NotNull final ResolvedMember method) {
     generateMethod(classFile, accessMethod, makeEffectiveSignatureAttribute(method, Shadow.MethodCall, false),
         new BodyGenerator() {
           @Override
@@ -1103,7 +1110,8 @@ public final class AspectDeclaration extends TypeDeclaration {
         });
   }
 
-  private PerClause.Kind lookupPerClauseKind(ReferenceBinding binding) {
+  @Nullable
+  private PerClause.Kind lookupPerClauseKind(@Nullable ReferenceBinding binding) {
     final PerClause perClause;
     if (binding instanceof BinaryTypeBinding) {
       final ResolvedType superTypeX = factory.fromEclipse(binding);
@@ -1138,7 +1146,7 @@ public final class AspectDeclaration extends TypeDeclaration {
     }
   }
 
-  private void buildPerClause(ClassScope scope) {
+  private void buildPerClause(@NotNull ClassScope scope) {
     final EclipseFactory world = EclipseFactory.fromScopeLookupEnvironment(scope);
 
     if (perClause == null) {
@@ -1183,6 +1191,7 @@ public final class AspectDeclaration extends TypeDeclaration {
     resolvePerClause(); // XXX might be too soon for some error checking
   }
 
+  @NotNull
   private PerClause resolvePerClause() {
     final EclipseScope iscope = new EclipseScope(new FormalBinding[0], scope);
     perClause.resolve(iscope);

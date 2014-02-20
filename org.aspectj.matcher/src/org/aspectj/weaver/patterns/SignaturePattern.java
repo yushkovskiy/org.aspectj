@@ -15,6 +15,7 @@ package org.aspectj.weaver.patterns;
 import org.aspectj.bridge.ISourceLocation;
 import org.aspectj.util.FuzzyBoolean;
 import org.aspectj.weaver.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.*;
@@ -572,7 +573,7 @@ public class SignaturePattern extends PatternNode implements ISignaturePattern {
     }
   }
 
-  private boolean isParameterAnnotationMatching(AnnotationTypePattern tp) {
+  private static boolean isParameterAnnotationMatching(AnnotationTypePattern tp) {
     if (tp instanceof OrAnnotationTypePattern) {
       final OrAnnotationTypePattern orAtp = (OrAnnotationTypePattern) tp;
       return (isParameterAnnotationMatching(orAtp.getLeft()) || isParameterAnnotationMatching(orAtp.getRight()));
@@ -699,7 +700,7 @@ public class SignaturePattern extends PatternNode implements ISignaturePattern {
     }
   }
 
-  private ResolvedMember findMethod(ResolvedType aspectType, ResolvedMember ajcMethod) {
+  private static ResolvedMember findMethod(ResolvedType aspectType, ResolvedMember ajcMethod) {
     final ResolvedMember[] decMethods = aspectType.getDeclaredMethods();
     for (int i = 0; i < decMethods.length; i++) {
       final ResolvedMember member = decMethods[i];
@@ -870,7 +871,7 @@ public class SignaturePattern extends PatternNode implements ISignaturePattern {
   }
 
   @Override
-  public void write(CompressingDataOutputStream s) throws IOException {
+  public void write(@NotNull CompressingDataOutputStream s) throws IOException {
     kind.write(s);
     modifiers.write(s);
     returnType.write(s);

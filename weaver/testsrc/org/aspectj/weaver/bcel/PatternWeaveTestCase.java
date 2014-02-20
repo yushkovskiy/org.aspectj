@@ -88,6 +88,7 @@ public class PatternWeaveTestCase extends WeaveTestCase {
 
     final List l = new ArrayList();
     final BcelAdvice p = new BcelAdvice(null, cp, null, 0, -1, -1, null, null) {
+      @Override
       public boolean implementOn(Shadow shadow) {
         l.add(shadow);
         return true;

@@ -17,13 +17,21 @@ import org.aspectj.weaver.*;
 import org.aspectj.weaver.ast.Expr;
 import org.aspectj.weaver.ast.Literal;
 import org.aspectj.weaver.ast.Test;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Map;
 
-public class PerSingleton extends PerClause {
+public final class PerSingleton extends PerClause {
 
   private ResolvedMember perSingletonAspectOfMethod;
+
+  @NotNull
+  public static PerClause readPerClause(@NotNull VersionedDataInputStream s, ISourceContext context) throws IOException {
+    final PerSingleton ret = new PerSingleton();
+    ret.readLocation(context, s);
+    return ret;
+  }
 
   public PerSingleton() {
   }
@@ -40,11 +48,6 @@ public class PerSingleton extends PerClause {
 
   @Override
   public FuzzyBoolean fastMatch(FastMatchInfo type) {
-    return FuzzyBoolean.YES;
-  }
-
-  @Override
-  protected FuzzyBoolean matchInternal(Shadow shadow) {
     return FuzzyBoolean.YES;
   }
 
@@ -136,15 +139,9 @@ public class PerSingleton extends PerClause {
   }
 
   @Override
-  public void write(CompressingDataOutputStream s) throws IOException {
+  public void write(@NotNull CompressingDataOutputStream s) throws IOException {
     SINGLETON.write(s);
     writeLocation(s);
-  }
-
-  public static PerClause readPerClause(VersionedDataInputStream s, ISourceContext context) throws IOException {
-    final PerSingleton ret = new PerSingleton();
-    ret.readLocation(context, s);
-    return ret;
   }
 
   @Override
@@ -173,6 +170,11 @@ public class PerSingleton extends PerClause {
     int result = 17;
     result = 37 * result + ((inAspect == null) ? 0 : inAspect.hashCode());
     return result;
+  }
+
+  @Override
+  protected FuzzyBoolean matchInternal(Shadow shadow) {
+    return FuzzyBoolean.YES;
   }
 
 }

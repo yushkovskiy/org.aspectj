@@ -28,6 +28,7 @@ import org.aspectj.apache.bcel.util.SyntheticRepository;
 public class RuntimeVisibleParameterAnnotationAttributeTest extends BcelTestCase {
 
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
   }
@@ -109,7 +110,7 @@ public class RuntimeVisibleParameterAnnotationAttributeTest extends BcelTestCase
     }
   }
 
-  private void checkAnnotation(AnnotationGen a, String name, String elementname, String elementvalue) {
+  private static void checkAnnotation(AnnotationGen a, String name, String elementname, String elementvalue) {
     assertTrue("Expected annotation to have name " + name + " but it had name " + a.getTypeName(),
         a.getTypeName().equals(name));
     assertTrue("Expected annotation to have one element but it had " + a.getValues().size(), a.getValues().size() == 1);
@@ -123,7 +124,7 @@ public class RuntimeVisibleParameterAnnotationAttributeTest extends BcelTestCase
 
   // helper methods
 
-  public void checkValue(AnnotationGen a, String name, String tostring) {
+  public static void checkValue(AnnotationGen a, String name, String tostring) {
     for (final Iterator<NameValuePair> i = a.getValues().iterator(); i.hasNext(); ) {
       final NameValuePair element = i.next();
       if (element.getNameString().equals(name)) {
@@ -136,6 +137,7 @@ public class RuntimeVisibleParameterAnnotationAttributeTest extends BcelTestCase
     fail("Didnt find named element " + name);
   }
 
+  @Override
   protected void tearDown() throws Exception {
     super.tearDown();
   }

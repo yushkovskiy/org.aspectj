@@ -472,7 +472,7 @@ public class PatternParser {
     return p;
   }
 
-  private void assertNoTypeVariables(String[] tvs, String errorMessage, IToken token) {
+  private static void assertNoTypeVariables(String[] tvs, String errorMessage, IToken token) {
     if (tvs != null) {
       throw new ParserException(errorMessage, token);
     }
@@ -588,7 +588,7 @@ public class PatternParser {
   }
 
   private Pointcut parseWithinCodeAnnotationPointcut() {
-		/* String kind = */
+    /* String kind = */
     parseIdentifier();
     eat("(");
     if (maybeEat(")")) {
@@ -807,8 +807,8 @@ public class PatternParser {
     return p;
   }
 
-  private TypePattern setAnnotationPatternForTypePattern(TypePattern t, AnnotationTypePattern ap,
-                                                         boolean parameterAnnotationsPattern) {
+  private static TypePattern setAnnotationPatternForTypePattern(TypePattern t, AnnotationTypePattern ap,
+                                                                boolean parameterAnnotationsPattern) {
     final TypePattern ret = t;
     if (parameterAnnotationsPattern) {
       ap.setForParameterAnnotationMatch();
@@ -1398,7 +1398,7 @@ public class PatternParser {
     return ret;
   }
 
-  private void checkLegalName(String s, IToken tok) {
+  private static void checkLegalName(String s, IToken tok) {
     char ch = s.charAt(0);
     if (!(ch == '*' || Character.isJavaIdentifierStart(ch))) {
       throw new ParserException("illegal identifier start (" + ch + ")", tok);
@@ -1413,7 +1413,7 @@ public class PatternParser {
 
   }
 
-  private boolean isAdjacent(IToken first, IToken second) {
+  private static boolean isAdjacent(IToken first, IToken second) {
     return first.getEnd() == second.getStart() - 1;
   }
 
@@ -1654,7 +1654,7 @@ public class PatternParser {
     return ret;
   }
 
-  private NamePattern tryToExtractName(TypePattern nextType) {
+  private static NamePattern tryToExtractName(TypePattern nextType) {
     if (nextType == TypePattern.ANY) {
       return NamePattern.ANY;
     } else if (nextType instanceof WildTypePattern) {

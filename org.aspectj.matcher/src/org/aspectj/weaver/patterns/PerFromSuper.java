@@ -16,6 +16,7 @@ import org.aspectj.bridge.MessageUtil;
 import org.aspectj.util.FuzzyBoolean;
 import org.aspectj.weaver.*;
 import org.aspectj.weaver.ast.Test;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Map;
@@ -80,7 +81,7 @@ public class PerFromSuper extends PerClause {
     return this;
   }
 
-  public PerClause lookupConcretePerClause(ResolvedType lookupType) {
+  public static PerClause lookupConcretePerClause(ResolvedType lookupType) {
     final PerClause ret = lookupType.getPerClause();
     if (ret == null) {
       return null;
@@ -92,7 +93,7 @@ public class PerFromSuper extends PerClause {
   }
 
   @Override
-  public void write(CompressingDataOutputStream s) throws IOException {
+  public void write(@NotNull CompressingDataOutputStream s) throws IOException {
     FROMSUPER.write(s);
     kind.write(s);
     writeLocation(s);

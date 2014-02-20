@@ -13,6 +13,7 @@
 package org.aspectj.weaver.patterns;
 
 import org.aspectj.weaver.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Map;
@@ -102,7 +103,7 @@ public class ThrowsPattern extends PatternNode {
     return true;
   }
 
-  private boolean matchesAny(TypePattern typePattern, ResolvedType[] types) {
+  private static boolean matchesAny(TypePattern typePattern, ResolvedType[] types) {
     for (int i = types.length - 1; i >= 0; i--) {
       if (typePattern.matchesStatically(types[i])) {
         return true;
@@ -123,7 +124,7 @@ public class ThrowsPattern extends PatternNode {
   }
 
   @Override
-  public void write(CompressingDataOutputStream s) throws IOException {
+  public void write(@NotNull CompressingDataOutputStream s) throws IOException {
     required.write(s);
     forbidden.write(s);
     // XXXwriteLocation(s);

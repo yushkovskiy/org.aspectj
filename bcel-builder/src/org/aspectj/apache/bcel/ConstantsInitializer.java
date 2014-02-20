@@ -56,7 +56,7 @@ package org.aspectj.apache.bcel;
 import org.aspectj.apache.bcel.generic.Type;
 import org.jetbrains.annotations.Nullable;
 
-public class ConstantsInitializer {
+public final class ConstantsInitializer {
 
   @Nullable
   public static Object initialize() {

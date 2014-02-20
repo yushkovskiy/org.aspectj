@@ -106,11 +106,13 @@ public class ArgsWeaveTestCase extends WeaveTestCase {
     return new BcelAdvice(AdviceKind.stringToKind(kindx), makePointcutNoZeroArg(),
         MemberImpl.method(UnresolvedType.forName("Aspect"), 0, "foo", "()V"), 0, -1, -1, null,
         rtx) {
+      @Override
       public void specializeOn(Shadow shadow) {
         super.specializeOn(shadow);
         shadow.getArgVar(0);
       }
 
+      @Override
       public InstructionList getAdviceInstructions(BcelShadow shadow, BcelVar extraVar, InstructionHandle fk) {
         return getArgsAdviceTag(shadow, kindx);
       }

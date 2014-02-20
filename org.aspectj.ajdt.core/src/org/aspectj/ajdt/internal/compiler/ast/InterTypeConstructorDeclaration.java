@@ -25,6 +25,7 @@ import org.aspectj.org.eclipse.jdt.internal.compiler.impl.Constant;
 import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.*;
 import org.aspectj.org.eclipse.jdt.internal.compiler.parser.Parser;
 import org.aspectj.weaver.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Modifier;
 
@@ -231,7 +232,7 @@ public class InterTypeConstructorDeclaration extends InterTypeDeclaration {
   }
 
   @Override
-  public EclipseTypeMunger build(ClassScope classScope) {
+  public EclipseTypeMunger build(@NotNull ClassScope classScope) {
     final EclipseFactory world = EclipseFactory.fromScopeLookupEnvironment(classScope);
 
     resolveOnType(classScope);

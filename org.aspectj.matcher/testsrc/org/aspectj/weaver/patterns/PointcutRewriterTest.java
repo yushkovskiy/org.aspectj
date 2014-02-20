@@ -463,7 +463,7 @@ public class PointcutRewriterTest extends TestCase {
     assertEquals("reordered", "((within(abc) && execution(new(..))) || get(* *))", prw.rewrite(opc).toString());
   }
 
-  private Pointcut getPointcut(String s) {
+  private static Pointcut getPointcut(String s) {
     return new PatternParser(s).parsePointcut();
   }
 

@@ -26,6 +26,7 @@ import org.aspectj.apache.bcel.util.SyntheticRepository;
 public class VarargsTest extends BcelTestCase {
 
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
   }
@@ -62,7 +63,7 @@ public class VarargsTest extends BcelTestCase {
 
   // helper methods
 
-  public void checkMarkedVarargs(JavaClass clazz, String methodname, boolean shouldBeMarked) {
+  public static void checkMarkedVarargs(JavaClass clazz, String methodname, boolean shouldBeMarked) {
     final Method[] methods = clazz.getMethods();
 
     for (int i = 0; i < methods.length; i++) {
@@ -77,7 +78,7 @@ public class VarargsTest extends BcelTestCase {
 
   // helper methods
 
-  public void checkValue(AnnotationGen a, String name, String tostring) {
+  public static void checkValue(AnnotationGen a, String name, String tostring) {
     for (final Iterator<NameValuePair> i = a.getValues().iterator(); i.hasNext(); ) {
       final NameValuePair element = i.next();
       if (element.getNameString().equals(name)) {
@@ -90,6 +91,7 @@ public class VarargsTest extends BcelTestCase {
     fail("Didnt find named element " + name);
   }
 
+  @Override
   protected void tearDown() throws Exception {
     super.tearDown();
   }

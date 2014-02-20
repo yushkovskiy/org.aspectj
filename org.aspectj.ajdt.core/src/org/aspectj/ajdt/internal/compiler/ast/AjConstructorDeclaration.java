@@ -12,9 +12,11 @@ package org.aspectj.ajdt.internal.compiler.ast;
 
 import org.aspectj.org.eclipse.jdt.internal.compiler.ClassFile;
 import org.aspectj.org.eclipse.jdt.internal.compiler.CompilationResult;
+import org.aspectj.org.eclipse.jdt.internal.compiler.IAttribute;
 import org.aspectj.org.eclipse.jdt.internal.compiler.ast.ConstructorDeclaration;
 import org.aspectj.org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
 import org.aspectj.weaver.AjAttribute;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,12 +26,9 @@ import java.util.List;
  * Enables us to generate extra attributes in the method_info attribute
  * to support aspectj.
  */
-public class AjConstructorDeclaration extends ConstructorDeclaration {
+public final class AjConstructorDeclaration extends ConstructorDeclaration {
 
-  /**
-   * @param compilationResult
-   */
-  public AjConstructorDeclaration(CompilationResult compilationResult) {
+  public AjConstructorDeclaration(@NotNull CompilationResult compilationResult) {
     super(compilationResult);
   }
 
@@ -37,14 +36,14 @@ public class AjConstructorDeclaration extends ConstructorDeclaration {
    * @see org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration#generateInfoAttributes(org.eclipse.jdt.internal.compiler.ClassFile)
    */
   @Override
-  protected int generateInfoAttributes(ClassFile classFile) {
+  protected int generateInfoAttributes(@NotNull ClassFile classFile) {
     // add extra attributes into list then call 2-arg version of generateInfoAttributes...
-    final List extras = new ArrayList();
+    final List<IAttribute> extras = new ArrayList<>();
     addDeclarationStartLineAttribute(extras, classFile);
     return classFile.generateMethodInfoAttributes(binding, extras);
   }
 
-  protected void addDeclarationStartLineAttribute(List extraAttributeList, ClassFile classFile) {
+  protected void addDeclarationStartLineAttribute(@NotNull List<IAttribute> extraAttributeList, @NotNull ClassFile classFile) {
     if ((classFile.codeStream.generateAttributes & ClassFileConstants.ATTR_LINES) == 0) return;
 
     final int[] separators = compilationResult().lineSeparatorPositions;

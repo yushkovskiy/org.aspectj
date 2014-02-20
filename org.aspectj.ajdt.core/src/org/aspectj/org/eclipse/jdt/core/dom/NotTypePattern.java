@@ -13,7 +13,7 @@ import java.util.List;
 
 public class NotTypePattern extends TypePattern {
 
-  private TypePattern negatedPattern;
+  private final TypePattern negatedPattern;
 
   /**
    * The negated type pattern cannot be null

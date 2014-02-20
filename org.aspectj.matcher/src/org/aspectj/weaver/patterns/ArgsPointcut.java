@@ -18,6 +18,7 @@ import org.aspectj.util.FuzzyBoolean;
 import org.aspectj.weaver.*;
 import org.aspectj.weaver.ast.Literal;
 import org.aspectj.weaver.ast.Test;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -72,7 +73,7 @@ public class ArgsPointcut extends NameBindingPointcut {
     return ret;
   }
 
-  private ResolvedType[] getArgumentsToMatchAgainst(Shadow shadow) {
+  private static ResolvedType[] getArgumentsToMatchAgainst(Shadow shadow) {
 
     if (shadow.isShadowForArrayConstructionJoinpoint()) {
       return shadow.getArgumentTypesForArrayConstructionShadow();
@@ -141,7 +142,7 @@ public class ArgsPointcut extends NameBindingPointcut {
   }
 
   @Override
-  public void write(CompressingDataOutputStream s) throws IOException {
+  public void write(@NotNull CompressingDataOutputStream s) throws IOException {
     s.writeByte(Pointcut.ARGS);
     arguments.write(s);
     writeLocation(s);
@@ -253,7 +254,7 @@ public class ArgsPointcut extends NameBindingPointcut {
    *
    * @return
    */
-  private boolean isUncheckedArgumentWarningSuppressed() {
+  private static boolean isUncheckedArgumentWarningSuppressed() {
     return false;
   }
 

@@ -14,6 +14,7 @@ package org.aspectj.weaver.patterns;
 
 import org.aspectj.bridge.IMessage;
 import org.aspectj.weaver.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.List;
@@ -64,7 +65,7 @@ public class DeclarePrecedence extends Declare {
   }
 
   @Override
-  public void write(CompressingDataOutputStream s) throws IOException {
+  public void write(@NotNull CompressingDataOutputStream s) throws IOException {
     s.writeByte(Declare.DOMINATES);
     patterns.write(s);
     writeLocation(s);

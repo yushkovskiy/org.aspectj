@@ -30,11 +30,12 @@ import org.aspectj.apache.bcel.generic.ObjectType;
 
 public class ElementValueGenTest extends BcelTestCase {
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
   }
 
-  private ClassGen createClassGen(String classname) {
+  private static ClassGen createClassGen(String classname) {
     return new ClassGen(classname, "java.lang.Object", "<generated>", Constants.ACC_PUBLIC | Constants.ACC_SUPER, null);
   }
 
@@ -195,7 +196,7 @@ public class ElementValueGenTest extends BcelTestCase {
   // //
   // Helper methods
 
-  private void checkSerialize(ElementValue evgBefore, ConstantPool cpg) {
+  private static void checkSerialize(ElementValue evgBefore, ConstantPool cpg) {
     try {
       final String beforeValue = evgBefore.stringifyValue();
       final ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -222,6 +223,7 @@ public class ElementValueGenTest extends BcelTestCase {
     }
   }
 
+  @Override
   protected void tearDown() throws Exception {
     super.tearDown();
   }

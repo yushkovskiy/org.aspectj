@@ -45,6 +45,7 @@ public class UnwovenClassFile implements IUnwovenClassFile {
     this.bytes = bytes;
   }
 
+  @Override
   public String getFilename() {
     return filename;
   }
@@ -54,6 +55,7 @@ public class UnwovenClassFile implements IUnwovenClassFile {
     return prefix + "$" + innerName + ".class";
   }
 
+  @Override
   public byte[] getBytes() {
     // if (bytes == null) bytes = javaClass.getBytes();
     return bytes;
@@ -140,6 +142,7 @@ public class UnwovenClassFile implements IUnwovenClassFile {
     return true;
   }
 
+  @Override
   public char[] getClassNameAsChars() {
     if (charfilename == null) {
       charfilename = getClassName().replace('.', '/').toCharArray();
@@ -147,6 +150,7 @@ public class UnwovenClassFile implements IUnwovenClassFile {
     return charfilename;
   }
 
+  @Override
   public String getClassName() {
     if (className == null)
       className = getJavaClass().getClassName(); // OPTIMIZE quicker way to determine name??? surely?

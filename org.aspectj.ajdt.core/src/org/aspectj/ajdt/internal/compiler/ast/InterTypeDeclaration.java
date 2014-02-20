@@ -29,6 +29,8 @@ import org.aspectj.weaver.AjAttribute;
 import org.aspectj.weaver.ResolvedMember;
 import org.aspectj.weaver.ResolvedTypeMunger;
 import org.aspectj.weaver.Shadow;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -40,6 +42,10 @@ import java.util.List;
  * @author Jim Hugunin
  */
 public abstract class InterTypeDeclaration extends AjMethodDeclaration {
+
+  // XXXAJ5 - When the compiler is changed, these will exist somewhere in it...
+  private final static short ACC_ANNOTATION = 0x2000;
+  private final static short ACC_ENUM = 0x4000;
   protected TypeReference onType;
   protected ReferenceBinding onTypeBinding;
   protected ResolvedTypeMunger munger;
@@ -61,12 +67,8 @@ public abstract class InterTypeDeclaration extends AjMethodDeclaration {
    */
   private boolean scopeSetup = false;
 
-  // XXXAJ5 - When the compiler is changed, these will exist somewhere in it...
-  private final static short ACC_ANNOTATION = 0x2000;
-  private final static short ACC_ENUM = 0x4000;
 
-
-  public InterTypeDeclaration(CompilationResult result, TypeReference onType) {
+  public InterTypeDeclaration(@NotNull CompilationResult result, TypeReference onType) {
     super(result);
     setOnType(onType);
     modifiers = ClassFileConstants.AccPublic | ClassFileConstants.AccStatic;
@@ -86,9 +88,6 @@ public abstract class InterTypeDeclaration extends AjMethodDeclaration {
     this.selector = CharOperation.concat(selector, Integer.toHexString(sourceStart).toCharArray());
     this.selector = CharOperation.concat(getPrefix(), this.selector);
   }
-
-  // return the selector prefix for this itd that is to be used before resolution replaces it with a "proper" name
-  protected abstract char[] getPrefix();
 
 
   public void addAtAspectJAnnotations() {
@@ -145,21 +144,11 @@ public abstract class InterTypeDeclaration extends AjMethodDeclaration {
     fixSuperCallsInBody();
   }
 
-  private void fixSuperCallsForInterfaceContext(ClassScope scope) {
-    if (onTypeBinding.isInterface()) {
-      final ContextToken tok = CompilationAndWeavingContext.enteringPhase(CompilationAndWeavingContext.FIXING_SUPER_CALLS, selector);
-      final InterSuperFixerVisitor v =
-          new InterSuperFixerVisitor(this,
-              EclipseFactory.fromScopeLookupEnvironment(scope), scope);
-      this.traverse(v, scope);
-      CompilationAndWeavingContext.leavingPhase(tok);
-    }
-  }
-
   /**
    * Called from AspectDeclarations.buildInterTypeAndPerClause
    */
-  public abstract EclipseTypeMunger build(ClassScope classScope);
+  @Nullable
+  public abstract EclipseTypeMunger build(@NotNull ClassScope classScope);
 
   public void fixSuperCallsInBody() {
     final ContextToken tok = CompilationAndWeavingContext.enteringPhase(CompilationAndWeavingContext.FIXING_SUPER_CALLS_IN_ITDS, selector);
@@ -168,155 +157,6 @@ public abstract class InterTypeDeclaration extends AjMethodDeclaration {
     munger.setSuperMethodsCalled(v.superMethodsCalled);
     CompilationAndWeavingContext.leavingPhase(tok);
   }
-
-  protected void resolveOnType(ClassScope classScope) {
-    checkSpec();
-
-    if (onType == null) return; // error reported elsewhere.
-
-    // If they did supply a parameterized single type reference, we need to do
-    // some extra checks...
-    if (onType instanceof ParameterizedSingleTypeReference || onType instanceof ParameterizedQualifiedTypeReference) {
-      resolveTypeParametersForITDOnGenericType(classScope);
-    } else {
-      onTypeBinding = (ReferenceBinding) onType.getTypeBindingPublic(classScope);
-      if (!onTypeBinding.isValidBinding()) {
-        classScope.problemReporter().invalidType(onType, onTypeBinding);
-        ignoreFurtherInvestigation = true;
-      }
-      if (onTypeBinding.isParameterizedType()) {
-        // might be OK... pr132349
-        final ParameterizedTypeBinding ptb = (ParameterizedTypeBinding) onTypeBinding;
-        if (ptb.isNestedType()) {
-          if (ptb.typeVariables() == null || ptb.typeVariables().length == 0) {
-            if (ptb.enclosingType().isRawType()) onTypeBinding = ptb.type;
-          }
-        }
-      }
-    }
-  }
-
-  /**
-   * Transform the parameterized type binding (e.g. SomeType<A,B,C>) to a
-   * real type (e.g. SomeType).  The only kind of parameterization allowed
-   * is with type variables and those are references to type variables on
-   * the target type.  Once we have worked out the base generic type intended
-   * then we do lots of checks to verify the declaration was well formed.
-   */
-  private void resolveTypeParametersForITDOnGenericType(ClassScope classScope) {
-
-    // Collapse the parameterized reference to its generic type
-    if (onType instanceof ParameterizedSingleTypeReference) {
-      final ParameterizedSingleTypeReference pref = (ParameterizedSingleTypeReference) onType;
-      final long pos = (((long) pref.sourceStart) << 32) | pref.sourceEnd;
-      onType = new SingleTypeReference(pref.token, pos);
-    } else {
-      final ParameterizedQualifiedTypeReference pref = (ParameterizedQualifiedTypeReference) onType;
-      final long pos = (((long) pref.sourceStart) << 32) | pref.sourceEnd;
-      onType = new QualifiedTypeReference(pref.tokens, new long[]{pos});
-
-    }
-
-    onTypeBinding = (ReferenceBinding) onType.getTypeBindingPublic(classScope);
-    if (!onTypeBinding.isValidBinding()) {
-      classScope.problemReporter().invalidType(onType, onTypeBinding);
-      ignoreFurtherInvestigation = true;
-    }
-
-
-    if (onTypeBinding.isRawType()) {
-      onTypeBinding = ((RawTypeBinding) onTypeBinding).type;
-    }
-
-    final int aliasCount = (typeVariableAliases == null ? 0 : typeVariableAliases.size());
-
-    // Cannot specify a parameterized target type for the ITD if the target
-    // type is not generic.
-    if (aliasCount != 0 && !onTypeBinding.isGenericType()) {
-      scope.problemReporter().signalError(sourceStart, sourceEnd,
-          "Type parameters can not be specified in the ITD target type - the target type " + onTypeBinding.debugName() + " is not generic.");
-      ignoreFurtherInvestigation = true;
-      return;
-    }
-
-    // Check they have supplied the right number of type parameters on the ITD target type
-    if (aliasCount > 0) {
-      if (onTypeBinding.typeVariables().length != aliasCount) { // typeParameters.length) {   phantom contains the fake ones from the ontype, typeparameters will also include extra things if it is a generic method
-        scope.problemReporter().signalError(sourceStart, sourceEnd,
-            "Incorrect number of type parameters supplied.  The generic type " + onTypeBinding.debugName() + " has " +
-                onTypeBinding.typeVariables().length + " type parameters, not " + aliasCount + ".");
-        ignoreFurtherInvestigation = true;
-        return;
-      }
-    }
-
-    // check if they used stupid names for type variables
-    if (aliasCount > 0) {
-      for (int i = 0; i < aliasCount; i++) {
-        final String array_element = (String) typeVariableAliases.get(i);
-        final SingleTypeReference str = new SingleTypeReference(array_element.toCharArray(), 0);
-        final TypeBinding tb = str.getTypeBindingPublic(classScope);
-        if (tb != null && !(tb instanceof ProblemReferenceBinding)) {// && !(tb instanceof TypeVariableBinding)) {
-          scope.problemReporter().signalError(sourceStart, sourceEnd,
-              "Intertype declarations can only be made on the generic type, not on a parameterized type. The name '" +
-                  array_element + "' cannot be used as a type parameter, since it refers to a real type.");
-          ignoreFurtherInvestigation = true;
-          return;
-
-        }
-      }
-    }
-//		TypeVariableBinding[] tVarsInGenericType = onTypeBinding.typeVariables();
-//		typeVariableAliases = new ArrayList(); /* Name>GenericTypeVariablePosition */ // FIXME ASC DONT THINK WE NEED TO BUILD IT HERE AS WELL...
-//		TypeReference[] targs = pref.typeArguments;
-//    	if (targs!=null) {
-//    		for (int i = 0; i < targs.length; i++) {
-//    			TypeReference tref = targs[i];
-//    			typeVariableAliases.add(CharOperation.toString(tref.getTypeName()));//tVarsInGenericType[i]); 
-//    		}
-//		}
-  }
-
-
-  protected void checkSpec() {
-    if (Modifier.isProtected(declaredModifiers)) {
-      scope.problemReporter().signalError(sourceStart, sourceEnd,
-          "protected inter-type declarations are not allowed");
-      ignoreFurtherInvestigation = true;
-    }
-  }
-
-  protected static List makeEffectiveSignatureAttribute(
-      ResolvedMember sig,
-      Shadow.Kind kind,
-      boolean weaveBody) {
-    final List l = new ArrayList(1);
-    l.add(new EclipseAttributeAdapter(
-        new AjAttribute.EffectiveSignatureAttribute(sig, kind, weaveBody)));
-    return l;
-  }
-
-  protected void setMunger(ResolvedTypeMunger munger) {
-    munger.getSignature().setPosition(sourceStart, sourceEnd);
-    munger.getSignature().setSourceContext(new EclipseSourceContext(compilationResult));
-    this.munger = munger;
-  }
-
-  @Override
-  protected int generateInfoAttributes(ClassFile classFile) {
-    final List l;
-    final Shadow.Kind kind = getShadowKindForBody();
-    if (kind != null) {
-      l = makeEffectiveSignatureAttribute(munger.getSignature(), kind, true);
-    } else {
-      l = new ArrayList(0);
-    }
-    addDeclarationStartLineAttribute(l, classFile);
-
-    return classFile.generateMethodInfoAttributes(binding, l);
-  }
-
-  protected abstract Shadow.Kind getShadowKindForBody();
 
   public ResolvedMember getSignature() {
     if (munger == null) return null; // Can be null in an erroneous program I think
@@ -387,7 +227,6 @@ public abstract class InterTypeDeclaration extends AjMethodDeclaration {
             if (!tb.isTypeVariable() && !(tb instanceof ProblemReferenceBinding)) {
               usingNonTypeVariableInITD = true;
             }
-
           }
         }
         if (usingNonTypeVariableInITD) {
@@ -403,7 +242,6 @@ public abstract class InterTypeDeclaration extends AjMethodDeclaration {
           onType = null;
         }
       }
-
     }
 
     // Work out the real base type
@@ -459,5 +297,167 @@ public abstract class InterTypeDeclaration extends AjMethodDeclaration {
     // scope.isStatic = Modifier.isStatic(declaredModifiers);
     scope.parent = interTypeScope;
     scopeSetup = true;
+  }
+
+  // return the selector prefix for this itd that is to be used before resolution replaces it with a "proper" name
+  protected abstract char[] getPrefix();
+
+  protected void resolveOnType(ClassScope classScope) {
+    checkSpec();
+
+    if (onType == null) return; // error reported elsewhere.
+
+    // If they did supply a parameterized single type reference, we need to do
+    // some extra checks...
+    if (onType instanceof ParameterizedSingleTypeReference || onType instanceof ParameterizedQualifiedTypeReference) {
+      resolveTypeParametersForITDOnGenericType(classScope);
+    } else {
+      onTypeBinding = (ReferenceBinding) onType.getTypeBindingPublic(classScope);
+      if (!onTypeBinding.isValidBinding()) {
+        classScope.problemReporter().invalidType(onType, onTypeBinding);
+        ignoreFurtherInvestigation = true;
+      }
+      if (onTypeBinding.isParameterizedType()) {
+        // might be OK... pr132349
+        final ParameterizedTypeBinding ptb = (ParameterizedTypeBinding) onTypeBinding;
+        if (ptb.isNestedType()) {
+          if (ptb.typeVariables() == null || ptb.typeVariables().length == 0) {
+            if (ptb.enclosingType().isRawType()) onTypeBinding = ptb.type;
+          }
+        }
+      }
+    }
+  }
+
+
+  protected void checkSpec() {
+    if (Modifier.isProtected(declaredModifiers)) {
+      scope.problemReporter().signalError(sourceStart, sourceEnd,
+          "protected inter-type declarations are not allowed");
+      ignoreFurtherInvestigation = true;
+    }
+  }
+
+  protected static List makeEffectiveSignatureAttribute(
+      ResolvedMember sig,
+      Shadow.Kind kind,
+      boolean weaveBody) {
+    final List l = new ArrayList(1);
+    l.add(new EclipseAttributeAdapter(
+        new AjAttribute.EffectiveSignatureAttribute(sig, kind, weaveBody)));
+    return l;
+  }
+
+  protected void setMunger(ResolvedTypeMunger munger) {
+    munger.getSignature().setPosition(sourceStart, sourceEnd);
+    munger.getSignature().setSourceContext(new EclipseSourceContext(compilationResult));
+    this.munger = munger;
+  }
+
+  @Override
+  protected int generateInfoAttributes(@NotNull ClassFile classFile) {
+    final List l;
+    final Shadow.Kind kind = getShadowKindForBody();
+    if (kind != null) {
+      l = makeEffectiveSignatureAttribute(munger.getSignature(), kind, true);
+    } else {
+      l = new ArrayList(0);
+    }
+    addDeclarationStartLineAttribute(l, classFile);
+
+    return classFile.generateMethodInfoAttributes(binding, l);
+  }
+
+  @Nullable
+  protected abstract Shadow.Kind getShadowKindForBody();
+
+  private void fixSuperCallsForInterfaceContext(ClassScope scope) {
+    if (onTypeBinding.isInterface()) {
+      final ContextToken tok = CompilationAndWeavingContext.enteringPhase(CompilationAndWeavingContext.FIXING_SUPER_CALLS, selector);
+      final InterSuperFixerVisitor v =
+          new InterSuperFixerVisitor(this,
+              EclipseFactory.fromScopeLookupEnvironment(scope), scope);
+      this.traverse(v, scope);
+      CompilationAndWeavingContext.leavingPhase(tok);
+    }
+  }
+
+  /**
+   * Transform the parameterized type binding (e.g. SomeType<A,B,C>) to a
+   * real type (e.g. SomeType).  The only kind of parameterization allowed
+   * is with type variables and those are references to type variables on
+   * the target type.  Once we have worked out the base generic type intended
+   * then we do lots of checks to verify the declaration was well formed.
+   */
+  private void resolveTypeParametersForITDOnGenericType(ClassScope classScope) {
+
+    // Collapse the parameterized reference to its generic type
+    if (onType instanceof ParameterizedSingleTypeReference) {
+      final ParameterizedSingleTypeReference pref = (ParameterizedSingleTypeReference) onType;
+      final long pos = (((long) pref.sourceStart) << 32) | pref.sourceEnd;
+      onType = new SingleTypeReference(pref.token, pos);
+    } else {
+      final ParameterizedQualifiedTypeReference pref = (ParameterizedQualifiedTypeReference) onType;
+      final long pos = (((long) pref.sourceStart) << 32) | pref.sourceEnd;
+      onType = new QualifiedTypeReference(pref.tokens, new long[]{pos});
+    }
+
+    onTypeBinding = (ReferenceBinding) onType.getTypeBindingPublic(classScope);
+    if (!onTypeBinding.isValidBinding()) {
+      classScope.problemReporter().invalidType(onType, onTypeBinding);
+      ignoreFurtherInvestigation = true;
+    }
+
+
+    if (onTypeBinding.isRawType()) {
+      onTypeBinding = ((RawTypeBinding) onTypeBinding).type;
+    }
+
+    final int aliasCount = (typeVariableAliases == null ? 0 : typeVariableAliases.size());
+
+    // Cannot specify a parameterized target type for the ITD if the target
+    // type is not generic.
+    if (aliasCount != 0 && !onTypeBinding.isGenericType()) {
+      scope.problemReporter().signalError(sourceStart, sourceEnd,
+          "Type parameters can not be specified in the ITD target type - the target type " + onTypeBinding.debugName() + " is not generic.");
+      ignoreFurtherInvestigation = true;
+      return;
+    }
+
+    // Check they have supplied the right number of type parameters on the ITD target type
+    if (aliasCount > 0) {
+      if (onTypeBinding.typeVariables().length != aliasCount) { // typeParameters.length) {   phantom contains the fake ones from the ontype, typeparameters will also include extra things if it is a generic method
+        scope.problemReporter().signalError(sourceStart, sourceEnd,
+            "Incorrect number of type parameters supplied.  The generic type " + onTypeBinding.debugName() + " has " +
+                onTypeBinding.typeVariables().length + " type parameters, not " + aliasCount + ".");
+        ignoreFurtherInvestigation = true;
+        return;
+      }
+    }
+
+    // check if they used stupid names for type variables
+    if (aliasCount > 0) {
+      for (int i = 0; i < aliasCount; i++) {
+        final String array_element = (String) typeVariableAliases.get(i);
+        final SingleTypeReference str = new SingleTypeReference(array_element.toCharArray(), 0);
+        final TypeBinding tb = str.getTypeBindingPublic(classScope);
+        if (tb != null && !(tb instanceof ProblemReferenceBinding)) {// && !(tb instanceof TypeVariableBinding)) {
+          scope.problemReporter().signalError(sourceStart, sourceEnd,
+              "Intertype declarations can only be made on the generic type, not on a parameterized type. The name '" +
+                  array_element + "' cannot be used as a type parameter, since it refers to a real type.");
+          ignoreFurtherInvestigation = true;
+          return;
+        }
+      }
+    }
+//		TypeVariableBinding[] tVarsInGenericType = onTypeBinding.typeVariables();
+//		typeVariableAliases = new ArrayList(); /* Name>GenericTypeVariablePosition */ // FIXME ASC DONT THINK WE NEED TO BUILD IT HERE AS WELL...
+//		TypeReference[] targs = pref.typeArguments;
+//    	if (targs!=null) {
+//    		for (int i = 0; i < targs.length; i++) {
+//    			TypeReference tref = targs[i];
+//    			typeVariableAliases.add(CharOperation.toString(tref.getTypeName()));//tVarsInGenericType[i]); 
+//    		}
+//		}
   }
 }

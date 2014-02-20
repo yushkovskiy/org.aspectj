@@ -50,6 +50,7 @@ public class BcelPerClauseAspectAdder extends BcelTypeMunger {
     }
   }
 
+  @Override
   public boolean munge(BcelClassWeaver weaver) {
     final LazyClassGen gen = weaver.getLazyClassGen();
 
@@ -122,14 +123,17 @@ public class BcelPerClauseAspectAdder extends BcelTypeMunger {
     return true;
   }
 
+  @Override
   public ResolvedMember getMatchingSyntheticMember(Member member) {
     return null;
   }
 
+  @Override
   public ResolvedMember getSignature() {
     return null;
   }
 
+  @Override
   public boolean matches(ResolvedType onType) {
     // cannot always do the right thing because may need to eagerly generate ajcMightHaveAspect interface for LTW (says Alex)
     if (hasGeneratedInner) { // pr237419 - not always going to generate the marker interface

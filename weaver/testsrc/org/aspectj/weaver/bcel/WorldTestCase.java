@@ -33,6 +33,7 @@ public class WorldTestCase extends CommonWorldTests {
 
   private final BcelWorld world = new BcelWorld(BcweaverTests.TESTDATA_PATH + "/tracing.jar");
 
+  @Override
   protected World getWorld() {
     return world;
   }

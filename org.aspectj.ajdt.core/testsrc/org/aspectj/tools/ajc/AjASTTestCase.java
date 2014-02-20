@@ -121,8 +121,8 @@ public abstract class AjASTTestCase extends TestCase {
    */
   class TypeCategoryTester implements ITypePatternTester {
 
-    private int expectedCategory;
-    private String expectedExpression;
+    private final int expectedCategory;
+    private final String expectedExpression;
 
     public TypeCategoryTester(int expectedCategory,
                               String expectedExpression) {
@@ -159,7 +159,7 @@ public abstract class AjASTTestCase extends TestCase {
    */
   class TypePatternSourceRangeTester implements ITypePatternTester {
 
-    private int[][] expectedRawSourceRanges;
+    private final int[][] expectedRawSourceRanges;
 
     public TypePatternSourceRangeTester(int[][] expectedRawSourceRanges) {
       this.expectedRawSourceRanges = expectedRawSourceRanges;
@@ -201,8 +201,8 @@ public abstract class AjASTTestCase extends TestCase {
    */
   class SourceRangeTester implements ITypePatternTester {
 
-    private int expectedStart;
-    private int expectedLength;
+    private final int expectedStart;
+    private final int expectedLength;
 
     public SourceRangeTester(int expectedStart, int expectedLength) {
       this.expectedLength = expectedLength;

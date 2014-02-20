@@ -73,12 +73,14 @@ public final class InvokeDynamic extends InvokeInstruction {
     super(Constants.INVOKEDYNAMIC, index);
   }
 
+  @Override
   public void dump(DataOutputStream out) throws IOException {
     out.writeByte(opcode);
     out.writeShort(index);
     out.writeShort(0);
   }
 
+  @Override
   public String toString(ConstantPool cp) {
     return super.toString(cp) + " " + index;
   }
@@ -95,14 +97,17 @@ public final class InvokeDynamic extends InvokeInstruction {
     return opcode * 37 + index;
   }
 
+  @Override
   public Type getReturnType(ConstantPool cp) {
     return Type.getReturnType(getSignature(cp));
   }
 
+  @Override
   public Type[] getArgumentTypes(ConstantPool cp) {
     return Type.getArgumentTypes(getSignature(cp));
   }
 
+  @Override
   public String getSignature(ConstantPool cp) {
     if (signature == null) {
       final ConstantInvokeDynamic cid = (ConstantInvokeDynamic) cp.getConstant(index);
@@ -122,6 +127,7 @@ public final class InvokeDynamic extends InvokeInstruction {
     return name;
   }
 
+  @Override
   public String getClassName(ConstantPool cp) {
     throw new IllegalStateException("there is no classname for invokedynamic");
   }

@@ -18,6 +18,7 @@ import org.aspectj.util.FuzzyBoolean;
 import org.aspectj.weaver.*;
 import org.aspectj.weaver.ast.Expr;
 import org.aspectj.weaver.ast.Test;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -85,7 +86,7 @@ public class ConcreteCflowPointcut extends Pointcut {
   }
 
   @Override
-  public void write(CompressingDataOutputStream s) throws IOException {
+  public void write(@NotNull CompressingDataOutputStream s) throws IOException {
     throw new RuntimeException("unimplemented");
   }
 

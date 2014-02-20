@@ -34,7 +34,7 @@ public class IncrementalStateManager {
   // SECRETAPI will consume more memory, so turn on at your own risk ;) Set to 'true' when memory usage is understood
   public static boolean recordIncrementalStates = false;
   public static boolean debugIncrementalStates = false;
-  private static Hashtable<String, AjState> incrementalStates = new Hashtable<String, AjState>();
+  private static final Hashtable<String, AjState> incrementalStates = new Hashtable<String, AjState>();
 
   public static void recordSuccessfulBuild(String buildConfig, AjState state) {
     if (!recordIncrementalStates) {
@@ -55,7 +55,7 @@ public class IncrementalStateManager {
       System.out.println("Name " + entry.getKey());
       final File f = new File("n:/temp/foo.ajstate");
       try {
-        final AjState state = (AjState) entry.getValue();
+        final AjState state = entry.getValue();
         final CompressingDataOutputStream dos = new CompressingDataOutputStream(new FileOutputStream(f));
         state.write(dos);
         dos.close();

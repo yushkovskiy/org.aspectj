@@ -91,6 +91,7 @@ public class TABLESWITCH extends InstructionSelect {
    *
    * @param out Output stream
    */
+  @Override
   public void dump(DataOutputStream out) throws IOException {
     super.dump(out);
 

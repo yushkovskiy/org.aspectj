@@ -273,7 +273,7 @@ public class Fundamentals extends TestCase {
     // Internally used instructions skipped
   }
 
-  public void checkInstruction(Instruction i, int opcode, int length, int stackConsumed, int stackProduced) {
+  public static void checkInstruction(Instruction i, int opcode, int length, int stackConsumed, int stackProduced) {
     final String header = new String("Checking instruction '" + i + "' ");
     if (i.opcode != opcode)
       fail(header + " expected opcode " + opcode + " but it is " + i.opcode);

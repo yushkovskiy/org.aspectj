@@ -21,36 +21,40 @@ import org.aspectj.weaver.patterns.OrPointcut;
  * Look for an if() pointcut
  */
 class IfFinder extends AbstractPatternNodeVisitor {
-	boolean hasIf = false;
+  boolean hasIf = false;
 
-	public Object visit(IfPointcut node, Object data) {
-		if (node.alwaysFalse() || node.alwaysTrue()) {
-			// IfFalse / IfTrue
-		} else {
-			hasIf = true;
-		}
-		return node;
-	}
+  @Override
+  public Object visit(IfPointcut node, Object data) {
+    if (node.alwaysFalse() || node.alwaysTrue()) {
+      // IfFalse / IfTrue
+    } else {
+      hasIf = true;
+    }
+    return node;
+  }
 
-	public Object visit(AndPointcut node, Object data) {
-		if (!hasIf)
-			node.getLeft().accept(this, data);
-		if (!hasIf)
-			node.getRight().accept(this, data);
-		return node;
-	}
+  @Override
+  public Object visit(AndPointcut node, Object data) {
+    if (!hasIf)
+      node.getLeft().accept(this, data);
+    if (!hasIf)
+      node.getRight().accept(this, data);
+    return node;
+  }
 
-	public Object visit(NotPointcut node, Object data) {
-		if (!hasIf)
-			node.getNegatedPointcut().accept(this, data);
-		return node;
-	}
+  @Override
+  public Object visit(NotPointcut node, Object data) {
+    if (!hasIf)
+      node.getNegatedPointcut().accept(this, data);
+    return node;
+  }
 
-	public Object visit(OrPointcut node, Object data) {
-		if (!hasIf)
-			node.getLeft().accept(this, data);
-		if (!hasIf)
-			node.getRight().accept(this, data);
-		return node;
-	}
+  @Override
+  public Object visit(OrPointcut node, Object data) {
+    if (!hasIf)
+      node.getLeft().accept(this, data);
+    if (!hasIf)
+      node.getRight().accept(this, data);
+    return node;
+  }
 }

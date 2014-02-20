@@ -259,6 +259,7 @@ class BcelClassWeaver implements IClassWeaver {
       this.onType = onType;
     }
 
+    @Override
     public int compareTo(@NotNull Object other) {
       final IfaceInitList o = (IfaceInitList) other;
       if (onType.isAssignableFrom(o.onType)) {
@@ -270,6 +271,7 @@ class BcelClassWeaver implements IClassWeaver {
       }
     }
 
+    @Override
     public int fallbackCompareTo(@NotNull Object other) {
       return 0;
     }
@@ -401,6 +403,7 @@ class BcelClassWeaver implements IClassWeaver {
    *
    * @return true if the class was modified
    */
+  @Override
   public boolean weave() {
     if (clazz.isWoven() && !clazz.isReweavable()) {
       if (world.getLint().nonReweavableTypeEncountered.isEnabled()) {
@@ -2537,6 +2540,7 @@ class BcelClassWeaver implements IClassWeaver {
 
   private void weaveInAddedMethods() {
     Collections.sort(addedLazyMethodGens, new Comparator<LazyMethodGen>() {
+      @Override
       public int compare(LazyMethodGen aa, LazyMethodGen bb) {
         final int i = aa.getName().compareTo(bb.getName());
         if (i != 0) {

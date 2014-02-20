@@ -21,7 +21,7 @@ import org.aspectj.weaver.ConstantPoolWriter;
  */
 public class EclipseConstantPoolWriter implements ConstantPoolWriter {
 
-  private ConstantPool constantPool;
+  private final ConstantPool constantPool;
 
   public EclipseConstantPoolWriter(ConstantPool constantPool) {
     this.constantPool = constantPool;

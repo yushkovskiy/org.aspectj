@@ -22,13 +22,15 @@ import org.aspectj.org.eclipse.jdt.internal.compiler.flow.InitializationFlowCont
 import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.ClassScope;
 import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.TagBits;
 import org.aspectj.weaver.patterns.DeclareAnnotation;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class DeclareAnnotationDeclaration extends DeclareDeclaration {
-
-  private Annotation annotation;
+public final class DeclareAnnotationDeclaration extends DeclareDeclaration {
+  @NotNull
+  private final Annotation annotation;
   private boolean isRemover = false;
 
-  public DeclareAnnotationDeclaration(CompilationResult result, DeclareAnnotation symbolicDeclare, Annotation annotation) {
+  public DeclareAnnotationDeclaration(CompilationResult result, @Nullable DeclareAnnotation symbolicDeclare, @NotNull Annotation annotation) {
     super(result, symbolicDeclare);
     this.annotation = annotation;
 
@@ -76,8 +78,21 @@ public class DeclareAnnotationDeclaration extends DeclareDeclaration {
 
   }
 
+  @Nullable
   public Annotation getDeclaredAnnotation() {
     return annotation;
+  }
+
+  @Override
+  public void postParse(@NotNull TypeDeclaration typeDec) {
+    super.postParse(typeDec);
+    if (declareDecl != null) {
+      ((DeclareAnnotation) declareDecl).setAnnotationMethod(new String(selector));
+    }
+  }
+
+  public boolean isRemover() {
+    return isRemover;
   }
 
   @Override
@@ -90,7 +105,7 @@ public class DeclareAnnotationDeclaration extends DeclareDeclaration {
     return false;
   }
 
-  private void addAnnotation(Annotation ann) {
+  private void addAnnotation(@NotNull Annotation ann) {
     if (this.annotations == null) {
       this.annotations = new Annotation[1];
     } else {
@@ -99,17 +114,5 @@ public class DeclareAnnotationDeclaration extends DeclareDeclaration {
       System.arraycopy(old, 0, this.annotations, 1, old.length);
     }
     this.annotations[0] = ann;
-  }
-
-  @Override
-  public void postParse(TypeDeclaration typeDec) {
-    super.postParse(typeDec);
-    if (declareDecl != null) {
-      ((DeclareAnnotation) declareDecl).setAnnotationMethod(new String(selector));
-    }
-  }
-
-  public boolean isRemover() {
-    return isRemover;
   }
 }

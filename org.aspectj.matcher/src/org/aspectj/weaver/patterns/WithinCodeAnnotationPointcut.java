@@ -15,6 +15,7 @@ import org.aspectj.weaver.*;
 import org.aspectj.weaver.ast.Literal;
 import org.aspectj.weaver.ast.Test;
 import org.aspectj.weaver.ast.Var;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -197,7 +198,7 @@ public class WithinCodeAnnotationPointcut extends NameBindingPointcut {
    * @see org.aspectj.weaver.patterns.PatternNode#write(java.io.DataOutputStream)
    */
   @Override
-  public void write(CompressingDataOutputStream s) throws IOException {
+  public void write(@NotNull CompressingDataOutputStream s) throws IOException {
     s.writeByte(Pointcut.ATWITHINCODE);
     annotationTypePattern.write(s);
     writeLocation(s);

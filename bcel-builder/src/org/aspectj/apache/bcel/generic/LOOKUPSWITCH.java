@@ -80,6 +80,7 @@ public class LOOKUPSWITCH extends InstructionSelect {
    *
    * @param out Output stream
    */
+  @Override
   public void dump(DataOutputStream out) throws IOException {
     super.dump(out);
     out.writeInt(matchLength); // npairs

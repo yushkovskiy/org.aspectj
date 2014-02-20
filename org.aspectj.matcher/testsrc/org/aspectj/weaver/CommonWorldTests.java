@@ -181,25 +181,25 @@ public abstract class CommonWorldTests extends TestCase {
 
   // ---- tests for parts of ResolvedType objects
 
-  protected void modifiersTest(ResolvedType ty, int mods) {
+  protected static void modifiersTest(ResolvedType ty, int mods) {
     assertEquals(ty + " modifiers:", Modifier.toString(mods), Modifier.toString(ty.getModifiers()));
   }
 
-  protected void fieldsTest(ResolvedType ty, Member[] x) {
+  protected static void fieldsTest(ResolvedType ty, Member[] x) {
     TestUtil.assertSetEquals(ty + " fields:", x, ty.getDeclaredJavaFields());
   }
 
-  protected void methodsTest(ResolvedType ty, Member[] x) {
+  protected static void methodsTest(ResolvedType ty, Member[] x) {
     TestUtil.assertSetEquals(ty + " methods:", x, ty.getDeclaredJavaMethods());
   }
 
-  protected void mungersTest(ResolvedType ty, ShadowMunger[] x) {
+  protected static void mungersTest(ResolvedType ty, ShadowMunger[] x) {
     final List l = (List) ty.getDeclaredShadowMungers();
     final ShadowMunger[] array = (ShadowMunger[]) l.toArray(new ShadowMunger[l.size()]);
     TestUtil.assertSetEquals(ty + " mungers:", x, array);
   }
 
-  protected void interfaceTest(ResolvedType type, ResolvedType[] expectedInterfaces) {
+  protected static void interfaceTest(ResolvedType type, ResolvedType[] expectedInterfaces) {
     final ResolvedType[] interfaces = type.getDeclaredInterfaces();
     for (int i = 0; i < expectedInterfaces.length; i++) {
       boolean wasMissing = true;
@@ -215,27 +215,27 @@ public abstract class CommonWorldTests extends TestCase {
     }
   }
 
-  protected void interfacesTest(ResolvedType ty, ResolvedType[] x) {
+  protected static void interfacesTest(ResolvedType ty, ResolvedType[] x) {
     TestUtil.assertArrayEquals(ty + " interfaces:", x, ty.getDeclaredInterfaces());
   }
 
-  protected void superclassTest(ResolvedType ty, UnresolvedType x) {
+  protected static void superclassTest(ResolvedType ty, UnresolvedType x) {
     assertEquals(ty + " superclass:", x, ty.getSuperclass());
   }
 
-  protected void pointcutsTest(ResolvedType ty, Member[] x) {
+  protected static void pointcutsTest(ResolvedType ty, Member[] x) {
     TestUtil.assertSetEquals(ty + " pointcuts:", x, ty.getDeclaredPointcuts());
   }
 
-  protected void isInterfaceTest(ResolvedType ty, boolean x) {
+  protected static void isInterfaceTest(ResolvedType ty, boolean x) {
     assertEquals(ty + " is interface:", x, ty.isInterface());
   }
 
-  protected void isAspectTest(ResolvedType ty, boolean x) {
+  protected static void isAspectTest(ResolvedType ty, boolean x) {
     assertEquals(ty + " is aspect:", x, ty.isAspect());
   }
 
-  protected void isClassTest(ResolvedType ty, boolean x) {
+  protected static void isClassTest(ResolvedType ty, boolean x) {
     assertEquals(ty + " is class:", x, ty.isClass());
   }
 
@@ -253,11 +253,11 @@ public abstract class CommonWorldTests extends TestCase {
 
   // ---- tests for parts of ResolvedMethod objects
 
-  protected void modifiersTest(ResolvedMember m, int mods) {
+  protected static void modifiersTest(ResolvedMember m, int mods) {
     assertEquals(m + " modifiers:", Modifier.toString(mods), Modifier.toString(m.getModifiers()));
   }
 
-  protected void exceptionsTest(ResolvedMember m, UnresolvedType[] exns) {
+  protected static void exceptionsTest(ResolvedMember m, UnresolvedType[] exns) {
     TestUtil.assertSetEquals(m + " exceptions:", exns, m.getExceptions());
   }
 

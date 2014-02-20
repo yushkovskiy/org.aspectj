@@ -689,7 +689,7 @@ public class ParserTestCase extends PatternsTestCase {
     assertEquals("Expected annotation value not found", "ival=5", getValueString(pc));
   }
 
-  private String getValueString(Pointcut pc) {
+  private static String getValueString(Pointcut pc) {
     if (!(pc instanceof KindedPointcut)) {
       fail("Expected KindedPointcut but was " + pc.getClass());
     }

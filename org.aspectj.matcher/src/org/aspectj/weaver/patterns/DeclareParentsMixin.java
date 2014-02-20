@@ -14,6 +14,7 @@ package org.aspectj.weaver.patterns;
 import org.aspectj.weaver.CompressingDataOutputStream;
 import org.aspectj.weaver.ISourceContext;
 import org.aspectj.weaver.VersionedDataInputStream;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.List;
@@ -51,7 +52,7 @@ public class DeclareParentsMixin extends DeclareParents {
   }
 
   @Override
-  public void write(CompressingDataOutputStream s) throws IOException {
+  public void write(@NotNull CompressingDataOutputStream s) throws IOException {
     s.writeByte(Declare.PARENTSMIXIN);
     child.write(s);
     parents.write(s);

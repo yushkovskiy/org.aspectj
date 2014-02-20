@@ -277,6 +277,7 @@ public class ResolvedMemberSignaturesTestCase15 extends TestCase {
     assertEquals("Lfluffy/Derived;", foundMembers[0].getDeclaringType().getSignature());
   }
 
+  @Override
   protected void setUp() throws Exception {
     world = new BcelWorld();
     baseType = UnresolvedType.forSignature("Lfluffy/Base;");

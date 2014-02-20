@@ -129,6 +129,7 @@ public abstract class InstructionSelect extends InstructionBranch {
    * @param max_offset the maximum offset that may be caused by these instructions
    * @return additional offset caused by possible change of this instruction's length
    */
+  @Override
   protected int updatePosition(int offset, int max_offset) {
     positionOfThisInstruction += offset; // Additional offset caused by
     // preceding SWITCHs, GOTOs,
@@ -150,6 +151,7 @@ public abstract class InstructionSelect extends InstructionBranch {
    *
    * @param out Output stream
    */
+  @Override
   public void dump(DataOutputStream out) throws IOException {
     out.writeByte(opcode);
 
@@ -177,6 +179,7 @@ public abstract class InstructionSelect extends InstructionBranch {
   /**
    * @return mnemonic for instruction
    */
+  @Override
   public String toString(boolean verbose) {
     final StringBuilder buf = new StringBuilder(super.toString(verbose));
 
@@ -209,6 +212,7 @@ public abstract class InstructionSelect extends InstructionBranch {
    * @param old_ih old target
    * @param new_ih new target
    */
+  @Override
   public void updateTarget(InstructionHandle old_ih, InstructionHandle new_ih) {
     boolean targeted = false;
 
@@ -232,6 +236,7 @@ public abstract class InstructionSelect extends InstructionBranch {
   /**
    * @return true, if ih is target of this instruction
    */
+  @Override
   public boolean containsTarget(InstructionHandle ih) {
     if (targetInstruction == ih) {
       return true;
@@ -249,6 +254,7 @@ public abstract class InstructionSelect extends InstructionBranch {
   /**
    * Inform targets that they're not targeted anymore.
    */
+  @Override
   void dispose() {
     super.dispose();
 
@@ -286,6 +292,7 @@ public abstract class InstructionSelect extends InstructionBranch {
     return targets;
   }
 
+  @Override
   public int getLength() {
     return length;
   }

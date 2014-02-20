@@ -11,6 +11,8 @@
  * ******************************************************************/
 package org.aspectj.weaver;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.lang.ref.WeakReference;
 
 /**
@@ -48,6 +50,7 @@ public class WeakClassLoaderReference {
     }
   }
 
+  @NotNull
   public ClassLoader getClassLoader() {
     final ClassLoader instance = (ClassLoader) loaderRef.get();
     // Assert instance!=null

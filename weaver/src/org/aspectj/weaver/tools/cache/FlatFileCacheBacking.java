@@ -39,6 +39,7 @@ import org.aspectj.util.LangUtil;
 public class FlatFileCacheBacking extends AsynchronousFileCacheBacking {
   private static final AsynchronousFileCacheBackingCreator<FlatFileCacheBacking> defaultCreator =
       new AsynchronousFileCacheBackingCreator<FlatFileCacheBacking>() {
+        @Override
         public FlatFileCacheBacking create(File cacheDir) {
           return new FlatFileCacheBacking(cacheDir);
         }

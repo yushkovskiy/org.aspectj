@@ -1833,6 +1833,7 @@ public final class LazyMethodGen implements Traceable {
     attributes.add(attribute);
   }
 
+  @Override
   public String toTraceString() {
     return toShortString();
   }

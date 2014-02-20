@@ -17,8 +17,9 @@ import org.aspectj.weaver.patterns.ModifiersPatternTestCase;
 
 public class BcelModifiersPatternTestCase extends ModifiersPatternTestCase {
 
-	public World getWorld() {
-		return new BcelWorld();
-	}
+  @Override
+  public World getWorld() {
+    return new BcelWorld();
+  }
 
 }

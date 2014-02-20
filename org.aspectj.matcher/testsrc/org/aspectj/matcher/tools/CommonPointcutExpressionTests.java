@@ -737,7 +737,7 @@ public abstract class CommonPointcutExpressionTests extends TestCase {
 
   // -- helpers
 
-  private ResolvedMember getMethod(ResolvedType type, String methodName, String methodSignature) {
+  private static ResolvedMember getMethod(ResolvedType type, String methodName, String methodSignature) {
     final ResolvedMember[] methods = type.getDeclaredMethods();
     for (int i = 0; i < methods.length; i++) {
       System.out.println(methods[i].getName() + methods[i].getSignature());

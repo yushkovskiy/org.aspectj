@@ -261,10 +261,12 @@ public class BcelGenericSignatureToTypeXConverter {
       return "placeholder for TypeVariable of " + ftpToBeSubstituted.toString();
     }
 
+    @Override
     public ResolvedType resolve(World world) {
       return this;
     }
 
+    @Override
     public boolean isCacheable() {
       return false;
     }

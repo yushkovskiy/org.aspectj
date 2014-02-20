@@ -195,7 +195,7 @@ public class TypeVariable {
     return true;
   }
 
-  private boolean isASubtypeOf(UnresolvedType candidateSuperType, UnresolvedType candidateSubType) {
+  private static boolean isASubtypeOf(UnresolvedType candidateSuperType, UnresolvedType candidateSubType) {
     final ResolvedType superType = (ResolvedType) candidateSuperType;
     final ResolvedType subType = (ResolvedType) candidateSubType;
     return superType.isAssignableFrom(subType);

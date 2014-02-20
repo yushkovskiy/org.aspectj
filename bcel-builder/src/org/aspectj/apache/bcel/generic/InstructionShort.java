@@ -68,11 +68,13 @@ public class InstructionShort extends Instruction {
     this.value = value;
   }
 
+  @Override
   public void dump(DataOutputStream out) throws IOException {
     out.writeByte(opcode);
     out.writeShort(value);
   }
 
+  @Override
   public String toString(boolean verbose) {
     return super.toString(verbose) + " " + value;
   }

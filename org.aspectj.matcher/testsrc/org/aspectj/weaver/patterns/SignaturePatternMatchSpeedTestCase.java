@@ -114,7 +114,7 @@ public class SignaturePatternMatchSpeedTestCase extends PatternsTestCase {
   /**
    * Run match 1000 times to warmup
    */
-  private void warmup(SignaturePattern signaturePattern, Member method, World world) {
+  private static void warmup(SignaturePattern signaturePattern, Member method, World world) {
     for (int i = 0; i < 1000; i++) {
       signaturePattern.matches(method, world, false);
     }
@@ -123,7 +123,7 @@ public class SignaturePatternMatchSpeedTestCase extends PatternsTestCase {
   /**
    * Run match 1000000 and return time taken in ms
    */
-  private long measure(SignaturePattern signaturePattern, Member method, World world) {
+  private static long measure(SignaturePattern signaturePattern, Member method, World world) {
     final long stime = System.currentTimeMillis();
     for (int i = 0; i < 1000000; i++) {
       signaturePattern.matches(method, world, false);
@@ -142,15 +142,15 @@ public class SignaturePatternMatchSpeedTestCase extends PatternsTestCase {
     assertEquals(p.toString() + " matches " + member.toString(), b, matches);
   }
 
-  private SignaturePattern makeMethodPat(String pattern) {
+  private static SignaturePattern makeMethodPat(String pattern) {
     return new PatternParser(pattern).parseMethodOrConstructorSignaturePattern();
   }
 
-  private SignaturePattern makeFieldPat(String pattern) {
+  private static SignaturePattern makeFieldPat(String pattern) {
     return new PatternParser(pattern).parseFieldSignaturePattern();
   }
 
-  private void checkSerialization(SignaturePattern p) throws IOException {
+  private static void checkSerialization(SignaturePattern p) throws IOException {
     final ByteArrayOutputStream bo = new ByteArrayOutputStream();
     final ConstantPoolSimulator cps = new ConstantPoolSimulator();
     final CompressingDataOutputStream out = new CompressingDataOutputStream(bo, cps);

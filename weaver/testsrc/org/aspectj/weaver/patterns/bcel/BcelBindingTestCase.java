@@ -17,8 +17,9 @@ import org.aspectj.weaver.patterns.BindingTestCase;
 
 public class BcelBindingTestCase extends BindingTestCase {
 
-	public World getWorld() {
-		return new BcelWorld();
-	}
+  @Override
+  public World getWorld() {
+    return new BcelWorld();
+  }
 
 }

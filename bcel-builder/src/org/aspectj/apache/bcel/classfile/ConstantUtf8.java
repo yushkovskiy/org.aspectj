@@ -104,6 +104,7 @@ public final class ConstantUtf8 extends Constant implements SimpleConstant {
     return string;
   }
 
+  @Override
   public String getStringValue() {
     return string;
   }

@@ -93,6 +93,7 @@ public class InstructionBranch extends Instruction implements InstructionTargete
     super(opcode);
   }
 
+  @Override
   public void dump(DataOutputStream out) throws IOException {
     final int target = getTargetOffset();
 
@@ -187,6 +188,7 @@ public class InstructionBranch extends Instruction implements InstructionTargete
    * @param verbose long/short format switch
    * @return mnemonic for instruction
    */
+  @Override
   public String toString(boolean verbose) {
     final String s = super.toString(verbose);
     String t = "null";
@@ -214,6 +216,7 @@ public class InstructionBranch extends Instruction implements InstructionTargete
   /**
    * @return target offset in byte code
    */
+  @Override
   public final int getIndex() {
     return targetIndex;
   }
@@ -254,6 +257,7 @@ public class InstructionBranch extends Instruction implements InstructionTargete
    * @param oldHandle old target
    * @param newHandle new target
    */
+  @Override
   public void updateTarget(InstructionHandle oldHandle, InstructionHandle newHandle) {
     if (targetInstruction == oldHandle) {
       setTarget(newHandle);
@@ -265,6 +269,7 @@ public class InstructionBranch extends Instruction implements InstructionTargete
   /**
    * @return true, if ih is target of this instruction
    */
+  @Override
   public boolean containsTarget(InstructionHandle ih) {
     return targetInstruction == ih;
   }
@@ -272,12 +277,14 @@ public class InstructionBranch extends Instruction implements InstructionTargete
   /**
    * Inform target that it's not targeted anymore.
    */
+  @Override
   void dispose() {
     setTarget(null);
     targetIndex = -1;
     positionOfThisInstruction = -1;
   }
 
+  @Override
   public Type getType(ConstantPool cp) {
     if ((Constants.instFlags[opcode] & Constants.JSR_INSTRUCTION) != 0) {
       return new ReturnaddressType(physicalSuccessor());

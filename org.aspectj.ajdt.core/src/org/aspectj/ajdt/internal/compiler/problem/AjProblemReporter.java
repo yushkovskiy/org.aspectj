@@ -652,8 +652,8 @@ public class AjProblemReporter extends ProblemReporter {
 
   private static class PinpointedProblem implements IProblem {
 
-    private IProblem delegate;
-    private String message;
+    private final IProblem delegate;
+    private final String message;
 
     public PinpointedProblem(IProblem aProblem, String pinpoint) {
       this.delegate = aProblem;

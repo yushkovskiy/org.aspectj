@@ -114,6 +114,7 @@ public final class BcelRenderer implements ITestVisitor, IExprVisitor {
 
   // ---- test visitors
 
+  @Override
   public void visit(And e) {
     final InstructionHandle savedFk = fk;
     recur(e.getRight(), sk, fk, next);
@@ -121,22 +122,26 @@ public final class BcelRenderer implements ITestVisitor, IExprVisitor {
     recur(e.getLeft(), ning, savedFk, ning);
   }
 
+  @Override
   public void visit(Or e) {
     final InstructionHandle savedSk = sk;
     recur(e.getRight(), sk, fk, next);
     recur(e.getLeft(), savedSk, instructions.getStart(), instructions.getStart());
   }
 
+  @Override
   public void visit(Not e) {
     recur(e.getBody(), fk, sk, next);
   }
 
+  @Override
   public void visit(Instanceof i) {
     instructions.insert(createJumpBasedOnBooleanOnStack());
     instructions.insert(Utility.createInstanceof(fact, (ReferenceType) BcelWorld.makeBcelType(i.getType())));
     i.getVar().accept(this);
   }
 
+  @Override
   public void visit(HasAnnotation hasAnnotation) {
     // in Java:
     // foo.class.isAnnotationPresent(annotationClass);
@@ -175,6 +180,7 @@ public final class BcelRenderer implements ITestVisitor, IExprVisitor {
    *
    * @see org.aspectj.weaver.ast.ITestVisitor#visit(org.aspectj.weaver.internal.tools.MatchingContextBasedTest)
    */
+  @Override
   public void visit(MatchingContextBasedTest matchingContextTest) {
     throw new UnsupportedOperationException("matching context extension not supported in bytecode weaving");
   }
@@ -200,12 +206,14 @@ public final class BcelRenderer implements ITestVisitor, IExprVisitor {
     return il;
   }
 
+  @Override
   public void visit(Literal literal) {
     if (literal == Literal.FALSE) {
       throw new BCException("visiting a false expression");
     }
   }
 
+  @Override
   public void visit(Call call) {
     final Member method = call.getMethod();
     // assert method.isStatic()
@@ -230,6 +238,7 @@ public final class BcelRenderer implements ITestVisitor, IExprVisitor {
     instructions.insert(callIl);
   }
 
+  @Override
   public void visit(FieldGetCall fieldGetCall) {
     final Member field = fieldGetCall.getField();
     final Member method = fieldGetCall.getMethod();
@@ -247,17 +256,20 @@ public final class BcelRenderer implements ITestVisitor, IExprVisitor {
 
   // ---- expr visitors
 
+  @Override
   public void visit(Var var) {
     final BcelVar bvar = (BcelVar) var;
     bvar.insertLoad(instructions, fact);
   }
 
+  @Override
   public void visit(FieldGet fieldGet) {
     final Member field = fieldGet.getField();
     // assert field.isStatic()
     instructions.insert(Utility.createGet(fact, field));
   }
 
+  @Override
   public void visit(CallExpr call) {
     final Member method = call.getMethod();
     // assert method.isStatic()

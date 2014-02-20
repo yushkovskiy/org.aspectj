@@ -11,7 +11,7 @@ package org.aspectj.org.eclipse.jdt.core.dom;
 
 public abstract class IdentifierTypePattern extends TypePattern {
 
-  private Type type;
+  private final Type type;
 
   IdentifierTypePattern(AST ast, Type type) {
     super(ast);

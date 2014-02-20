@@ -12,6 +12,7 @@ package org.aspectj.weaver.patterns;
 import org.aspectj.util.FuzzyBoolean;
 import org.aspectj.weaver.AjAttribute.WeaverVersionInfo;
 import org.aspectj.weaver.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Map;
@@ -79,7 +80,7 @@ public class NotAnnotationTypePattern extends AnnotationTypePattern {
    * @see org.aspectj.weaver.patterns.PatternNode#write(java.io.DataOutputStream)
    */
   @Override
-  public void write(CompressingDataOutputStream s) throws IOException {
+  public void write(@NotNull CompressingDataOutputStream s) throws IOException {
     s.writeByte(AnnotationTypePattern.NOT);
     negatedPattern.write(s);
     writeLocation(s);

@@ -99,7 +99,7 @@ public final class Ajc {
   private boolean shouldEmptySandbox = true;
   @NotNull
   private final AjcCommandController controller;
-  private static boolean verbose = System.getProperty("org.aspectj.tools.ajc.Ajc.verbose", "true").equals("true");
+  private static final boolean verbose = System.getProperty("org.aspectj.tools.ajc.Ajc.verbose", "true").equals("true");
 
   /**
    * Constructs a new Ajc instance, with a new AspectJ compiler inside.

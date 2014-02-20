@@ -24,6 +24,8 @@ import org.aspectj.weaver.AjAttribute;
 import org.aspectj.weaver.NewMemberClassTypeMunger;
 import org.aspectj.weaver.ResolvedType;
 import org.aspectj.weaver.ResolvedTypeMunger;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Modifier;
 import java.util.Collections;
@@ -34,7 +36,7 @@ import java.util.Collections;
  * @author Andy Clement
  * @since 1.6.9
  */
-public class IntertypeMemberClassDeclaration extends TypeDeclaration {
+public final class IntertypeMemberClassDeclaration extends TypeDeclaration {
 
   // The target type for this inner class
   private TypeReference onType;
@@ -54,7 +56,7 @@ public class IntertypeMemberClassDeclaration extends TypeDeclaration {
   }
 
   @Override
-  public void resolve(ClassScope aspectScope) {
+  public void resolve(@NotNull ClassScope aspectScope) {
     resolveOnType(aspectScope);
     ensureScopeSetup();
     super.resolve(aspectScope);
@@ -76,22 +78,16 @@ public class IntertypeMemberClassDeclaration extends TypeDeclaration {
   }
 
   @Override
-  public void resolve(BlockScope blockScope) {
+  public void resolve(@NotNull BlockScope blockScope) {
     throw new IllegalStateException();
   }
 
   @Override
-  public void resolve(CompilationUnitScope upperScope) {
+  public void resolve(@NotNull CompilationUnitScope upperScope) {
     throw new IllegalStateException();
   }
 
-  @SuppressWarnings("unchecked")
-  @Override
-  protected void generateAttributes(ClassFile classFile) {
-    // classFile.extraAttributes.add(new EclipseAttributeAdapter(makeAttribute()));
-    super.generateAttributes(classFile);
-  }
-
+  @Nullable
   public AjAttribute getAttribute() {
     // if there were problems then there is nothing to return
     if (newMemberClassTypeMunger == null) {
@@ -206,26 +202,8 @@ public class IntertypeMemberClassDeclaration extends TypeDeclaration {
     this.onType = onType;
   }
 
-  private void resolveOnType(ClassScope cuScope) {
-    if (onType == null || onTypeResolvedBinding != null) {
-      return;
-    } // error reported elsewhere.
-
-    onTypeResolvedBinding = (ReferenceBinding) onType.getTypeBindingPublic(cuScope);
-    if (!onTypeResolvedBinding.isValidBinding()) {
-      cuScope.problemReporter().invalidType(onType, onTypeResolvedBinding);
-      ignoreFurtherInvestigation = true;
-    } else {
-      // fix up the ITD'd type?
-      if (this.binding != null) {
-        ((NestedTypeBinding) this.binding).enclosingType = (SourceTypeBinding) onTypeResolvedBinding;
-      }
-      // this done at build type for the nested type now:
-      // ((NestedTypeBinding) this.binding).compoundName = CharOperation.splitOn('.', "Basic$_".toCharArray());
-    }
-  }
-
-  public EclipseTypeMunger build(ClassScope classScope) {
+  @Nullable
+  public EclipseTypeMunger build(@NotNull ClassScope classScope) {
     final EclipseFactory world = EclipseFactory.fromScopeLookupEnvironment(classScope);
     resolveOnType(classScope);
     ensureScopeSetup();
@@ -269,5 +247,31 @@ public class IntertypeMemberClassDeclaration extends TypeDeclaration {
   @Override
   public char[] alternativeName() {
     return onType.getLastToken();
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  protected void generateAttributes(@NotNull ClassFile classFile) {
+    // classFile.extraAttributes.add(new EclipseAttributeAdapter(makeAttribute()));
+    super.generateAttributes(classFile);
+  }
+
+  private void resolveOnType(@NotNull ClassScope cuScope) {
+    if (onType == null || onTypeResolvedBinding != null) {
+      return;
+    } // error reported elsewhere.
+
+    onTypeResolvedBinding = (ReferenceBinding) onType.getTypeBindingPublic(cuScope);
+    if (!onTypeResolvedBinding.isValidBinding()) {
+      cuScope.problemReporter().invalidType(onType, onTypeResolvedBinding);
+      ignoreFurtherInvestigation = true;
+    } else {
+      // fix up the ITD'd type?
+      if (this.binding != null) {
+        ((NestedTypeBinding) this.binding).enclosingType = (SourceTypeBinding) onTypeResolvedBinding;
+      }
+      // this done at build type for the nested type now:
+      // ((NestedTypeBinding) this.binding).compoundName = CharOperation.splitOn('.', "Basic$_".toCharArray());
+    }
   }
 }

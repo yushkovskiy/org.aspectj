@@ -80,10 +80,12 @@ public final class BranchHandle extends InstructionHandle {
    * Override InstructionHandle methods: delegate to branch instruction. Through this overriding all access to the private
    * i_position field should be prevented.
    */
+  @Override
   public int getPosition() {
     return bi.positionOfThisInstruction;
   }
 
+  @Override
   void setPosition(int pos) {
     this.pos = bi.positionOfThisInstruction = pos;
   }
@@ -127,6 +129,7 @@ public final class BranchHandle extends InstructionHandle {
   /**
    * Set new contents. Old instruction is disposed and may not be used anymore.
    */
+  @Override
   public void setInstruction(Instruction i) {
     super.setInstruction(i);
     bi = (InstructionBranch) i;

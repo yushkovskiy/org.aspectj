@@ -14,6 +14,7 @@ package org.aspectj.weaver.patterns;
 
 import org.aspectj.weaver.CompressingDataOutputStream;
 import org.aspectj.weaver.VersionedDataInputStream;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.lang.reflect.Modifier;
@@ -86,7 +87,7 @@ public class ModifiersPattern extends PatternNode {
   }
 
   @Override
-  public void write(CompressingDataOutputStream s) throws IOException {
+  public void write(@NotNull CompressingDataOutputStream s) throws IOException {
     // s.writeByte(MODIFIERS_PATTERN);
     s.writeShort(requiredModifiers);
     s.writeShort(forbiddenModifiers);

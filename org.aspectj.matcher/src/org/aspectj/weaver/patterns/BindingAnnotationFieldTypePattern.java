@@ -15,6 +15,7 @@ import org.aspectj.bridge.IMessage;
 import org.aspectj.bridge.MessageUtil;
 import org.aspectj.util.FuzzyBoolean;
 import org.aspectj.weaver.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Map;
@@ -110,7 +111,7 @@ public class BindingAnnotationFieldTypePattern extends ExactAnnotationTypePatter
   }
 
   @Override
-  public void write(CompressingDataOutputStream s) throws IOException {
+  public void write(@NotNull CompressingDataOutputStream s) throws IOException {
     s.writeByte(AnnotationTypePattern.BINDINGFIELD2);
     formalType.write(s); // the type of the field within the annotation
     s.writeShort((short) formalIndex);

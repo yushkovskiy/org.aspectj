@@ -36,16 +36,18 @@ public class RuntimeInvisAnnos extends RuntimeAnnos {
     super(Constants.ATTR_RUNTIME_INVISIBLE_ANNOTATIONS, false, nameIndex, len, rvaData, cpool);
   }
 
+  @Override
   public void accept(ClassVisitor v) {
     v.visitRuntimeInvisibleAnnotations(this);
   }
 
+  @Override
   public final void dump(DataOutputStream dos) throws IOException {
     super.dump(dos);
     writeAnnotations(dos);
   }
 
-  public Attribute copy(ConstantPool constant_pool) {
+  public static Attribute copy(ConstantPool constant_pool) {
     throw new RuntimeException("Not implemented yet!");
   }
 }

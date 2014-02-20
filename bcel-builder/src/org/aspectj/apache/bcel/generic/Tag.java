@@ -24,10 +24,12 @@ public abstract class Tag implements InstructionTargeter, Cloneable {
   }
 
   // ---- from InstructionTargeter
+  @Override
   public boolean containsTarget(InstructionHandle ih) {
     return false;
   }
 
+  @Override
   public void updateTarget(InstructionHandle oldHandle, InstructionHandle newHandle) {
     oldHandle.removeTargeter(this);
     if (newHandle != null) {

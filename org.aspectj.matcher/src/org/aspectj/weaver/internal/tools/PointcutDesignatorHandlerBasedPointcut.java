@@ -21,6 +21,7 @@ import org.aspectj.weaver.reflect.ReflectionShadow;
 import org.aspectj.weaver.reflect.ReflectionWorld;
 import org.aspectj.weaver.tools.ContextBasedMatcher;
 import org.aspectj.weaver.tools.MatchingContext;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Map;
@@ -156,7 +157,7 @@ public class PointcutDesignatorHandlerBasedPointcut extends Pointcut {
    * @see org.aspectj.weaver.patterns.PatternNode#write(java.io.DataOutputStream)
    */
   @Override
-  public void write(CompressingDataOutputStream s) throws IOException {
+  public void write(@NotNull CompressingDataOutputStream s) throws IOException {
     throw new UnsupportedOperationException("can't write custom pointcut designator expressions to stream");
   }
 

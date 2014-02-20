@@ -19,8 +19,8 @@ import java.util.List;
 public class DelegatingOutputStream extends OutputStream {
 
   private boolean verbose = true;
-  private OutputStream target;
-  private List delegates;
+  private final OutputStream target;
+  private final List delegates;
 
   public DelegatingOutputStream(OutputStream os) {
     this.target = os;

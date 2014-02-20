@@ -61,11 +61,13 @@ public abstract class WeaveTestCase extends TestCase {
     super(name);
   }
 
+  @Override
   public void setUp() throws Exception {
     outDir = BcweaverTests.getOutdir();
     outDirPath = outDir.getAbsolutePath();
   }
 
+  @Override
   public void tearDown() throws Exception {
     super.tearDown();
     BcweaverTests.removeOutDir();

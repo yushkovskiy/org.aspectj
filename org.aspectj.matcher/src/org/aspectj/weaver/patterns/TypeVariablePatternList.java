@@ -14,6 +14,7 @@ package org.aspectj.weaver.patterns;
 import org.aspectj.weaver.CompressingDataOutputStream;
 import org.aspectj.weaver.ISourceContext;
 import org.aspectj.weaver.VersionedDataInputStream;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -48,7 +49,7 @@ public class TypeVariablePatternList extends PatternNode {
   }
 
   @Override
-  public void write(CompressingDataOutputStream s) throws IOException {
+  public void write(@NotNull CompressingDataOutputStream s) throws IOException {
     s.writeInt(patterns.length);
     for (int i = 0; i < patterns.length; i++) {
       patterns[i].write(s);

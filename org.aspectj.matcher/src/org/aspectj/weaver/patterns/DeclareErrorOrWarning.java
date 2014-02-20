@@ -16,6 +16,7 @@ import org.aspectj.weaver.CompressingDataOutputStream;
 import org.aspectj.weaver.ISourceContext;
 import org.aspectj.weaver.VersionedDataInputStream;
 import org.aspectj.weaver.World;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Map;
@@ -71,7 +72,7 @@ public class DeclareErrorOrWarning extends Declare {
   }
 
   @Override
-  public void write(CompressingDataOutputStream s) throws IOException {
+  public void write(@NotNull CompressingDataOutputStream s) throws IOException {
     s.writeByte(Declare.ERROR_OR_WARNING);
     s.writeBoolean(isError);
     pointcut.write(s);
@@ -79,6 +80,7 @@ public class DeclareErrorOrWarning extends Declare {
     writeLocation(s);
   }
 
+  @NotNull
   public static Declare read(VersionedDataInputStream s, ISourceContext context) throws IOException {
     final Declare ret = new DeclareErrorOrWarning(s.readBoolean(), Pointcut.read(s, context), s.readUTF());
     ret.readLocation(context, s);
@@ -103,6 +105,7 @@ public class DeclareErrorOrWarning extends Declare {
   }
 
   @Override
+  @NotNull
   public Declare parameterizeWith(Map typeVariableBindingMap, World w) {
     final Declare ret = new DeclareErrorOrWarning(isError, pointcut.parameterizeWith(typeVariableBindingMap, w), message);
     ret.copyLocationFrom(this);
@@ -115,6 +118,7 @@ public class DeclareErrorOrWarning extends Declare {
   }
 
   @Override
+  @NotNull
   public String getNameSuffix() {
     return "eow";
   }
@@ -122,6 +126,7 @@ public class DeclareErrorOrWarning extends Declare {
   /**
    * returns "declare warning" or "declare error"
    */
+  @NotNull
   public String getName() {
     final StringBuffer buf = new StringBuffer();
     buf.append("declare ");

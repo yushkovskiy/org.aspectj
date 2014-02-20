@@ -31,11 +31,13 @@ public class TjpWeaveTestCase extends WeaveTestCase {
     super(name);
   }
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
     behave15 = true;
   }
 
+  @Override
   public void tearDown() throws Exception {
     super.tearDown();
     behave15 = false;

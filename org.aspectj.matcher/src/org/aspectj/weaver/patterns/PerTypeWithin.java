@@ -20,6 +20,7 @@ import org.aspectj.weaver.*;
 import org.aspectj.weaver.ast.Expr;
 import org.aspectj.weaver.ast.Literal;
 import org.aspectj.weaver.ast.Test;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Map;
@@ -179,7 +180,7 @@ public class PerTypeWithin extends PerClause {
   }
 
   @Override
-  public void write(CompressingDataOutputStream s) throws IOException {
+  public void write(@NotNull CompressingDataOutputStream s) throws IOException {
     PERTYPEWITHIN.write(s);
     typePattern.write(s);
     writeLocation(s);

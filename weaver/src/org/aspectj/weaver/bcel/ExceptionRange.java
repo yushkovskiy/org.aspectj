@@ -120,6 +120,7 @@ public final class ExceptionRange extends Range {
     return hashCode;
   }
 
+  @Override
   public void updateTarget(InstructionHandle oldIh, InstructionHandle newIh, InstructionList newBody) {
     super.updateTarget(oldIh, newIh, newBody);
     // we're guaranteed that start, end, and handler are distinct instruction handles.

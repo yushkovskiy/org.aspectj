@@ -1794,6 +1794,7 @@ public final class AtAjAttributes {
 
     // sort by index
     Collections.sort(arguments, new Comparator<MethodArgument>() {
+      @Override
       public int compare(@NotNull MethodArgument mo, @NotNull MethodArgument mo1) {
         if (mo.indexOnStack == mo1.indexOnStack) {
           return 0;

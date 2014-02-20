@@ -18,8 +18,9 @@ import org.aspectj.weaver.patterns.ParserTestCase;
 
 public class BcelParserTestCase extends ParserTestCase {
 
-	public World getWorld() {
-		return new BcelWorld(BcweaverTests.TESTDATA_PATH + "/testcode.jar");
-	}
+  @Override
+  public World getWorld() {
+    return new BcelWorld(BcweaverTests.TESTDATA_PATH + "/testcode.jar");
+  }
 
 }

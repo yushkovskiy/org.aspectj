@@ -171,6 +171,7 @@ public class DocumentParser extends DefaultHandler {
     return xmlReader;
   }
 
+  @Override
   public InputSource resolveEntity(String publicId, String systemId) throws SAXException {
     if (publicId.equals(DTD_PUBLIC_ID) || publicId.equals(DTD_PUBLIC_ID_ALIAS)) {
       final InputStream in = DocumentParser.class.getResourceAsStream("/aspectj_1_5_0.dtd");
@@ -186,6 +187,7 @@ public class DocumentParser extends DefaultHandler {
     }
   }
 
+  @Override
   public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
     if (ASPECT_ELEMENT.equals(qName)) {
       final String name = attributes.getValue(NAME_ATTRIBUTE);
@@ -331,6 +333,7 @@ public class DocumentParser extends DefaultHandler {
     return replaceXmlAnd(attributes.getValue(WITHIN_ATTRIBUTE));
   }
 
+  @Override
   public void endElement(String uri, String localName, String qName) throws SAXException {
     if (CONCRETE_ASPECT_ELEMENT.equals(qName)) {
       activeConcreteAspectDefinition = null;
@@ -345,14 +348,17 @@ public class DocumentParser extends DefaultHandler {
   }
 
   // TODO AV - define what we want for XML parser error - for now stderr
+  @Override
   public void warning(SAXParseException e) throws SAXException {
     super.warning(e);
   }
 
+  @Override
   public void error(SAXParseException e) throws SAXException {
     super.error(e);
   }
 
+  @Override
   public void fatalError(SAXParseException e) throws SAXException {
     super.fatalError(e);
   }

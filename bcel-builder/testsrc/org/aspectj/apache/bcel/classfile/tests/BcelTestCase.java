@@ -12,33 +12,31 @@
 
 package org.aspectj.apache.bcel.classfile.tests;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-
 import junit.framework.TestCase;
-
-import org.aspectj.apache.bcel.classfile.Attribute;
-import org.aspectj.apache.bcel.classfile.ConstantPool;
-import org.aspectj.apache.bcel.classfile.Field;
-import org.aspectj.apache.bcel.classfile.JavaClass;
-import org.aspectj.apache.bcel.classfile.Method;
+import org.aspectj.apache.bcel.classfile.*;
 import org.aspectj.apache.bcel.classfile.annotation.AnnotationGen;
-import org.aspectj.apache.bcel.classfile.annotation.NameValuePair;
 import org.aspectj.apache.bcel.classfile.annotation.ElementValue;
+import org.aspectj.apache.bcel.classfile.annotation.NameValuePair;
 import org.aspectj.apache.bcel.classfile.annotation.SimpleElementValue;
 import org.aspectj.apache.bcel.generic.ObjectType;
 import org.aspectj.apache.bcel.util.ClassPath;
 import org.aspectj.apache.bcel.util.SyntheticRepository;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Super class for the Java5 tests, includes various helper methods.
  */
 
-public class BcelTestCase extends TestCase {
+public abstract class BcelTestCase extends TestCase {
 
   private final boolean verbose = false;
 
+  @NotNull
   protected File createTestdataFile(String name) {
     return new File("testdata" + File.separator + name);
   }
@@ -53,6 +51,7 @@ public class BcelTestCase extends TestCase {
     return repos.loadClass(clazzname);
   }
 
+  @Nullable
   protected Method getMethod(JavaClass cl, String methodname) {
     final Method[] methods = cl.getMethods();
     for (int i = 0; i < methods.length; i++) {
@@ -64,6 +63,7 @@ public class BcelTestCase extends TestCase {
     return null;
   }
 
+  @Nullable
   protected Field getField(JavaClass cl, String fieldname) {
     final Field[] fields = cl.getFields();
     for (int i = 0; i < fields.length; i++) {

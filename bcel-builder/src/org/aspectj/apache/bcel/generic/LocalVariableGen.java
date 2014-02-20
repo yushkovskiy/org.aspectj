@@ -168,6 +168,7 @@ public class LocalVariableGen implements InstructionTargeter, Cloneable, java.io
    * @param old_ih old target, either start or end
    * @param new_ih new target
    */
+  @Override
   public void updateTarget(InstructionHandle old_ih, InstructionHandle new_ih) {
     boolean targeted = false;
 
@@ -189,6 +190,7 @@ public class LocalVariableGen implements InstructionTargeter, Cloneable, java.io
   /**
    * @return true, if ih is target of this variable
    */
+  @Override
   public boolean containsTarget(InstructionHandle ih) {
     return start == ih || end == ih;
   }
@@ -209,6 +211,7 @@ public class LocalVariableGen implements InstructionTargeter, Cloneable, java.io
     return "LocalVariableGen(" + name + ", " + type + ", " + start + ", " + end + ")";
   }
 
+  @Override
   public Object clone() {
     try {
       return super.clone();

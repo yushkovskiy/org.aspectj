@@ -162,12 +162,12 @@ public abstract class AbstractTrace implements Trace {
   }
 
   @NotNull
-  protected String formatArray(@NotNull Object obj) {
+  protected static String formatArray(@NotNull Object obj) {
     return obj.getClass().getComponentType().getName() + "[" + Array.getLength(obj) + "]";
   }
 
   @NotNull
-  protected String formatCollection(@NotNull Collection c) {
+  protected static String formatCollection(@NotNull Collection c) {
     return c.getClass().getName() + "(" + c.size() + ")";
   }
 

@@ -38,18 +38,22 @@ public class TypeAnnotationAccessVar extends BcelVar {
     return "TypeAnnotationAccessVar(" + getType() + ")";
   }
 
+  @Override
   public Instruction createLoad(InstructionFactory fact) {
     throw new RuntimeException("unimplemented");
   }
 
+  @Override
   public Instruction createStore(InstructionFactory fact) {
     throw new RuntimeException("unimplemented");
   }
 
+  @Override
   public InstructionList createCopyFrom(InstructionFactory fact, int oldSlot) {
     throw new RuntimeException("unimplemented");
   }
 
+  @Override
   public void appendLoad(InstructionList il, InstructionFactory fact) {
     il.append(createLoadInstructions(getType(), fact));
   }
@@ -68,11 +72,13 @@ public class TypeAnnotationAccessVar extends BcelVar {
 
   }
 
+  @Override
   public void appendLoadAndConvert(InstructionList il, InstructionFactory fact, ResolvedType toType) {
     il.append(createLoadInstructions(toType, fact));
 
   }
 
+  @Override
   public void insertLoad(InstructionList il, InstructionFactory fact) {
     il.insert(createLoadInstructions(getType(), fact));
   }

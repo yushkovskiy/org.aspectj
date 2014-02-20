@@ -106,7 +106,7 @@ public class WithinTestCase extends PatternsTestCase {
     checkSerialization(p);
   }
 
-  private void checkSerialization(Pointcut p) throws IOException {
+  private static void checkSerialization(Pointcut p) throws IOException {
     final ByteArrayOutputStream bo = new ByteArrayOutputStream();
     final ConstantPoolSimulator cps = new ConstantPoolSimulator();
     final CompressingDataOutputStream out = new CompressingDataOutputStream(bo, cps);

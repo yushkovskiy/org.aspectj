@@ -90,7 +90,7 @@ public class TypePatternListTestCase extends PatternsTestCase {
     stupidCheck("(int, int, int, int)", new boolean[]{false, false, false, false, true});
   }
 
-  private TypePatternList makeArgumentsPattern(String pattern) {
+  private static TypePatternList makeArgumentsPattern(String pattern) {
     return new PatternParser(pattern).parseArgumentsPattern(false);
   }
 

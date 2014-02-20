@@ -16,6 +16,7 @@ import org.aspectj.weaver.*;
 import org.aspectj.weaver.ast.Literal;
 import org.aspectj.weaver.ast.Test;
 import org.aspectj.weaver.ast.Var;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.*;
@@ -139,7 +140,7 @@ public class AnnotationPointcut extends NameBindingPointcut {
     return annotationTypePattern.matches(toMatchAgainst);
   }
 
-  private ResolvedMember findMethod(ResolvedType aspectType, ResolvedMember ajcMethod) {
+  private static ResolvedMember findMethod(ResolvedType aspectType, ResolvedMember ajcMethod) {
     final ResolvedMember[] decMethods = aspectType.getDeclaredMethods();
     for (int i = 0; i < decMethods.length; i++) {
       final ResolvedMember member = decMethods[i];
@@ -267,7 +268,7 @@ public class AnnotationPointcut extends NameBindingPointcut {
    * @see org.aspectj.weaver.patterns.PatternNode#write(java.io.DataOutputStream)
    */
   @Override
-  public void write(CompressingDataOutputStream s) throws IOException {
+  public void write(@NotNull CompressingDataOutputStream s) throws IOException {
     s.writeByte(Pointcut.ANNOTATION);
     annotationTypePattern.write(s);
     writeLocation(s);

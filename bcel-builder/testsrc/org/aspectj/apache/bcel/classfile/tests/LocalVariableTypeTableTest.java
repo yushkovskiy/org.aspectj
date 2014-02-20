@@ -23,6 +23,7 @@ import org.aspectj.apache.bcel.classfile.Utility;
 public class LocalVariableTypeTableTest extends BcelTestCase {
 
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
   }
@@ -65,6 +66,7 @@ public class LocalVariableTypeTableTest extends BcelTestCase {
     if (!tc1OK || !tc2OK) fail(errormessage);
   }
 
+  @Override
   protected void tearDown() throws Exception {
     super.tearDown();
   }

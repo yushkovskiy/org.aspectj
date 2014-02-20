@@ -25,6 +25,7 @@ public class EnumAccessFlagTest extends TestCase {
 
   private final boolean verbose = false;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
   }
@@ -48,6 +49,7 @@ public class EnumAccessFlagTest extends TestCase {
   }
 
 
+  @Override
   protected void tearDown() throws Exception {
     super.tearDown();
   }

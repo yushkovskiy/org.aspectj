@@ -83,6 +83,7 @@ public class LineNumberGen
   /**
    * @return true, if ih is target of this line number
    */
+  @Override
   public boolean containsTarget(InstructionHandle ih) {
     return this.ih == ih;
   }
@@ -91,6 +92,7 @@ public class LineNumberGen
    * @param old_ih old target
    * @param new_ih new target
    */
+  @Override
   public void updateTarget(InstructionHandle old_ih, InstructionHandle new_ih) {
     if (old_ih != ih)
       throw new ClassGenException("Not targeting " + old_ih + ", but " + ih + "}");
@@ -114,6 +116,7 @@ public class LineNumberGen
     this.ih = ih;
   }
 
+  @Override
   public Object clone() {
     try {
       return super.clone();

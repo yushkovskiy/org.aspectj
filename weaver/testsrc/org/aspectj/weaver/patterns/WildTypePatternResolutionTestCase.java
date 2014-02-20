@@ -404,6 +404,7 @@ public class WildTypePatternResolutionTestCase extends TestCase {
     return null;
   }
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     this.world = new BcelWorld();

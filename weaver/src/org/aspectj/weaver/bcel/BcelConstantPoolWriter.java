@@ -16,19 +16,20 @@ import org.aspectj.weaver.ConstantPoolWriter;
 
 /**
  * An implementation of the constant pool writer that speaks Bcel.
- * 
+ *
  * @author Andy Clement
  */
 class BcelConstantPoolWriter implements ConstantPoolWriter {
 
-	ConstantPool pool;
+  ConstantPool pool;
 
-	public BcelConstantPoolWriter(ConstantPool pool) {
-		this.pool = pool;
-	}
+  public BcelConstantPoolWriter(ConstantPool pool) {
+    this.pool = pool;
+  }
 
-	public int writeUtf8(String name) {
-		return pool.addUtf8(name);
-	}
+  @Override
+  public int writeUtf8(String name) {
+    return pool.addUtf8(name);
+  }
 
 }

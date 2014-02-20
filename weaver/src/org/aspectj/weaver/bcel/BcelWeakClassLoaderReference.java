@@ -13,6 +13,8 @@ package org.aspectj.weaver.bcel;
 
 import org.aspectj.apache.bcel.util.ClassLoaderReference;
 import org.aspectj.weaver.WeakClassLoaderReference;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Wraps a reference to a classloader inside a WeakReference. This should be used where we do not want the existence of a
@@ -32,13 +34,13 @@ import org.aspectj.weaver.WeakClassLoaderReference;
  *
  * @author Andy Clement
  */
-public class BcelWeakClassLoaderReference extends WeakClassLoaderReference implements ClassLoaderReference {
+public final class BcelWeakClassLoaderReference extends WeakClassLoaderReference implements ClassLoaderReference {
 
-  public BcelWeakClassLoaderReference(ClassLoader loader) {
+  public BcelWeakClassLoaderReference(@NotNull ClassLoader loader) {
     super(loader);
   }
 
-  public boolean equals(Object obj) {
+  public boolean equals(@Nullable Object obj) {
     if (!(obj instanceof BcelWeakClassLoaderReference))
       return false;
     final BcelWeakClassLoaderReference other = (BcelWeakClassLoaderReference) obj;

@@ -33,7 +33,7 @@ import java.util.List;
  *         Comments
  */
 public class WeaverMessageHandler implements IMessageHandler {
-  private IMessageHandler sink;
+  private final IMessageHandler sink;
   private CompilationResult currentlyWeaving;
   private Compiler compiler;
 

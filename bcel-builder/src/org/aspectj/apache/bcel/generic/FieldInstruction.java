@@ -68,6 +68,7 @@ public class FieldInstruction extends FieldOrMethod {
     super(opcode, index);
   }
 
+  @Override
   public String toString(ConstantPool cp) {
     return org.aspectj.apache.bcel.Constants.OPCODE_NAMES[opcode] + " "
         + cp.constantToString(index, org.aspectj.apache.bcel.Constants.CONSTANT_Fieldref);
@@ -80,6 +81,7 @@ public class FieldInstruction extends FieldOrMethod {
     return Type.getTypeSize(getSignature(cpg));
   }
 
+  @Override
   public Type getType(ConstantPool cpg) {
     return getFieldType(cpg);
   }
@@ -92,6 +94,7 @@ public class FieldInstruction extends FieldOrMethod {
     return getName(cpg);
   }
 
+  @Override
   public int produceStack(ConstantPool cpg) {
     if (!isStackProducer()) {
       return 0;
@@ -100,6 +103,7 @@ public class FieldInstruction extends FieldOrMethod {
     return getFieldSize(cpg); // SAME FOR GETFIELD/GETSTATIC
   }
 
+  @Override
   public int consumeStack(ConstantPool cpg) {
     if (!isStackConsumer()) {
       return 0;

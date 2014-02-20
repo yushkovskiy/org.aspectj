@@ -50,6 +50,7 @@ public class AnonymousClassTest extends TestCase {
     assertTrue("anonymous inner classes are anonymous", clazz.isNested());
   }
 
+  @Override
   protected void setUp() throws Exception {
     final ClassPath cp =
         new ClassPath("testdata" + File.separator + "testcode.jar" + File.pathSeparator + System.getProperty("java.class.path"));

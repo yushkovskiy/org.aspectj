@@ -17,6 +17,7 @@ import org.aspectj.bridge.Version;
 import org.aspectj.weaver.tools.Trace;
 import org.aspectj.weaver.tools.TraceFactory;
 import org.aspectj.weaver.tools.Traceable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -509,7 +510,7 @@ public class Dump {
 
   public interface INode {
 
-    public void accept(IVisitor visior);
+    public void accept(@NotNull IVisitor visior);
 
   }
 

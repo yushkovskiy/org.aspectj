@@ -40,7 +40,7 @@ public class AnnotationGenTest extends BcelTestCase {
     super.setUp();
   }
 
-  private ClassGen createClassGen(String classname) {
+  private static ClassGen createClassGen(String classname) {
     return new ClassGen(classname, "java.lang.Object", "<generated>", Constants.ACC_PUBLIC | Constants.ACC_SUPER, null);
   }
 
@@ -131,7 +131,7 @@ public class AnnotationGenTest extends BcelTestCase {
   // //
   // Helper methods
 
-  private void checkSerialize(AnnotationGen a, ConstantPool cpg) {
+  private static void checkSerialize(AnnotationGen a, ConstantPool cpg) {
     try {
       final String beforeName = a.getTypeName();
       final List<NameValuePair> beforeValues = a.getValues();

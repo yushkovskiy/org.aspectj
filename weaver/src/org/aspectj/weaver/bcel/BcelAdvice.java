@@ -657,6 +657,7 @@ class BcelAdvice extends Advice {
     return BcelRenderer.renderTest(shadow.getFactory(), shadow.getWorld(), runtimeTest, sk, fk, next);
   }
 
+  @Override
   public int compareTo(@NotNull Object other) {
     if (!(other instanceof BcelAdvice)) {
       return 0;

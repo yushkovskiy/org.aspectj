@@ -166,7 +166,7 @@ public class Checker extends ShadowMunger {
   // }
 
   // Return the next non-escaped (with a '\') open curly
-  private int nextCurly(String string, int pos) {
+  private static int nextCurly(String string, int pos) {
     do {
       final int curlyIndex = string.indexOf('{', pos);
       if (curlyIndex == -1) {

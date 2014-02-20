@@ -18,13 +18,16 @@ import org.aspectj.org.eclipse.jdt.core.compiler.IProblem;
 import org.aspectj.org.eclipse.jdt.internal.compiler.env.ICompilationUnit;
 import org.aspectj.weaver.LintMessage;
 import org.aspectj.weaver.World;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-public class EclipseAdapterUtils {
+public final class EclipseAdapterUtils {
 
   // XXX some cut-and-paste from eclipse sources
-  public static String makeLocationContext(ICompilationUnit compilationUnit, IProblem problem) {
+  @NotNull
+  public static String makeLocationContext(@NotNull ICompilationUnit compilationUnit, @NotNull IProblem problem) {
     // extra from the source the innacurate token
     // and "highlight" it using some underneath ^^^^^
     // put some context around too.
@@ -107,10 +110,10 @@ public class EclipseAdapterUtils {
   /**
    * Extract source location file, start and end lines, and context. Column is not extracted correctly.
    *
-   * @param progressListener
    * @return ISourceLocation with correct file and lines but not column.
    */
-  public static ISourceLocation makeSourceLocation(ICompilationUnit unit, IProblem problem, IProgressListener progressListener) {
+  @NotNull
+  public static ISourceLocation makeSourceLocation(@NotNull ICompilationUnit unit, @NotNull IProblem problem, @Nullable IProgressListener progressListener) {
     final int line = problem.getSourceLineNumber();
     final File file = new File(new String(problem.getOriginatingFileName()));
     // cheat here...269912 - don't build the context if under IDE control
@@ -125,11 +128,9 @@ public class EclipseAdapterUtils {
 
   /**
    * Extract message text and source location, including context.
-   *
-   * @param world
-   * @param progressListener
    */
-  public static IMessage makeMessage(ICompilationUnit unit, IProblem problem, World world, IProgressListener progressListener) {
+  @NotNull
+  public static IMessage makeMessage(@NotNull ICompilationUnit unit, @NotNull IProblem problem, @NotNull World world, @Nullable IProgressListener progressListener) {
     final ISourceLocation sourceLocation = makeSourceLocation(unit, problem, progressListener);
     final IProblem[] seeAlso = problem.seeAlso();
     // If the user has turned off classfile line number gen, then we may not be able to tell them
@@ -189,13 +190,15 @@ public class EclipseAdapterUtils {
     return msg;
   }
 
-  public static IMessage makeErrorMessage(ICompilationUnit unit, String text, Exception ex) {
+  @NotNull
+  public static IMessage makeErrorMessage(@NotNull ICompilationUnit unit, String text, Exception ex) {
     final ISourceLocation loc = new SourceLocation(new File(new String(unit.getFileName())), 0, 0, 0, "");
     final IMessage msg = new Message(text, IMessage.ERROR, ex, loc);
     return msg;
   }
 
-  public static IMessage makeErrorMessage(String srcFile, String text, Exception ex) {
+  @NotNull
+  public static IMessage makeErrorMessage(@NotNull String srcFile, @NotNull String text, @NotNull Exception ex) {
     final ISourceLocation loc = new SourceLocation(new File(srcFile), 0, 0, 0, "");
     final IMessage msg = new Message(text, IMessage.ERROR, ex, loc);
     return msg;

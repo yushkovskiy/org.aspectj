@@ -28,53 +28,61 @@ import org.aspectj.apache.bcel.classfile.annotation.NameValuePair;
  */
 public class FakeAnnotation extends AnnotationGen {
 
-	private String name;
-	private String sig;
-	private boolean isRuntimeVisible;
+  private String name;
+  private String sig;
+  private boolean isRuntimeVisible;
 
-	public FakeAnnotation(String name, String sig, boolean isRuntimeVisible) {
-		super(null, null, true, null);
-		this.name = name;
-		this.sig = sig;
-		this.isRuntimeVisible = isRuntimeVisible;
-	}
+  public FakeAnnotation(String name, String sig, boolean isRuntimeVisible) {
+    super(null, null, true, null);
+    this.name = name;
+    this.sig = sig;
+    this.isRuntimeVisible = isRuntimeVisible;
+  }
 
-	public String getTypeName() {
-		return name;
-	}
+  @Override
+  public String getTypeName() {
+    return name;
+  }
 
-	public String getTypeSignature() {
-		return sig;
-	}
+  @Override
+  public String getTypeSignature() {
+    return sig;
+  }
 
-	public void addElementNameValuePair(NameValuePair evp) {
-		// doesnt need to know about name/value pairs
-	}
+  @Override
+  public void addElementNameValuePair(NameValuePair evp) {
+    // doesnt need to know about name/value pairs
+  }
 
-	public void dump(DataOutputStream dos) throws IOException {
-		// should be serialized
-	}
+  @Override
+  public void dump(DataOutputStream dos) throws IOException {
+    // should be serialized
+  }
 
-	public int getTypeIndex() {
-		return 0;
-	}
+  @Override
+  public int getTypeIndex() {
+    return 0;
+  }
 
-	public List getValues() {
-		return null;
-	}
+  @Override
+  public List getValues() {
+    return null;
+  }
 
-	public boolean isRuntimeVisible() {
-		return isRuntimeVisible;
-	}
+  @Override
+  public boolean isRuntimeVisible() {
+    return isRuntimeVisible;
+  }
 
-	protected void setIsRuntimeVisible(boolean b) {
-	}
+  protected void setIsRuntimeVisible(boolean b) {
+  }
 
-	public String toShortString() {
-		return "@" + this.name;
-	}
+  @Override
+  public String toShortString() {
+    return "@" + this.name;
+  }
 
-	public String toString() {
-		return this.name;
-	}
+  public String toString() {
+    return this.name;
+  }
 }

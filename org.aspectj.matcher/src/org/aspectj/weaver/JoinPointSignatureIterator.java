@@ -139,7 +139,7 @@ public class JoinPointSignatureIterator implements Iterator<JoinPointSignature> 
   /**
    * Build a list containing every type between subtype and supertype, inclusively.
    */
-  private void accumulateTypesInBetween(ResolvedType subType, ResolvedType superType, List<ResolvedType> types) {
+  private static void accumulateTypesInBetween(ResolvedType subType, ResolvedType superType, List<ResolvedType> types) {
     types.add(subType);
     if (subType == superType) {
       return;
@@ -246,7 +246,7 @@ public class JoinPointSignatureIterator implements Iterator<JoinPointSignature> 
    * @param parentMember
    * @return
    */
-  private boolean isVisibleTo(ResolvedMember childMember, ResolvedMember parentMember) {
+  private static boolean isVisibleTo(ResolvedMember childMember, ResolvedMember parentMember) {
     if (childMember.getDeclaringType().equals(parentMember.getDeclaringType())) {
       return true;
     }

@@ -16,11 +16,13 @@ package org.aspectj.weaver.tools.cache;
  * Default factory for creating the backing and resolving classes.
  */
 public class DefaultCacheFactory implements CacheFactory {
-	public CacheKeyResolver createResolver() {
-		return new DefaultCacheKeyResolver();
-	}
+  @Override
+  public CacheKeyResolver createResolver() {
+    return new DefaultCacheKeyResolver();
+  }
 
-	public CacheBacking createBacking(String scope) {
-		return DefaultFileCacheBacking.createBacking(scope);
-	}
+  @Override
+  public CacheBacking createBacking(String scope) {
+    return DefaultFileCacheBacking.createBacking(scope);
+  }
 }

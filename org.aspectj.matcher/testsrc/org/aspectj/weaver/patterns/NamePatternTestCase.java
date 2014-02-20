@@ -70,7 +70,7 @@ public class NamePatternTestCase extends TestCase {
     }
   }
 
-  private void checkMatch(String string, NamePattern p, boolean shouldMatch) {
+  private static void checkMatch(String string, NamePattern p, boolean shouldMatch) {
     final String msg = "matching " + string + " to " + p;
     assertEquals(msg, shouldMatch, p.matches(string));
   }
@@ -88,7 +88,7 @@ public class NamePatternTestCase extends TestCase {
     }
   }
 
-  private void checkSerialization(NamePattern p) throws IOException {
+  private static void checkSerialization(NamePattern p) throws IOException {
     final ByteArrayOutputStream bo = new ByteArrayOutputStream();
     final ConstantPoolSimulator cps = new ConstantPoolSimulator();
     final CompressingDataOutputStream out = new CompressingDataOutputStream(bo, cps);

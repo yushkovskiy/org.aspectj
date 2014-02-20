@@ -11,8 +11,8 @@ package org.aspectj.org.eclipse.jdt.core.dom;
 
 public abstract class AbstractBooleanTypePattern extends TypePattern {
 
-  private TypePattern left;
-  private TypePattern right;
+  private final TypePattern left;
+  private final TypePattern right;
 
   AbstractBooleanTypePattern(AST ast, TypePattern left, TypePattern right,
                              String booleanOperator) {

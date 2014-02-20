@@ -16,6 +16,7 @@ import org.aspectj.apache.bcel.classfile.ConstantPool;
 import org.aspectj.apache.bcel.classfile.ConstantUtf8;
 import org.aspectj.apache.bcel.classfile.Utility;
 import org.aspectj.apache.bcel.generic.ObjectType;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -25,6 +26,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class AnnotationGen {
+  @NotNull
   public static final AnnotationGen[] NO_ANNOTATIONS = new AnnotationGen[0];
 
   private int typeIndex;
@@ -43,7 +45,8 @@ public class AnnotationGen {
     pairs = copyValues(a.getValues(), cpool, copyPoolEntries);
   }
 
-  private List<NameValuePair> copyValues(List<NameValuePair> in, ConstantPool cpool, boolean copyPoolEntries) {
+  @NotNull
+  private static List<NameValuePair> copyValues(List<NameValuePair> in, ConstantPool cpool, boolean copyPoolEntries) {
     final List<NameValuePair> out = new ArrayList<NameValuePair>();
     for (NameValuePair nvp : in) {
       out.add(new NameValuePair(nvp, cpool, copyPoolEntries));
@@ -67,6 +70,7 @@ public class AnnotationGen {
     isRuntimeVisible = runtimeVisible;
   }
 
+  @NotNull
   public static AnnotationGen read(DataInputStream dis, ConstantPool cpool, boolean b) throws IOException {
     final AnnotationGen a = new AnnotationGen(cpool);
     a.typeIndex = dis.readUnsignedShort();
@@ -125,6 +129,7 @@ public class AnnotationGen {
     return s.toString();
   }
 
+  @NotNull
   public String toShortString() {
     final StringBuilder s = new StringBuilder();
     s.append("@").append(getTypeName());

@@ -20,6 +20,7 @@ import org.aspectj.weaver.ast.Expr;
 import org.aspectj.weaver.ast.Literal;
 import org.aspectj.weaver.ast.Test;
 import org.aspectj.weaver.ast.Var;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -95,7 +96,7 @@ public class IfPointcut extends Pointcut {
   }
 
   @Override
-  public void write(CompressingDataOutputStream s) throws IOException {
+  public void write(@NotNull CompressingDataOutputStream s) throws IOException {
     s.writeByte(Pointcut.IF);
     s.writeBoolean(testMethod != null); // do we have a test method?
     if (testMethod != null) {
@@ -500,7 +501,7 @@ public class IfPointcut extends Pointcut {
     }
 
     @Override
-    public void write(CompressingDataOutputStream s) throws IOException {
+    public void write(@NotNull CompressingDataOutputStream s) throws IOException {
       s.writeByte(Pointcut.IF_FALSE);
     }
 
@@ -569,7 +570,7 @@ public class IfPointcut extends Pointcut {
     }
 
     @Override
-    public void write(CompressingDataOutputStream s) throws IOException {
+    public void write(@NotNull CompressingDataOutputStream s) throws IOException {
       s.writeByte(IF_TRUE);
     }
 

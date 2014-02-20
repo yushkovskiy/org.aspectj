@@ -78,6 +78,7 @@ public class InvokeInstruction extends FieldOrMethod {
   /**
    * @return mnemonic for instruction with symbolic references resolved
    */
+  @Override
   public String toString(ConstantPool cp) {
     final Constant c = cp.getConstant(index);
     final StringTokenizer tok = new StringTokenizer(cp.constantToString(c));
@@ -90,6 +91,7 @@ public class InvokeInstruction extends FieldOrMethod {
    *
    * @return Number of words consumed from stack by this instruction
    */
+  @Override
   public int consumeStack(ConstantPool cpg) {
     final String signature = getSignature(cpg);
     int sum = Type.getArgumentSizes(signature);
@@ -104,6 +106,7 @@ public class InvokeInstruction extends FieldOrMethod {
    *
    * @return Number of words produced onto stack by this instruction
    */
+  @Override
   public int produceStack(ConstantPool cpg) {
     return getReturnType(cpg).getSize();
   }
@@ -111,6 +114,7 @@ public class InvokeInstruction extends FieldOrMethod {
   /**
    * @return return type of referenced method.
    */
+  @Override
   public Type getType(ConstantPool cpg) {
     return getReturnType(cpg);
   }

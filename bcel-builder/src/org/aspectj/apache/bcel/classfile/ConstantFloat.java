@@ -97,6 +97,7 @@ public final class ConstantFloat extends Constant implements SimpleConstant {
     return floatValue;
   }
 
+  @Override
   public final String getStringValue() {
     return Float.toString(floatValue);
   }

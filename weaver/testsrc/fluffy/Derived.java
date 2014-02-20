@@ -6,17 +6,27 @@ import org.aspectj.weaver.testcode.Base;
 
 public class Derived extends Base {
 
-	public static void onlyDerived() throws IOException, CloneNotSupportedException {}
-	public static void both() {}
-	
-	public void onlyDerivedNonStatic() {}
-	public void bothNonStatic() {}
-	
-	public int onlyDerived;
-	public int both;
-	
-	public Derived() {}
-	
-	public void m() {}
-	
+  public static void onlyDerived() throws IOException, CloneNotSupportedException {
+  }
+
+  public static void both() {
+  }
+
+  public void onlyDerivedNonStatic() {
+  }
+
+  @Override
+  public void bothNonStatic() {
+  }
+
+  public int onlyDerived;
+  public int both;
+
+  public Derived() {
+  }
+
+  @Override
+  public void m() {
+  }
+
 }

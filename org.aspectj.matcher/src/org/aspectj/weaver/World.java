@@ -48,47 +48,75 @@ public abstract class World implements Dump.INode {
   @NotNull
   private static final Trace trace = TraceFactory.getTraceFactory().getTrace(World.class);
 
+  @NotNull
   public final static String xsetAVOID_FINAL = "avoidFinal"; // default true
-
+  @NotNull
   public final static String xsetWEAVE_JAVA_PACKAGES = "weaveJavaPackages"; // default
   // false
   // -
   // controls
   // LTW
+  @NotNull
   public final static String xsetWEAVE_JAVAX_PACKAGES = "weaveJavaxPackages"; // default
   // false
   // -
   // controls
   // LTW
+  @NotNull
   public final static String xsetCAPTURE_ALL_CONTEXT = "captureAllContext"; // default
   // false
+  @NotNull
   public final static String xsetRUN_MINIMAL_MEMORY = "runMinimalMemory"; // default
   // true
+  @NotNull
   public final static String xsetDEBUG_STRUCTURAL_CHANGES_CODE = "debugStructuralChangesCode"; // default
   // false
+  @NotNull
   public final static String xsetDEBUG_BRIDGING = "debugBridging"; // default
   // false
+  @NotNull
   public final static String xsetTRANSIENT_TJP_FIELDS = "makeTjpFieldsTransient"; // default false
+  @NotNull
   public final static String xsetBCEL_REPOSITORY_CACHING = "bcelRepositoryCaching";
+  @NotNull
   public final static String xsetPIPELINE_COMPILATION = "pipelineCompilation";
+  @NotNull
   public final static String xsetGENERATE_STACKMAPS = "generateStackMaps";
+  @NotNull
   public final static String xsetPIPELINE_COMPILATION_DEFAULT = "true";
+  @NotNull
   public final static String xsetCOMPLETE_BINARY_TYPES = "completeBinaryTypes";
+  @NotNull
   public final static String xsetCOMPLETE_BINARY_TYPES_DEFAULT = "false";
+  @NotNull
   public final static String xsetTYPE_DEMOTION = "typeDemotion";
+  @NotNull
   public final static String xsetTYPE_DEMOTION_DEBUG = "typeDemotionDebug";
+  @NotNull
   public final static String xsetTYPE_REFS = "useWeakTypeRefs";
+  @NotNull
   public final static String xsetBCEL_REPOSITORY_CACHING_DEFAULT = "true";
+  @NotNull
   public final static String xsetFAST_PACK_METHODS = "fastPackMethods"; // default true
+  @NotNull
   public final static String xsetOVERWEAVING = "overWeaving";
+  @NotNull
   public final static String xsetOPTIMIZED_MATCHING = "optimizedMatching";
+  @NotNull
   public final static String xsetTIMERS_PER_JOINPOINT = "timersPerJoinpoint";
+  @NotNull
   public final static String xsetTIMERS_PER_FASTMATCH_CALL = "timersPerFastMatchCall";
+  @NotNull
   public final static String xsetITD_VERSION = "itdVersion";
+  @NotNull
   public final static String xsetITD_VERSION_ORIGINAL = "1";
+  @NotNull
   public final static String xsetITD_VERSION_2NDGEN = "2";
+  @NotNull
   public final static String xsetITD_VERSION_DEFAULT = xsetITD_VERSION_2NDGEN;
+  @NotNull
   public final static String xsetMINIMAL_MODEL = "minimalModel";
+  @NotNull
   public final static String xsetTARGETING_RUNTIME_1610 = "targetRuntime1_6_10";
 
   /**
@@ -126,6 +154,7 @@ public abstract class World implements Dump.INode {
   /**
    * All of the type and shadow mungers known to us
    */
+  @NotNull
   private final CrosscuttingMembersSet crosscuttingMembersSet = new CrosscuttingMembersSet(this);
 
   /**
@@ -188,6 +217,7 @@ public abstract class World implements Dump.INode {
 
   private boolean addSerialVerUID = false;
 
+  @Nullable
   private Properties extraConfiguration = null;
   private boolean checkedAdvancedConfiguration = false;
   private boolean synchronizationPointcutsInUse = false;
@@ -222,18 +252,29 @@ public abstract class World implements Dump.INode {
   /**
    * A list of RuntimeExceptions containing full stack information for every type we couldn't find.
    */
+  @Nullable
   private List<RuntimeException> dumpState_cantFindTypeExceptions = null;
 
+  @NotNull
   public final Primitive BYTE = new Primitive("B", 1, 0);
+  @NotNull
   public final Primitive CHAR = new Primitive("C", 1, 1);
+  @NotNull
   public final Primitive DOUBLE = new Primitive("D", 2, 2);
+  @NotNull
   public final Primitive FLOAT = new Primitive("F", 1, 3);
+  @NotNull
   public final Primitive INT = new Primitive("I", 1, 4);
+  @NotNull
   public final Primitive LONG = new Primitive("J", 2, 5);
+  @NotNull
   public final Primitive SHORT = new Primitive("S", 1, 6);
+  @NotNull
   public final Primitive BOOLEAN = new Primitive("Z", 1, 7);
+  @NotNull
   public final Primitive VOID = new Primitive("V", 0, 8);
 
+  @NotNull
   private final Object buildingTypeLock = new Object();
 
   // Only need one representation of '?' in a world - can be shared
@@ -246,12 +287,15 @@ public abstract class World implements Dump.INode {
   // --- I would rather stash this against a reference type - but we don't
   // guarantee referencetypes are unique for
   // so we can't :(
+  @NotNull
   private final Map<Class<?>, TypeVariable[]> workInProgress1 = new HashMap<Class<?>, TypeVariable[]>();
 
   // map from aspect > excluded types
   // memory issue here?
+  @NotNull
   private final Map<ResolvedType, Set<ResolvedType>> exclusionMap = new HashMap<ResolvedType, Set<ResolvedType>>();
 
+  @Nullable
   private TimeCollector timeCollector = null;
 
   static {
@@ -293,7 +337,7 @@ public abstract class World implements Dump.INode {
    * Dump processing when a fatal error occurs
    */
   @Override
-  public void accept(Dump.IVisitor visitor) {
+  public void accept(@NotNull Dump.IVisitor visitor) {
     // visitor.visitObject("Extra configuration:");
     // visitor.visitList(extraConfiguration.);
     visitor.visitObject("Shadow mungers:");
@@ -316,7 +360,8 @@ public abstract class World implements Dump.INode {
   /**
    * Resolve a type that we require to be present in the world
    */
-  public ResolvedType resolve(UnresolvedType ty) {
+  @Nullable
+  public ResolvedType resolve(@NotNull UnresolvedType ty) {
     return resolve(ty, false);
   }
 
@@ -324,7 +369,8 @@ public abstract class World implements Dump.INode {
    * Attempt to resolve a type - the source location gives you some context in which resolution is taking place. In the case of an
    * error where we can't find the type - we can then at least report why (source location) we were trying to resolve it.
    */
-  public ResolvedType resolve(UnresolvedType ty, ISourceLocation isl) {
+  @Nullable
+  public ResolvedType resolve(@NotNull UnresolvedType ty, ISourceLocation isl) {
     final ResolvedType ret = resolve(ty, true);
     if (ResolvedType.isMissing(ty)) {
       // IMessage msg = null;
@@ -345,7 +391,8 @@ public abstract class World implements Dump.INode {
    * Convenience method for resolving an array of unresolved types in one hit. Useful for e.g. resolving type parameters in
    * signatures.
    */
-  public ResolvedType[] resolve(UnresolvedType[] types) {
+  @NotNull
+  public ResolvedType[] resolve(@Nullable UnresolvedType[] types) {
     if (types == null) {
       return ResolvedType.NONE;
     }
@@ -360,7 +407,8 @@ public abstract class World implements Dump.INode {
   /**
    * Resolve a type. This the hub of type resolution. The resolved type is added to the type map by signature.
    */
-  public ResolvedType resolve(UnresolvedType ty, boolean allowMissing) {
+  @Nullable
+  public ResolvedType resolve(@NotNull UnresolvedType ty, boolean allowMissing) {
 
     // special resolution processing for already resolved types.
     if (ty instanceof ResolvedType) {
@@ -435,7 +483,7 @@ public abstract class World implements Dump.INode {
    * Return true if the classloader relating to this world is definetly the one that will define the specified class. Return false
    * otherwise or we don't know for certain.
    */
-  public boolean isLocallyDefined(String classname) {
+  public boolean isLocallyDefined(@NotNull String classname) {
     return false;
   }
 
@@ -443,7 +491,8 @@ public abstract class World implements Dump.INode {
    * Some TypeFactory operations create resolved types directly, but these won't be in the typeMap - this resolution process puts
    * them there. Resolved types are also told their world which is needed for the special autoboxing resolved types.
    */
-  public ResolvedType resolve(ResolvedType ty) {
+  @NotNull
+  public ResolvedType resolve(@NotNull ResolvedType ty) {
     if (ty.isTypeVariableReference()) {
       return ty; // until type variables have proper sigs...
     }
@@ -460,6 +509,7 @@ public abstract class World implements Dump.INode {
   /**
    * Convenience method for finding a type by name and resolving it in one step.
    */
+  @Nullable
   public ResolvedType resolve(String name) {
     // trace.enter("resolve", this, new Object[] {name});
     final ResolvedType ret = resolve(UnresolvedType.forName(name));
@@ -467,10 +517,12 @@ public abstract class World implements Dump.INode {
     return ret;
   }
 
+  @Nullable
   public ReferenceType resolveToReferenceType(String name) {
     return (ReferenceType) resolve(name);
   }
 
+  @Nullable
   public ResolvedType resolve(String name, boolean allowMissing) {
     return resolve(UnresolvedType.forName(name), allowMissing);
   }
@@ -809,7 +861,7 @@ public abstract class World implements Dump.INode {
 //		return true;
   }
 
-  public void performExtraConfiguration(String config) {
+  public void performExtraConfiguration(@Nullable String config) {
     if (config == null) {
       return;
     }
@@ -847,6 +899,7 @@ public abstract class World implements Dump.INode {
   /**
    * may return null
    */
+  @Nullable
   public Properties getExtraConfiguration() {
     return extraConfiguration;
   }
@@ -906,7 +959,7 @@ public abstract class World implements Dump.INode {
   // --- with java5 we can get into a recursive mess if we aren't careful when
   // resolving types (*cough* java.lang.Enum) ---
 
-  public boolean isDemotionActive() {
+  public static boolean isDemotionActive() {
     return true;
   }
 
@@ -1167,7 +1220,7 @@ public abstract class World implements Dump.INode {
     return false;
   }
 
-  public boolean isAspectIncluded(ResolvedType aspectType) {
+  public boolean isAspectIncluded(@NotNull ResolvedType aspectType) {
     return true;
   }
 
@@ -1282,7 +1335,7 @@ public abstract class World implements Dump.INode {
   /**
    * Reference types we don't intend to weave may be ejected from the cache if we need the space.
    */
-  protected boolean isExpendable(ResolvedType type) {
+  protected static boolean isExpendable(ResolvedType type) {
     return !type.equals(UnresolvedType.OBJECT) && !type.isExposedToWeaver() && !type.isPrimitiveType()
         && !type.isPrimitiveArray();
   }

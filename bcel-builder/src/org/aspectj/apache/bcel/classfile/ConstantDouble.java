@@ -102,6 +102,7 @@ public final class ConstantDouble extends Constant implements SimpleConstant {
     return value;
   }
 
+  @Override
   public String getStringValue() {
     return Double.toString(value);
   }

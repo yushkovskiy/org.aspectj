@@ -34,6 +34,7 @@ public class BcelCflowCounterFieldAdder extends BcelTypeMunger {
     this.cflowCounterField = cflowCounterField;
   }
 
+  @Override
   public boolean munge(BcelClassWeaver weaver) {
     final LazyClassGen gen = weaver.getLazyClassGen();
 
@@ -64,18 +65,22 @@ public class BcelCflowCounterFieldAdder extends BcelTypeMunger {
     return true;
   }
 
+  @Override
   public ResolvedMember getMatchingSyntheticMember(Member member) {
     return null;
   }
 
+  @Override
   public ResolvedMember getSignature() {
     return cflowCounterField;
   }
 
+  @Override
   public boolean matches(ResolvedType onType) {
     return onType.equals(cflowCounterField.getDeclaringType());
   }
 
+  @Override
   public boolean existsToSupportShadowMunging() {
     return true;
   }

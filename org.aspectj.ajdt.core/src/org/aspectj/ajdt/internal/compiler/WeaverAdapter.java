@@ -19,6 +19,8 @@ import org.aspectj.weaver.IClassFileProvider;
 import org.aspectj.weaver.IUnwovenClassFile;
 import org.aspectj.weaver.IWeaveRequestor;
 import org.eclipse.core.runtime.OperationCanceledException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -27,7 +29,7 @@ import java.util.Map;
  * @author colyer This class provides the weaver with a source of class files to weave (via the iterator and IClassFileProvider
  *         interfaces). It receives results back from the weaver via the IWeaveRequestor interface.
  */
-public class WeaverAdapter implements IClassFileProvider, IWeaveRequestor, Iterator {
+public final class WeaverAdapter implements IClassFileProvider, IWeaveRequestor, Iterator {
 
   private final AbstractCompilerAdapter compilerAdapter;
   private Iterator resultIterator;
@@ -35,6 +37,7 @@ public class WeaverAdapter implements IClassFileProvider, IWeaveRequestor, Itera
   private InterimCompilationResult nowProcessing;
   private InterimCompilationResult lastReturnedResult;
   private final WeaverMessageHandler weaverMessageHandler;
+  @Nullable
   private final IProgressListener progressListener;
   private boolean finalPhase = false;
   private int localIteratorCounter;
@@ -47,7 +50,7 @@ public class WeaverAdapter implements IClassFileProvider, IWeaveRequestor, Itera
   private int progressCompletionCount;
 
   public WeaverAdapter(AbstractCompilerAdapter forCompiler, WeaverMessageHandler weaverMessageHandler,
-                       IProgressListener progressListener) {
+                       @Nullable IProgressListener progressListener) {
     this.compilerAdapter = forCompiler;
     this.weaverMessageHandler = weaverMessageHandler;
     this.progressListener = progressListener;
@@ -205,7 +208,7 @@ public class WeaverAdapter implements IClassFileProvider, IWeaveRequestor, Itera
    * @see org.aspectj.weaver.IWeaveRequestor#acceptResult(org.aspectj.weaver.bcel.UnwovenClassFile)
    */
   @Override
-  public void acceptResult(IUnwovenClassFile result) {
+  public void acceptResult(@NotNull IUnwovenClassFile result) {
     final char[] key = result.getClassNameAsChars();
     removeFromMap(lastReturnedResult.result().compiledTypes, key);
     final AjClassFile ajcf = new AjClassFile(key, result.getBytes());

@@ -114,6 +114,7 @@ public class DefaultFileCacheBacking extends AbstractIndexedFileCacheBacking {
     }
   }
 
+  @Override
   public void clear() {
     final File cacheDir = getCacheDirectory();
     int numDeleted = 0;
@@ -140,6 +141,7 @@ public class DefaultFileCacheBacking extends AbstractIndexedFileCacheBacking {
   public String[] getKeys(final String regex) {
     final File cacheDirectory = getCacheDirectory();
     final File[] files = cacheDirectory.listFiles(new FilenameFilter() {
+      @Override
       public boolean accept(File file, String s) {
         if (s.matches(regex)) {
           return true;
@@ -157,6 +159,7 @@ public class DefaultFileCacheBacking extends AbstractIndexedFileCacheBacking {
     return keys;
   }
 
+  @Override
   public CachedClassEntry get(CachedClassReference ref, byte[] originalBytes) {
     final File cacheDirectory = getCacheDirectory();
     final String refKey = ref.getKey();
@@ -192,6 +195,7 @@ public class DefaultFileCacheBacking extends AbstractIndexedFileCacheBacking {
     return null;
   }
 
+  @Override
   public void put(CachedClassEntry entry, byte[] originalBytes) {
     final File cacheDirectory = getCacheDirectory();
     final String refKey = entry.getKey();
@@ -216,6 +220,7 @@ public class DefaultFileCacheBacking extends AbstractIndexedFileCacheBacking {
     }
   }
 
+  @Override
   public void remove(CachedClassReference ref) {
     final File cacheDirectory = getCacheDirectory();
     final String refKey = ref.getKey();

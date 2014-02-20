@@ -15,14 +15,27 @@ package org.aspectj.weaver.patterns;
 
 import org.aspectj.util.TypeSafeEnum;
 import org.aspectj.weaver.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
 // PTWIMPL New kind added to this class, can be (de)serialized
 public abstract class PerClause extends Pointcut {
+
+  @NotNull
+  public static final Kind SINGLETON = new Kind("issingleton", 1);
+  @NotNull
+  public static final Kind PERCFLOW = new Kind("percflow", 2);
+  @NotNull
+  public static final Kind PEROBJECT = new Kind("perobject", 3);
+  @NotNull
+  public static final Kind FROMSUPER = new Kind("fromsuper", 4);
+  @NotNull
+  public static final Kind PERTYPEWITHIN = new Kind("pertypewithin", 5);
   protected ResolvedType inAspect;
 
-  public static PerClause readPerClause(VersionedDataInputStream s, ISourceContext context) throws IOException {
+  @NotNull
+  public static PerClause readPerClause(@NotNull VersionedDataInputStream s, ISourceContext context) throws IOException {
     final Kind kind = Kind.read(s);
     if (kind == SINGLETON) return PerSingleton.readPerClause(s, context);
     else if (kind == PERCFLOW) return PerCflow.readPerClause(s, context);
@@ -45,9 +58,6 @@ public abstract class PerClause extends Pointcut {
   public abstract String toDeclarationString();
 
   public static class Kind extends TypeSafeEnum {
-    public Kind(String name, int key) {
-      super(name, key);
-    }
 
     public static Kind read(VersionedDataInputStream s) throws IOException {
       final int key = s.readByte();
@@ -65,15 +75,20 @@ public abstract class PerClause extends Pointcut {
       }
       throw new BCException("weird kind " + key);
     }
+
+    public Kind(String name, int key) {
+      super(name, key);
+    }
   }
 
-  public static final Kind SINGLETON = new Kind("issingleton", 1);
-  public static final Kind PERCFLOW = new Kind("percflow", 2);
-  public static final Kind PEROBJECT = new Kind("perobject", 3);
-  public static final Kind FROMSUPER = new Kind("fromsuper", 4);
-  public static final Kind PERTYPEWITHIN = new Kind("pertypewithin", 5);
-
   public static class KindAnnotationPrefix extends TypeSafeEnum {
+
+    public static final KindAnnotationPrefix PERCFLOW = new KindAnnotationPrefix("percflow(", 1);
+    public static final KindAnnotationPrefix PERCFLOWBELOW = new KindAnnotationPrefix("percflowbelow(", 2);
+    public static final KindAnnotationPrefix PERTHIS = new KindAnnotationPrefix("perthis(", 3);
+    public static final KindAnnotationPrefix PERTARGET = new KindAnnotationPrefix("pertarget(", 4);
+    public static final KindAnnotationPrefix PERTYPEWITHIN = new KindAnnotationPrefix("pertypewithin(", 5);
+
     private KindAnnotationPrefix(String name, int key) {
       super(name, key);
     }
@@ -89,11 +104,5 @@ public abstract class PerClause extends Pointcut {
 
       return perClause.substring(from, to);
     }
-
-    public static final KindAnnotationPrefix PERCFLOW = new KindAnnotationPrefix("percflow(", 1);
-    public static final KindAnnotationPrefix PERCFLOWBELOW = new KindAnnotationPrefix("percflowbelow(", 2);
-    public static final KindAnnotationPrefix PERTHIS = new KindAnnotationPrefix("perthis(", 3);
-    public static final KindAnnotationPrefix PERTARGET = new KindAnnotationPrefix("pertarget(", 4);
-    public static final KindAnnotationPrefix PERTYPEWITHIN = new KindAnnotationPrefix("pertypewithin(", 5);
   }
 }

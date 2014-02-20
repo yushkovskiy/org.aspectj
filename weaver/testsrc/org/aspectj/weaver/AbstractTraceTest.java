@@ -45,6 +45,7 @@ public abstract class AbstractTraceTest extends TestCase {
   public void testEnterWithThisAndTraceable() {
     final Object arg1 = new Traceable() {
 
+      @Override
       public String toTraceString() {
         return getClass().getName() + "[Traceable]";
       }

@@ -163,11 +163,13 @@ public class ClassPathManager {
       this.file = file;
     }
 
+    @Override
     public InputStream getInputStream() throws IOException {
       fis = new FileInputStream(file);
       return fis;
     }
 
+    @Override
     public void close() {
       try {
         if (fis != null)
@@ -179,6 +181,7 @@ public class ClassPathManager {
       }
     }
 
+    @Override
     public String getPath() {
       return file.getPath();
     }
@@ -195,6 +198,7 @@ public class ClassPathManager {
       this.dirPath = dirPath;
     }
 
+    @Override
     public ClassFile find(String name) {
       final File f = new File(dirPath + File.separator + name.replace('.', File.separatorChar) + ".class");
       if (f.isFile())
@@ -222,11 +226,13 @@ public class ClassPathManager {
       this.entry = entry;
     }
 
+    @Override
     public InputStream getInputStream() throws IOException {
       is = zipFile.getZipFile().getInputStream(entry);
       return is;
     }
 
+    @Override
     public void close() {
       try {
         if (is != null)
@@ -238,6 +244,7 @@ public class ClassPathManager {
       }
     }
 
+    @Override
     public String getPath() {
       return entry.getName();
     }
@@ -260,6 +267,7 @@ public class ClassPathManager {
       return zipFile;
     }
 
+    @Override
     public ClassFile find(String name) throws IOException {
       ensureOpen();
       final String key = name.replace('.', '/') + ".class";

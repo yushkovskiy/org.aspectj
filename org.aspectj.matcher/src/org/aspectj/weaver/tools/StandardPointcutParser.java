@@ -181,7 +181,7 @@ public class StandardPointcutParser {
    * @param type
    * @return
    */
-  public PointcutParameter createPointcutParameter(String name, Class type) {
+  public static PointcutParameter createPointcutParameter(String name, Class type) {
     return new PointcutParameterImpl(name, type);
   }
 
@@ -327,7 +327,7 @@ public class StandardPointcutParser {
     }
   }
 
-  private UnresolvedType toUnresolvedType(Class clazz) {
+  private static UnresolvedType toUnresolvedType(Class clazz) {
     if (clazz.isArray()) {
       return UnresolvedType.forSignature(clazz.getName().replace('.', '/'));
     } else {
@@ -469,7 +469,7 @@ public class StandardPointcutParser {
     }
   }
 
-  private String buildUserMessageFromParserException(String pc, ParserException ex) {
+  private static String buildUserMessageFromParserException(String pc, ParserException ex) {
     final StringBuffer msg = new StringBuffer();
     msg.append("Pointcut is not well-formed: expecting '");
     msg.append(ex.getMessage());

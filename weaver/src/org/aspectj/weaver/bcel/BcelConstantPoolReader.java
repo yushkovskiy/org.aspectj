@@ -16,19 +16,20 @@ import org.aspectj.weaver.ConstantPoolReader;
 
 /**
  * An implementation of the constant pool reader that speaks Bcel.
- * 
+ *
  * @author Andy Clement
  */
 public class BcelConstantPoolReader implements ConstantPoolReader {
 
-	private ConstantPool constantPool;
+  private ConstantPool constantPool;
 
-	public BcelConstantPoolReader(ConstantPool constantPool) {
-		this.constantPool = constantPool;
-	}
+  public BcelConstantPoolReader(ConstantPool constantPool) {
+    this.constantPool = constantPool;
+  }
 
-	public String readUtf8(int cpIndex) {
-		return constantPool.getConstantUtf8(cpIndex).getValue();
-	}
+  @Override
+  public String readUtf8(int cpIndex) {
+    return constantPool.getConstantUtf8(cpIndex).getValue();
+  }
 
 }

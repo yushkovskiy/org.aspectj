@@ -99,6 +99,7 @@ public final class CodeException implements Cloneable, Constants, Node, Serializ
     this.catch_type = catch_type;
   }
 
+  @Override
   public void accept(ClassVisitor v) {
     v.visitCodeException(this);
   }

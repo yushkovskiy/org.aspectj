@@ -36,7 +36,7 @@ public class AnnotationDefault extends Attribute {
     this.value = value;
   }
 
-  public Attribute copy(ConstantPool constant_pool) {
+  public static Attribute copy(ConstantPool constant_pool) {
     throw new RuntimeException("Not implemented yet!");
     // is this next line sufficient?
     // return (EnclosingMethod)clone();
@@ -46,11 +46,13 @@ public class AnnotationDefault extends Attribute {
     return value;
   }
 
+  @Override
   public final void dump(DataOutputStream dos) throws IOException {
     super.dump(dos);
     value.dump(dos);
   }
 
+  @Override
   public void accept(ClassVisitor v) {
     v.visitAnnotationDefault(this);
   }

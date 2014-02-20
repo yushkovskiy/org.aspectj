@@ -1131,6 +1131,7 @@ public class BcelShadow extends Shadow {
     return getThisJoinPointStaticPartBcelVar(false);
   }
 
+  @Override
   public BcelVar getThisAspectInstanceVar(ResolvedType aspectType) {
     return new AspectInstanceVar(aspectType);
   }

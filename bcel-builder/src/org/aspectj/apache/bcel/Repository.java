@@ -57,6 +57,8 @@ package org.aspectj.apache.bcel;
 import org.aspectj.apache.bcel.classfile.JavaClass;
 import org.aspectj.apache.bcel.util.ClassPath;
 import org.aspectj.apache.bcel.util.SyntheticRepository;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
@@ -70,11 +72,13 @@ import java.io.IOException;
  * @see org.aspectj.apache.bcel.util.SyntheticRepository
  */
 public abstract class Repository {
+  @Nullable
   private static org.aspectj.apache.bcel.util.Repository _repository = null;
 
   /**
    * @return currently used repository instance
    */
+  @NotNull
   public static org.aspectj.apache.bcel.util.Repository getRepository() {
     if (_repository == null) {
       _repository = SyntheticRepository.getInstance();
@@ -85,7 +89,7 @@ public abstract class Repository {
   /**
    * Set repository instance to be used for class loading
    */
-  public static void setRepository(org.aspectj.apache.bcel.util.Repository rep) {
+  public static void setRepository(@NotNull org.aspectj.apache.bcel.util.Repository rep) {
     _repository = rep;
   }
 
@@ -94,7 +98,8 @@ public abstract class Repository {
    *
    * @return class object for given fully qualified class name, or null if the class could not be found or parsed correctly
    */
-  public static JavaClass lookupClass(String class_name) {
+  @Nullable
+  public static JavaClass lookupClass(@NotNull String class_name) {
     try {
       final JavaClass clazz = getRepository().findClass(class_name);
 
@@ -125,7 +130,8 @@ public abstract class Repository {
   /**
    * @return class file object for given Java class.
    */
-  public static ClassPath.ClassFile lookupClassFile(String class_name) {
+  @Nullable
+  public static ClassPath.ClassFile lookupClassFile(@NotNull String class_name) {
     try {
       return ClassPath.getSystemClassPath().getClassFile(class_name);
     } catch (IOException e) {
@@ -145,7 +151,8 @@ public abstract class Repository {
    *
    * @return old entry in repository
    */
-  public static JavaClass addClass(JavaClass clazz) {
+  @NotNull
+  public static JavaClass addClass(@NotNull JavaClass clazz) {
     final JavaClass old = getRepository().findClass(clazz.getClassName());
     getRepository().storeClass(clazz);
     return old;
@@ -154,7 +161,7 @@ public abstract class Repository {
   /**
    * Remove class with given (fully qualified) name from repository.
    */
-  public static void removeClass(String clazz) {
+  public static void removeClass(@NotNull String clazz) {
     getRepository().removeClass(getRepository().findClass(clazz));
   }
 
@@ -203,14 +210,14 @@ public abstract class Repository {
    *
    * @return true, if clazz is an instance of super_class
    */
-  public static boolean instanceOf(JavaClass clazz, JavaClass super_class) {
+  public static boolean instanceOf(@NotNull JavaClass clazz, @NotNull JavaClass super_class) {
     return clazz.instanceOf(super_class);
   }
 
   /**
    * @return true, if clazz is an instance of super_class
    */
-  public static boolean instanceOf(String clazz, String super_class) {
+  public static boolean instanceOf(@NotNull String clazz, @NotNull String super_class) {
     return instanceOf(lookupClass(clazz), lookupClass(super_class));
   }
 
@@ -231,14 +238,14 @@ public abstract class Repository {
   /**
    * @return true, if clazz is an implementation of interface inter
    */
-  public static boolean implementationOf(JavaClass clazz, JavaClass inter) {
+  public static boolean implementationOf(@NotNull JavaClass clazz, @NotNull JavaClass inter) {
     return clazz.implementationOf(inter);
   }
 
   /**
    * @return true, if clazz is an implementation of interface inter
    */
-  public static boolean implementationOf(String clazz, String inter) {
+  public static boolean implementationOf(@NotNull String clazz, @NotNull String inter) {
     return implementationOf(lookupClass(clazz), lookupClass(inter));
   }
 

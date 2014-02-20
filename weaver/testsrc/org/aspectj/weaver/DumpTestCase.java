@@ -37,6 +37,7 @@ public class DumpTestCase extends TestCase {
     super(name);
   }
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
 
@@ -44,6 +45,7 @@ public class DumpTestCase extends TestCase {
     savedDumpCondition = Dump.getDumpOnExit();
   }
 
+  @Override
   protected void tearDown() throws Exception {
     super.tearDown();
 

@@ -100,7 +100,7 @@ public class EclipseSourceContext implements IEclipseSourceContext {
   }
 
   private class UnusedDeclaredThrownExceptionFilter implements ProblemsForRemovalFilter {
-    private IProblem problemToRemove;
+    private final IProblem problemToRemove;
 
     public UnusedDeclaredThrownExceptionFilter(IProblem p) {
       problemToRemove = p;

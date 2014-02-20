@@ -77,6 +77,7 @@ public class InstructionLV extends Instruction {
     super(opcode);
   }
 
+  @Override
   public void dump(DataOutputStream out) throws IOException {
     if (lvar == -1) {
       out.writeByte(opcode);
@@ -132,6 +133,7 @@ public class InstructionLV extends Instruction {
    * <p/>
    * 'name of opcode' "[" 'opcode number' "]" "(" 'length of instruction' ")" "<" 'local variable index' ">"
    */
+  @Override
   public String toString(boolean verbose) {
     if (opcode >= Constants.ILOAD_0 && opcode <= Constants.ALOAD_3 || opcode >= Constants.ISTORE_0
         && opcode <= Constants.ASTORE_3) {
@@ -141,10 +143,12 @@ public class InstructionLV extends Instruction {
     }
   }
 
+  @Override
   public boolean isALOAD() {
     return opcode == ALOAD || opcode >= ALOAD_0 && opcode <= ALOAD_3;
   }
 
+  @Override
   public boolean isASTORE() {
     return opcode == ASTORE || opcode >= ASTORE_0 && opcode <= ASTORE_3;
   }
@@ -170,6 +174,7 @@ public class InstructionLV extends Instruction {
    * @return local variable index referred by this instruction.
    */
   // optimize!
+  @Override
   public final int getIndex() {
     if (lvar != -1) {
       return lvar;
@@ -182,6 +187,7 @@ public class InstructionLV extends Instruction {
     return -1;
   }
 
+  @Override
   public void setIndex(int i) {
     // Switching the index for a load/store without a current index specified (ie. an aload_1 or istore_2)
     // means we need to should adjust to a normal aload/istore opcode
@@ -229,6 +235,7 @@ public class InstructionLV extends Instruction {
     }
   }
 
+  @Override
   public int getLength() {
     final int size = Constants.iLen[opcode];
     if (lvar == -1) {

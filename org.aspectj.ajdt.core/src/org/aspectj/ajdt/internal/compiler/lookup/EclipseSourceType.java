@@ -23,6 +23,8 @@ import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.*;
 import org.aspectj.weaver.*;
 import org.aspectj.weaver.bcel.AtAjAttributes.LazyResolvedPointcutDefinition;
 import org.aspectj.weaver.patterns.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -36,10 +38,36 @@ import java.util.List;
  * @author Andy Clement
  */
 public class EclipseSourceType extends AbstractReferenceTypeDelegate {
+  @NotNull
   private static final char[] pointcutSig = "Lorg/aspectj/lang/annotation/Pointcut;".toCharArray();
+  @NotNull
   private static final char[] aspectSig = "Lorg/aspectj/lang/annotation/Aspect;".toCharArray();
+
+  @NotNull
+  private final static char[] valuesCharArray = "values".toCharArray();
+  @NotNull
+  private final static char[] valueOfCharArray = "valueOf".toCharArray();
+  @NotNull
+  private final static char[] jlString = "Ljava/lang/String;".toCharArray();
+
+  @NotNull
+  private static final char[] joinPoint = "Lorg/aspectj/lang/JoinPoint;".toCharArray();
+  @NotNull
+  private static final char[] joinPointStaticPart = "Lorg/aspectj/lang/JoinPoint$StaticPart;".toCharArray();
+  @NotNull
+  private static final char[] joinPointEnclosingStaticPart = "Lorg/aspectj/lang/JoinPoint$EnclosingStaticPart;".toCharArray();
+  @NotNull
+  private static final char[] proceedingJoinPoint = "Lorg/aspectj/lang/ProceedingJoinPoint;".toCharArray();
+
+  // XXXAJ5: Should be constants in the eclipse compiler somewhere, once it
+  // supports 1.5
+  public final static short ACC_ANNOTATION = 0x2000;
+  public final static short ACC_ENUM = 0x4000;
+  @Nullable
   protected ResolvedPointcutDefinition[] declaredPointcuts = null;
+  @Nullable
   protected ResolvedMember[] declaredMethods = null;
+  @Nullable
   protected ResolvedMember[] declaredFields = null;
 
   public List<Declare> declares = new ArrayList<Declare>();
@@ -49,21 +77,20 @@ public class EclipseSourceType extends AbstractReferenceTypeDelegate {
 
   private final SourceTypeBinding binding;
   private final TypeDeclaration declaration;
+  @Nullable
   private final CompilationUnitDeclaration unit;
   private boolean annotationsFullyResolved = false;
   private boolean annotationTypesAreResolved = false;
+  @Nullable
   private ResolvedType[] annotationTypes = null;
 
   private boolean discoveredAnnotationTargetKinds = false;
   private AnnotationTargetKind[] annotationTargetKinds;
+  @Nullable
   private AnnotationAJ[] annotations = null;
 
-  protected EclipseFactory eclipseWorld() {
-    return factory;
-  }
-
   public EclipseSourceType(ReferenceType resolvedTypeX, EclipseFactory factory, SourceTypeBinding binding,
-                           TypeDeclaration declaration, CompilationUnitDeclaration unit) {
+                           TypeDeclaration declaration, @Nullable CompilationUnitDeclaration unit) {
     super(resolvedTypeX, true);
     this.factory = factory;
     this.binding = binding;
@@ -125,62 +152,6 @@ public class EclipseSourceType extends AbstractReferenceTypeDelegate {
     return false;
   }
 
-  /**
-   * Returns "" if there is a problem
-   */
-  private static String getPointcutStringFromAnnotationStylePointcut(AbstractMethodDeclaration amd) {
-    final Annotation[] ans = amd.annotations;
-    if (ans == null) {
-      return "";
-    }
-    for (int i = 0; i < ans.length; i++) {
-      if (ans[i].resolvedType == null) {
-        continue; // XXX happens if we do this very early from
-      }
-      // buildInterTypeandPerClause
-      // may prevent us from resolving references made in @Pointcuts to
-      // an @Pointcut in a code-style aspect
-      final char[] sig = ans[i].resolvedType.signature();
-      if (CharOperation.equals(pointcutSig, sig)) {
-        if (ans[i].memberValuePairs().length == 0) {
-          return ""; // empty pointcut expression
-        }
-        final Expression expr = ans[i].memberValuePairs()[0].value;
-        if (expr instanceof StringLiteral) {
-          final StringLiteral sLit = ((StringLiteral) expr);
-          return new String(sLit.source());
-        } else if (expr instanceof NameReference && (((NameReference) expr).binding instanceof FieldBinding)) {
-          final Binding b = ((NameReference) expr).binding;
-          final Constant c = ((FieldBinding) b).constant;
-          return c.stringValue();
-        } else {
-          throw new BCException("Do not know how to recover pointcut definition from " + expr + " (type "
-              + expr.getClass().getName() + ")");
-        }
-      }
-    }
-    return "";
-  }
-
-  private static boolean isAnnotationStylePointcut(Annotation[] annotations) {
-    if (annotations == null) {
-      return false;
-    }
-    for (int i = 0; i < annotations.length; i++) {
-      if (annotations[i].resolvedType == null) {
-        continue; // XXX happens if we do this very early from
-      }
-      // buildInterTypeandPerClause
-      // may prevent us from resolving references made in @Pointcuts to
-      // an @Pointcut in a code-style aspect
-      final char[] sig = annotations[i].resolvedType.signature();
-      if (CharOperation.equals(pointcutSig, sig)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   @Override
   public WeaverStateInfo getWeaverState() {
     return null;
@@ -198,172 +169,6 @@ public class EclipseSourceType extends AbstractReferenceTypeDelegate {
   @Override
   public ResolvedType[] getDeclaredInterfaces() {
     return eclipseWorld().fromEclipse(binding.superInterfaces());
-  }
-
-  protected void fillDeclaredMembers() {
-    final List<ResolvedMember> declaredPointcuts = new ArrayList<ResolvedMember>();
-    final List<ResolvedMember> declaredMethods = new ArrayList<ResolvedMember>();
-    final List<ResolvedMember> declaredFields = new ArrayList<ResolvedMember>();
-
-    final MethodBinding[] ms = binding.methods(); // the important side-effect of this call is to make
-    // sure bindings are completed
-    final AbstractMethodDeclaration[] methods = declaration.methods;
-    if (methods != null) {
-      for (int i = 0, len = methods.length; i < len; i++) {
-        final AbstractMethodDeclaration amd = methods[i];
-        if (amd == null || amd.ignoreFurtherInvestigation) {
-          continue;
-        }
-        if (amd instanceof PointcutDeclaration) {
-          final PointcutDeclaration d = (PointcutDeclaration) amd;
-          final ResolvedPointcutDefinition df = d.makeResolvedPointcutDefinition(factory);
-          if (df != null) {
-            declaredPointcuts.add(df);
-          }
-        } else if (amd instanceof InterTypeDeclaration) {
-          // these are handled in a separate pass
-          continue;
-        } else if (amd instanceof DeclareDeclaration && !(amd instanceof DeclareAnnotationDeclaration)) { // surfaces
-          // the
-          // annotated
-          // ajc$ method
-          // these are handled in a separate pass
-          continue;
-        } else if (amd instanceof AdviceDeclaration) {
-          // these are ignored during compilation and only used during
-          // weaving
-          continue;
-        } else if ((amd.annotations != null) && isAnnotationStylePointcut(amd.annotations)) {
-          // consider pointcuts defined via annotations
-          final ResolvedPointcutDefinition df = makeResolvedPointcutDefinition(amd);
-          if (df != null) {
-            declaredPointcuts.add(df);
-          }
-        } else {
-          if (amd.binding == null || !amd.binding.isValidBinding()) {
-            continue;
-          }
-          final ResolvedMember member = factory.makeResolvedMember(amd.binding);
-          if (unit != null) {
-            boolean positionKnown = true;
-            if (amd.binding.sourceMethod() == null) {
-              if (amd.binding.declaringClass instanceof SourceTypeBinding) {
-                final SourceTypeBinding stb = ((SourceTypeBinding) amd.binding.declaringClass);
-                if (stb.scope == null || stb.scope.referenceContext == null) {
-                  positionKnown = false;
-                }
-              }
-            }
-            if (positionKnown) { // pr229829
-              member.setSourceContext(new EclipseSourceContext(unit.compilationResult, amd.binding.sourceStart()));
-              member.setPosition(amd.binding.sourceStart(), amd.binding.sourceEnd());
-            } else {
-              member.setSourceContext(new EclipseSourceContext(unit.compilationResult, 0));
-              member.setPosition(0, 0);
-            }
-          }
-          declaredMethods.add(member);
-        }
-      }
-    }
-
-    if (isEnum()) {
-      // The bindings for the eclipse binding will include values/valueof
-      for (int m = 0, len = ms.length; m < len; m++) {
-        final MethodBinding mb = ms[m];
-        if ((mb instanceof SyntheticMethodBinding) && mb.isStatic()) { // cannot use .isSynthetic() because it isn't truly synthetic
-          if (CharOperation.equals(mb.selector, valuesCharArray) && mb.parameters.length == 0 && mb.returnType.isArrayType() && ((ArrayBinding) mb.returnType).leafComponentType() == binding) {
-            // static <EnumType>[] values()
-            final ResolvedMember valuesMember = factory.makeResolvedMember(mb);
-            valuesMember.setSourceContext(new EclipseSourceContext(unit.compilationResult, 0));
-            valuesMember.setPosition(0, 0);
-            declaredMethods.add(valuesMember);
-          } else if (CharOperation.equals(mb.selector, valueOfCharArray) && mb.parameters.length == 1 && CharOperation.equals(mb.parameters[0].signature(), jlString) && mb.returnType == binding) {
-            // static <EnumType> valueOf(String)
-            final ResolvedMember valueOfMember = factory.makeResolvedMember(mb);
-            valueOfMember.setSourceContext(new EclipseSourceContext(unit.compilationResult, 0));
-            valueOfMember.setPosition(0, 0);
-            declaredMethods.add(valueOfMember);
-          }
-        }
-      }
-    }
-
-    final FieldBinding[] fields = binding.fields();
-    for (int i = 0, len = fields.length; i < len; i++) {
-      final FieldBinding f = fields[i];
-      declaredFields.add(factory.makeResolvedMember(f));
-    }
-
-    this.declaredPointcuts = declaredPointcuts.toArray(new ResolvedPointcutDefinition[declaredPointcuts.size()]);
-    this.declaredMethods = declaredMethods.toArray(new ResolvedMember[declaredMethods.size()]);
-    this.declaredFields = declaredFields.toArray(new ResolvedMember[declaredFields.size()]);
-  }
-
-  private final static char[] valuesCharArray = "values".toCharArray();
-  private final static char[] valueOfCharArray = "valueOf".toCharArray();
-  private final static char[] jlString = "Ljava/lang/String;".toCharArray();
-
-
-  private ResolvedPointcutDefinition makeResolvedPointcutDefinition(AbstractMethodDeclaration md) {
-    if (md.binding == null) {
-      return null; // there is another error that has caused this...
-      // pr138143
-    }
-
-    final EclipseSourceContext eSourceContext = new EclipseSourceContext(md.compilationResult);
-    Pointcut pc = null;
-    if (!md.isAbstract()) {
-      final String expression = getPointcutStringFromAnnotationStylePointcut(md);
-      try {
-        pc = new PatternParser(expression, eSourceContext).parsePointcut();
-      } catch (ParserException pe) { // error will be reported by other
-        // means...
-        pc = Pointcut.makeMatchesNothing(Pointcut.SYMBOLIC);
-      }
-    }
-
-    final FormalBinding[] bindings = buildFormalAdviceBindingsFrom(md);
-
-    final ResolvedPointcutDefinition rpd = new LazyResolvedPointcutDefinition(factory.fromBinding(md.binding.declaringClass),
-        md.modifiers, new String(md.selector), factory.fromBindings(md.binding.parameters),
-        factory.fromBinding(md.binding.returnType), pc, new EclipseScope(bindings, md.scope));
-
-    rpd.setPosition(md.sourceStart, md.sourceEnd);
-    rpd.setSourceContext(eSourceContext);
-    return rpd;
-  }
-
-  private static final char[] joinPoint = "Lorg/aspectj/lang/JoinPoint;".toCharArray();
-  private static final char[] joinPointStaticPart = "Lorg/aspectj/lang/JoinPoint$StaticPart;".toCharArray();
-  private static final char[] joinPointEnclosingStaticPart = "Lorg/aspectj/lang/JoinPoint$EnclosingStaticPart;".toCharArray();
-  private static final char[] proceedingJoinPoint = "Lorg/aspectj/lang/ProceedingJoinPoint;".toCharArray();
-
-  private static FormalBinding[] buildFormalAdviceBindingsFrom(AbstractMethodDeclaration mDecl) {
-    if (mDecl.arguments == null) {
-      return new FormalBinding[0];
-    }
-    if (mDecl.binding == null) {
-      return new FormalBinding[0];
-    }
-    final EclipseFactory factory = EclipseFactory.fromScopeLookupEnvironment(mDecl.scope);
-    final String extraArgName = "";// maybeGetExtraArgName();
-    final FormalBinding[] ret = new FormalBinding[mDecl.arguments.length];
-    for (int i = 0; i < mDecl.arguments.length; i++) {
-      final Argument arg = mDecl.arguments[i];
-      final String name = new String(arg.name);
-      final TypeBinding argTypeBinding = mDecl.binding.parameters[i];
-      final UnresolvedType type = factory.fromBinding(argTypeBinding);
-      if (CharOperation.equals(joinPoint, argTypeBinding.signature())
-          || CharOperation.equals(joinPointStaticPart, argTypeBinding.signature())
-          || CharOperation.equals(joinPointEnclosingStaticPart, argTypeBinding.signature())
-          || CharOperation.equals(proceedingJoinPoint, argTypeBinding.signature()) || name.equals(extraArgName)) {
-        ret[i] = new FormalBinding.ImplicitFormalBinding(type, name, i);
-      } else {
-        ret[i] = new FormalBinding(type, name, i, arg.sourceStart, arg.sourceEnd);
-      }
-    }
-    return ret;
   }
 
   /**
@@ -475,11 +280,6 @@ public class EclipseSourceType extends AbstractReferenceTypeDelegate {
     return binding.isInterface();
   }
 
-  // XXXAJ5: Should be constants in the eclipse compiler somewhere, once it
-  // supports 1.5
-  public final static short ACC_ANNOTATION = 0x2000;
-  public final static short ACC_ENUM = 0x4000;
-
   @Override
   public boolean isEnum() {
     return (binding.getAccessFlags() & ACC_ENUM) != 0;
@@ -590,32 +390,6 @@ public class EclipseSourceType extends AbstractReferenceTypeDelegate {
     return annotationTargetKinds;
   }
 
-  /**
-   * Ensure the annotation types have been resolved, where resolved means the eclipse type bindings have been converted to their
-   * ResolvedType representations. This does not deeply resolve the annotations, it only does the type names.
-   */
-  private void ensureAnnotationTypesResolved() {
-    // may need to re-resolve if new annotations have been added
-    final int declarationAnnoCount = (declaration.annotations == null ? 0 : declaration.annotations.length);
-    if (!annotationTypesAreResolved || declarationAnnoCount != annotationTypes.length) {
-      final Annotation[] as = declaration.annotations;
-      if (as == null) {
-        annotationTypes = ResolvedType.NONE;
-      } else {
-        annotationTypes = new ResolvedType[as.length];
-        for (int a = 0; a < as.length; a++) {
-          final TypeBinding tb = as[a].type.resolveType(declaration.staticInitializerScope);
-          if (tb == null) {
-            annotationTypes[a] = ResolvedType.MISSING;
-          } else {
-            annotationTypes[a] = factory.fromTypeBindingToRTX(tb);
-          }
-        }
-      }
-      annotationTypesAreResolved = true;
-    }
-  }
-
   @Override
   public boolean hasAnnotation(UnresolvedType ofType) {
     ensureAnnotationTypesResolved();
@@ -682,9 +456,385 @@ public class EclipseSourceType extends AbstractReferenceTypeDelegate {
     return annotationAJ;
   }
 
-  static class MissingImplementationException extends RuntimeException {
-    MissingImplementationException(String reason) {
-      super(reason);
+  @Override
+  public ResolvedType[] getAnnotationTypes() {
+    ensureAnnotationTypesResolved();
+    return annotationTypes;
+  }
+
+  @Override
+  public PerClause getPerClause() {
+    // should probably be: ((AspectDeclaration)declaration).perClause;
+    // but we don't need this level of detail, and working with real per
+    // clauses
+    // at this stage of compilation is not worth the trouble
+    if (!isAnnotationStyleAspect()) {
+      if (declaration instanceof AspectDeclaration) {
+        final PerClause pc = ((AspectDeclaration) declaration).perClause;
+        if (pc != null) {
+          return pc;
+        }
+      }
+      return new PerSingleton();
+    } else {
+      // for @Aspect, we do need the real kind though we don't need the
+      // real perClause
+      // at least try to get the right perclause
+      PerClause pc = null;
+      if (declaration instanceof AspectDeclaration) {
+        pc = ((AspectDeclaration) declaration).perClause;
+      }
+      if (pc == null) {
+        final PerClause.Kind kind = getPerClauseForTypeDeclaration(declaration);
+        // returning a perFromSuper is enough to get the correct kind..
+        // (that's really a hack - AV)
+        return new PerFromSuper(kind);
+      }
+      return pc;
+    }
+  }
+
+  @Override
+  public Collection getDeclares() {
+    return declares;
+  }
+
+  @Override
+  public Collection getPrivilegedAccesses() {
+    return Collections.EMPTY_LIST;
+  }
+
+  @Override
+  public Collection getTypeMungers() {
+    return typeMungers;
+  }
+
+  @Override
+  public boolean doesNotExposeShadowMungers() {
+    return true;
+  }
+
+  @Override
+  public String getDeclaredGenericSignature() {
+    return CharOperation.charToString(binding.genericSignature());
+  }
+
+  @Override
+  public boolean isGeneric() {
+    return binding.isGenericType();
+  }
+
+  @Override
+  public TypeVariable[] getTypeVariables() {
+    if (declaration.typeParameters == null) {
+      return new TypeVariable[0];
+    }
+    final TypeVariable[] typeVariables = new TypeVariable[declaration.typeParameters.length];
+    for (int i = 0; i < typeVariables.length; i++) {
+      typeVariables[i] = typeParameter2TypeVariable(declaration.typeParameters[i]);
+    }
+    return typeVariables;
+  }
+
+  protected EclipseFactory eclipseWorld() {
+    return factory;
+  }
+
+  protected void fillDeclaredMembers() {
+    final List<ResolvedMember> declaredPointcuts = new ArrayList<ResolvedMember>();
+    final List<ResolvedMember> declaredMethods = new ArrayList<ResolvedMember>();
+    final List<ResolvedMember> declaredFields = new ArrayList<ResolvedMember>();
+
+    final MethodBinding[] ms = binding.methods(); // the important side-effect of this call is to make
+    // sure bindings are completed
+    final AbstractMethodDeclaration[] methods = declaration.methods;
+    if (methods != null) {
+      for (int i = 0, len = methods.length; i < len; i++) {
+        final AbstractMethodDeclaration amd = methods[i];
+        if (amd == null || amd.ignoreFurtherInvestigation) {
+          continue;
+        }
+        if (amd instanceof PointcutDeclaration) {
+          final PointcutDeclaration d = (PointcutDeclaration) amd;
+          final ResolvedPointcutDefinition df = d.makeResolvedPointcutDefinition(factory);
+          if (df != null) {
+            declaredPointcuts.add(df);
+          }
+        } else if (amd instanceof InterTypeDeclaration) {
+          // these are handled in a separate pass
+          continue;
+        } else if (amd instanceof DeclareDeclaration && !(amd instanceof DeclareAnnotationDeclaration)) { // surfaces
+          // the
+          // annotated
+          // ajc$ method
+          // these are handled in a separate pass
+          continue;
+        } else if (amd instanceof AdviceDeclaration) {
+          // these are ignored during compilation and only used during
+          // weaving
+          continue;
+        } else if ((amd.annotations != null) && isAnnotationStylePointcut(amd.annotations)) {
+          // consider pointcuts defined via annotations
+          final ResolvedPointcutDefinition df = makeResolvedPointcutDefinition(amd);
+          if (df != null) {
+            declaredPointcuts.add(df);
+          }
+        } else {
+          if (amd.binding == null || !amd.binding.isValidBinding()) {
+            continue;
+          }
+          final ResolvedMember member = factory.makeResolvedMember(amd.binding);
+          if (unit != null) {
+            boolean positionKnown = true;
+            if (amd.binding.sourceMethod() == null) {
+              if (amd.binding.declaringClass instanceof SourceTypeBinding) {
+                final SourceTypeBinding stb = ((SourceTypeBinding) amd.binding.declaringClass);
+                if (stb.scope == null || stb.scope.referenceContext == null) {
+                  positionKnown = false;
+                }
+              }
+            }
+            if (positionKnown) { // pr229829
+              member.setSourceContext(new EclipseSourceContext(unit.compilationResult, amd.binding.sourceStart()));
+              member.setPosition(amd.binding.sourceStart(), amd.binding.sourceEnd());
+            } else {
+              member.setSourceContext(new EclipseSourceContext(unit.compilationResult, 0));
+              member.setPosition(0, 0);
+            }
+          }
+          declaredMethods.add(member);
+        }
+      }
+    }
+
+    if (isEnum()) {
+      // The bindings for the eclipse binding will include values/valueof
+      for (int m = 0, len = ms.length; m < len; m++) {
+        final MethodBinding mb = ms[m];
+        if ((mb instanceof SyntheticMethodBinding) && mb.isStatic()) { // cannot use .isSynthetic() because it isn't truly synthetic
+          if (CharOperation.equals(mb.selector, valuesCharArray) && mb.parameters.length == 0 && mb.returnType.isArrayType() && ((ArrayBinding) mb.returnType).leafComponentType() == binding) {
+            // static <EnumType>[] values()
+            final ResolvedMember valuesMember = factory.makeResolvedMember(mb);
+            valuesMember.setSourceContext(new EclipseSourceContext(unit.compilationResult, 0));
+            valuesMember.setPosition(0, 0);
+            declaredMethods.add(valuesMember);
+          } else if (CharOperation.equals(mb.selector, valueOfCharArray) && mb.parameters.length == 1 && CharOperation.equals(mb.parameters[0].signature(), jlString) && mb.returnType == binding) {
+            // static <EnumType> valueOf(String)
+            final ResolvedMember valueOfMember = factory.makeResolvedMember(mb);
+            valueOfMember.setSourceContext(new EclipseSourceContext(unit.compilationResult, 0));
+            valueOfMember.setPosition(0, 0);
+            declaredMethods.add(valueOfMember);
+          }
+        }
+      }
+    }
+
+    final FieldBinding[] fields = binding.fields();
+    for (int i = 0, len = fields.length; i < len; i++) {
+      final FieldBinding f = fields[i];
+      declaredFields.add(factory.makeResolvedMember(f));
+    }
+
+    this.declaredPointcuts = declaredPointcuts.toArray(new ResolvedPointcutDefinition[declaredPointcuts.size()]);
+    this.declaredMethods = declaredMethods.toArray(new ResolvedMember[declaredMethods.size()]);
+    this.declaredFields = declaredFields.toArray(new ResolvedMember[declaredFields.size()]);
+  }
+
+  PerClause.Kind getPerClauseForTypeDeclaration(TypeDeclaration typeDeclaration) {
+    final Annotation[] annotations = typeDeclaration.annotations;
+    for (int i = 0; i < annotations.length; i++) {
+      final Annotation annotation = annotations[i];
+      if (annotation != null && annotation.resolvedType != null
+          && CharOperation.equals(aspectSig, annotation.resolvedType.signature())) {
+        // found @Aspect(...)
+        if (annotation.memberValuePairs() == null || annotation.memberValuePairs().length == 0) {
+          // it is an @Aspect or @Aspect()
+          // needs to use PerFromSuper if declaration extends a super
+          // aspect
+          final PerClause.Kind kind = lookupPerClauseKind(typeDeclaration.binding.superclass);
+          // if no super aspect, we have a @Aspect() means singleton
+          if (kind == null) {
+            return PerClause.SINGLETON;
+          } else {
+            return kind;
+          }
+        } else if (annotation instanceof SingleMemberAnnotation) {
+          // it is an @Aspect(...something...)
+          final SingleMemberAnnotation theAnnotation = (SingleMemberAnnotation) annotation;
+          final String clause = new String(((StringLiteral) theAnnotation.memberValue).source());// TODO
+          // cast
+          // safe
+          // ?
+          return determinePerClause(typeDeclaration, clause);
+        } else if (annotation instanceof NormalAnnotation) { // this
+          // kind
+          // if it
+          // was
+          // added
+          // by
+          // the
+          // visitor
+          // !
+          // it is an @Aspect(...something...)
+          final NormalAnnotation theAnnotation = (NormalAnnotation) annotation;
+          if (theAnnotation.memberValuePairs == null || theAnnotation.memberValuePairs.length < 1) {
+            return PerClause.SINGLETON;
+          }
+          final String clause = new String(((StringLiteral) theAnnotation.memberValuePairs[0].value).source());// TODO
+          // cast
+          // safe
+          // ?
+          return determinePerClause(typeDeclaration, clause);
+        } else {
+          eclipseWorld().showMessage(
+              IMessage.ABORT,
+              "@Aspect annotation is expected to be SingleMemberAnnotation with 'String value()' as unique element",
+              new EclipseSourceLocation(typeDeclaration.compilationResult, typeDeclaration.sourceStart,
+                  typeDeclaration.sourceEnd), null);
+          return PerClause.SINGLETON;// fallback strategy just to
+          // avoid NPE
+        }
+      }
+    }
+    return null;// no @Aspect annotation at all (not as aspect)
+  }
+
+  /**
+   * Returns "" if there is a problem
+   */
+  private static String getPointcutStringFromAnnotationStylePointcut(AbstractMethodDeclaration amd) {
+    final Annotation[] ans = amd.annotations;
+    if (ans == null) {
+      return "";
+    }
+    for (int i = 0; i < ans.length; i++) {
+      if (ans[i].resolvedType == null) {
+        continue; // XXX happens if we do this very early from
+      }
+      // buildInterTypeandPerClause
+      // may prevent us from resolving references made in @Pointcuts to
+      // an @Pointcut in a code-style aspect
+      final char[] sig = ans[i].resolvedType.signature();
+      if (CharOperation.equals(pointcutSig, sig)) {
+        if (ans[i].memberValuePairs().length == 0) {
+          return ""; // empty pointcut expression
+        }
+        final Expression expr = ans[i].memberValuePairs()[0].value;
+        if (expr instanceof StringLiteral) {
+          final StringLiteral sLit = ((StringLiteral) expr);
+          return new String(sLit.source());
+        } else if (expr instanceof NameReference && (((NameReference) expr).binding instanceof FieldBinding)) {
+          final Binding b = ((NameReference) expr).binding;
+          final Constant c = ((FieldBinding) b).constant;
+          return c.stringValue();
+        } else {
+          throw new BCException("Do not know how to recover pointcut definition from " + expr + " (type "
+              + expr.getClass().getName() + ")");
+        }
+      }
+    }
+    return "";
+  }
+
+  private static boolean isAnnotationStylePointcut(Annotation[] annotations) {
+    if (annotations == null) {
+      return false;
+    }
+    for (int i = 0; i < annotations.length; i++) {
+      if (annotations[i].resolvedType == null) {
+        continue; // XXX happens if we do this very early from
+      }
+      // buildInterTypeandPerClause
+      // may prevent us from resolving references made in @Pointcuts to
+      // an @Pointcut in a code-style aspect
+      final char[] sig = annotations[i].resolvedType.signature();
+      if (CharOperation.equals(pointcutSig, sig)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+
+  private ResolvedPointcutDefinition makeResolvedPointcutDefinition(AbstractMethodDeclaration md) {
+    if (md.binding == null) {
+      return null; // there is another error that has caused this...
+      // pr138143
+    }
+
+    final EclipseSourceContext eSourceContext = new EclipseSourceContext(md.compilationResult);
+    Pointcut pc = null;
+    if (!md.isAbstract()) {
+      final String expression = getPointcutStringFromAnnotationStylePointcut(md);
+      try {
+        pc = new PatternParser(expression, eSourceContext).parsePointcut();
+      } catch (ParserException pe) { // error will be reported by other
+        // means...
+        pc = Pointcut.makeMatchesNothing(Pointcut.SYMBOLIC);
+      }
+    }
+
+    final FormalBinding[] bindings = buildFormalAdviceBindingsFrom(md);
+
+    final ResolvedPointcutDefinition rpd = new LazyResolvedPointcutDefinition(factory.fromBinding(md.binding.declaringClass),
+        md.modifiers, new String(md.selector), factory.fromBindings(md.binding.parameters),
+        factory.fromBinding(md.binding.returnType), pc, new EclipseScope(bindings, md.scope));
+
+    rpd.setPosition(md.sourceStart, md.sourceEnd);
+    rpd.setSourceContext(eSourceContext);
+    return rpd;
+  }
+
+  private static FormalBinding[] buildFormalAdviceBindingsFrom(AbstractMethodDeclaration mDecl) {
+    if (mDecl.arguments == null) {
+      return new FormalBinding[0];
+    }
+    if (mDecl.binding == null) {
+      return new FormalBinding[0];
+    }
+    final EclipseFactory factory = EclipseFactory.fromScopeLookupEnvironment(mDecl.scope);
+    final String extraArgName = "";// maybeGetExtraArgName();
+    final FormalBinding[] ret = new FormalBinding[mDecl.arguments.length];
+    for (int i = 0; i < mDecl.arguments.length; i++) {
+      final Argument arg = mDecl.arguments[i];
+      final String name = new String(arg.name);
+      final TypeBinding argTypeBinding = mDecl.binding.parameters[i];
+      final UnresolvedType type = factory.fromBinding(argTypeBinding);
+      if (CharOperation.equals(joinPoint, argTypeBinding.signature())
+          || CharOperation.equals(joinPointStaticPart, argTypeBinding.signature())
+          || CharOperation.equals(joinPointEnclosingStaticPart, argTypeBinding.signature())
+          || CharOperation.equals(proceedingJoinPoint, argTypeBinding.signature()) || name.equals(extraArgName)) {
+        ret[i] = new FormalBinding.ImplicitFormalBinding(type, name, i);
+      } else {
+        ret[i] = new FormalBinding(type, name, i, arg.sourceStart, arg.sourceEnd);
+      }
+    }
+    return ret;
+  }
+
+  /**
+   * Ensure the annotation types have been resolved, where resolved means the eclipse type bindings have been converted to their
+   * ResolvedType representations. This does not deeply resolve the annotations, it only does the type names.
+   */
+  private void ensureAnnotationTypesResolved() {
+    // may need to re-resolve if new annotations have been added
+    final int declarationAnnoCount = (declaration.annotations == null ? 0 : declaration.annotations.length);
+    if (!annotationTypesAreResolved || declarationAnnoCount != annotationTypes.length) {
+      final Annotation[] as = declaration.annotations;
+      if (as == null) {
+        annotationTypes = ResolvedType.NONE;
+      } else {
+        annotationTypes = new ResolvedType[as.length];
+        for (int a = 0; a < as.length; a++) {
+          final TypeBinding tb = as[a].type.resolveType(declaration.staticInitializerScope);
+          if (tb == null) {
+            annotationTypes[a] = ResolvedType.MISSING;
+          } else {
+            annotationTypes[a] = factory.fromTypeBindingToRTX(tb);
+          }
+        }
+      }
+      annotationTypesAreResolved = true;
     }
   }
 
@@ -956,103 +1106,6 @@ public class EclipseSourceType extends AbstractReferenceTypeDelegate {
     }
   }
 
-  @Override
-  public ResolvedType[] getAnnotationTypes() {
-    ensureAnnotationTypesResolved();
-    return annotationTypes;
-  }
-
-  @Override
-  public PerClause getPerClause() {
-    // should probably be: ((AspectDeclaration)declaration).perClause;
-    // but we don't need this level of detail, and working with real per
-    // clauses
-    // at this stage of compilation is not worth the trouble
-    if (!isAnnotationStyleAspect()) {
-      if (declaration instanceof AspectDeclaration) {
-        final PerClause pc = ((AspectDeclaration) declaration).perClause;
-        if (pc != null) {
-          return pc;
-        }
-      }
-      return new PerSingleton();
-    } else {
-      // for @Aspect, we do need the real kind though we don't need the
-      // real perClause
-      // at least try to get the right perclause
-      PerClause pc = null;
-      if (declaration instanceof AspectDeclaration) {
-        pc = ((AspectDeclaration) declaration).perClause;
-      }
-      if (pc == null) {
-        final PerClause.Kind kind = getPerClauseForTypeDeclaration(declaration);
-        // returning a perFromSuper is enough to get the correct kind..
-        // (that's really a hack - AV)
-        return new PerFromSuper(kind);
-      }
-      return pc;
-    }
-  }
-
-  PerClause.Kind getPerClauseForTypeDeclaration(TypeDeclaration typeDeclaration) {
-    final Annotation[] annotations = typeDeclaration.annotations;
-    for (int i = 0; i < annotations.length; i++) {
-      final Annotation annotation = annotations[i];
-      if (annotation != null && annotation.resolvedType != null
-          && CharOperation.equals(aspectSig, annotation.resolvedType.signature())) {
-        // found @Aspect(...)
-        if (annotation.memberValuePairs() == null || annotation.memberValuePairs().length == 0) {
-          // it is an @Aspect or @Aspect()
-          // needs to use PerFromSuper if declaration extends a super
-          // aspect
-          final PerClause.Kind kind = lookupPerClauseKind(typeDeclaration.binding.superclass);
-          // if no super aspect, we have a @Aspect() means singleton
-          if (kind == null) {
-            return PerClause.SINGLETON;
-          } else {
-            return kind;
-          }
-        } else if (annotation instanceof SingleMemberAnnotation) {
-          // it is an @Aspect(...something...)
-          final SingleMemberAnnotation theAnnotation = (SingleMemberAnnotation) annotation;
-          final String clause = new String(((StringLiteral) theAnnotation.memberValue).source());// TODO
-          // cast
-          // safe
-          // ?
-          return determinePerClause(typeDeclaration, clause);
-        } else if (annotation instanceof NormalAnnotation) { // this
-          // kind
-          // if it
-          // was
-          // added
-          // by
-          // the
-          // visitor
-          // !
-          // it is an @Aspect(...something...)
-          final NormalAnnotation theAnnotation = (NormalAnnotation) annotation;
-          if (theAnnotation.memberValuePairs == null || theAnnotation.memberValuePairs.length < 1) {
-            return PerClause.SINGLETON;
-          }
-          final String clause = new String(((StringLiteral) theAnnotation.memberValuePairs[0].value).source());// TODO
-          // cast
-          // safe
-          // ?
-          return determinePerClause(typeDeclaration, clause);
-        } else {
-          eclipseWorld().showMessage(
-              IMessage.ABORT,
-              "@Aspect annotation is expected to be SingleMemberAnnotation with 'String value()' as unique element",
-              new EclipseSourceLocation(typeDeclaration.compilationResult, typeDeclaration.sourceStart,
-                  typeDeclaration.sourceEnd), null);
-          return PerClause.SINGLETON;// fallback strategy just to
-          // avoid NPE
-        }
-      }
-    }
-    return null;// no @Aspect annotation at all (not as aspect)
-  }
-
   private PerClause.Kind determinePerClause(TypeDeclaration typeDeclaration, String clause) {
     if (clause.startsWith("perthis(")) {
       return PerClause.PEROBJECT;
@@ -1107,48 +1160,6 @@ public class EclipseSourceType extends AbstractReferenceTypeDelegate {
     return kind;
   }
 
-  @Override
-  public Collection getDeclares() {
-    return declares;
-  }
-
-  @Override
-  public Collection getPrivilegedAccesses() {
-    return Collections.EMPTY_LIST;
-  }
-
-  @Override
-  public Collection getTypeMungers() {
-    return typeMungers;
-  }
-
-  @Override
-  public boolean doesNotExposeShadowMungers() {
-    return true;
-  }
-
-  @Override
-  public String getDeclaredGenericSignature() {
-    return CharOperation.charToString(binding.genericSignature());
-  }
-
-  @Override
-  public boolean isGeneric() {
-    return binding.isGenericType();
-  }
-
-  @Override
-  public TypeVariable[] getTypeVariables() {
-    if (declaration.typeParameters == null) {
-      return new TypeVariable[0];
-    }
-    final TypeVariable[] typeVariables = new TypeVariable[declaration.typeParameters.length];
-    for (int i = 0; i < typeVariables.length; i++) {
-      typeVariables[i] = typeParameter2TypeVariable(declaration.typeParameters[i]);
-    }
-    return typeVariables;
-  }
-
   private TypeVariable typeParameter2TypeVariable(TypeParameter typeParameter) {
     final String name = new String(typeParameter.name);
     final ReferenceBinding superclassBinding = typeParameter.binding.superclass;
@@ -1166,6 +1177,12 @@ public class EclipseSourceType extends AbstractReferenceTypeDelegate {
     tv.setDeclaringElement(factory.fromBinding(typeParameter.binding.declaringElement));
     tv.setRank(typeParameter.binding.rank);
     return tv;
+  }
+
+  static class MissingImplementationException extends RuntimeException {
+    MissingImplementationException(String reason) {
+      super(reason);
+    }
   }
 
 }

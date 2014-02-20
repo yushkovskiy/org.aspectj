@@ -32,7 +32,7 @@ public class IntertypeMemberTypeFinder implements ITypeFinder {
   public SourceTypeBinding targetTypeBinding;
 
   // The new types declared onto the target
-  private Set<ReferenceBinding> intertypeMemberTypes = new HashSet<ReferenceBinding>();
+  private final Set<ReferenceBinding> intertypeMemberTypes = new HashSet<ReferenceBinding>();
 
   public void addInterTypeMemberType(ReferenceBinding binding) {
     intertypeMemberTypes.add(binding);

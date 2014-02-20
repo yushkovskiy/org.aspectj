@@ -14,6 +14,7 @@
 package org.aspectj.weaver.patterns;
 
 import org.aspectj.weaver.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Map;
@@ -63,7 +64,7 @@ public class BindingTypePattern extends ExactTypePattern implements BindingPatte
   }
 
   @Override
-  public void write(CompressingDataOutputStream out) throws IOException {
+  public void write(@NotNull CompressingDataOutputStream out) throws IOException {
     out.writeByte(TypePattern.BINDING);
     type.write(out);
     out.writeShort((short) formalIndex);

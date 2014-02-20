@@ -208,7 +208,7 @@ public class TypePatternTestCase extends PatternsTestCase {
     return scope;
   }
 
-  private TypePattern makeTypePattern(String pattern) {
+  private static TypePattern makeTypePattern(String pattern) {
     final PatternParser pp = new PatternParser(pattern);
     final TypePattern tp = pp.parseSingleTypePattern();
     pp.checkEof();

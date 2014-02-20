@@ -15,6 +15,7 @@ package org.aspectj.weaver.patterns;
 import org.aspectj.bridge.MessageUtil;
 import org.aspectj.weaver.AjAttribute.WeaverVersionInfo;
 import org.aspectj.weaver.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -218,7 +219,7 @@ public class DeclareAnnotation extends Declare {
   }
 
   @Override
-  public void write(CompressingDataOutputStream s) throws IOException {
+  public void write(@NotNull CompressingDataOutputStream s) throws IOException {
     s.writeByte(Declare.ANNOTATION);
     if (kind.id == AT_FIELD.id && isRemover) {
       s.writeInt(AT_REMOVE_FROM_FIELD.id);

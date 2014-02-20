@@ -71,6 +71,7 @@ public abstract class AsynchronousFileCacheBacking extends AbstractIndexedFileCa
     return index;
   }
 
+  @Override
   public CachedClassEntry get(CachedClassReference ref, byte[] originalBytes) {
     final String key = ref.getKey();
     final IndexEntry indexEntry;
@@ -111,6 +112,7 @@ public abstract class AsynchronousFileCacheBacking extends AbstractIndexedFileCa
     }
   }
 
+  @Override
   public void put(CachedClassEntry entry, byte[] originalBytes) {
     final String key = entry.getKey();
     final byte[] bytes = entry.isIgnored() ? null : entry.getBytes();
@@ -142,6 +144,7 @@ public abstract class AsynchronousFileCacheBacking extends AbstractIndexedFileCa
     }
   }
 
+  @Override
   public void remove(CachedClassReference ref) {
     remove(ref.getKey());
   }
@@ -193,6 +196,7 @@ public abstract class AsynchronousFileCacheBacking extends AbstractIndexedFileCa
     return exposedBytes;
   }
 
+  @Override
   public void clear() {
     synchronized (index) {
       index.clear();
@@ -291,6 +295,7 @@ public abstract class AsynchronousFileCacheBacking extends AbstractIndexedFileCa
     synchronized (execService) {
       if (commandsRunner == null) {
         commandsRunner = execService.submit(new Runnable() {
+          @Override
           @SuppressWarnings("synthetic-access")
           public void run() {
             for (; ; ) {
@@ -359,6 +364,7 @@ public abstract class AsynchronousFileCacheBacking extends AbstractIndexedFileCa
       }
     }
 
+    @Override
     public final AsynchronousFileCacheBacking getCache() {
       return cache;
     }

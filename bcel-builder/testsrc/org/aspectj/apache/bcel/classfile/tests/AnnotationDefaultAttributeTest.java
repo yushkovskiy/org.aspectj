@@ -20,6 +20,7 @@ import org.aspectj.apache.bcel.classfile.annotation.SimpleElementValue;
 
 public class AnnotationDefaultAttributeTest extends BcelTestCase {
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
   }
@@ -42,6 +43,7 @@ public class AnnotationDefaultAttributeTest extends BcelTestCase {
         val.getValueString().equals("bananas"));
   }
 
+  @Override
   protected void tearDown() throws Exception {
     super.tearDown();
   }

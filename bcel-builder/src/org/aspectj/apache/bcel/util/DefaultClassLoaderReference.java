@@ -54,20 +54,24 @@
 
 package org.aspectj.apache.bcel.util;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Simplistic ClassLoaderReference that merely delegates to a classloader. More sophisticated ones could allow for the
  * loader to be weakly referenced.
  *
  * @author Andy Clement
  */
-public class DefaultClassLoaderReference implements ClassLoaderReference {
-
+public final class DefaultClassLoaderReference implements ClassLoaderReference {
+  @NotNull
   private final java.lang.ClassLoader loader;
 
-  public DefaultClassLoaderReference(java.lang.ClassLoader classLoader) {
+  public DefaultClassLoaderReference(@NotNull ClassLoader classLoader) {
     this.loader = classLoader;
   }
 
+  @Override
+  @NotNull
   public java.lang.ClassLoader getClassLoader() {
     return loader;
   }

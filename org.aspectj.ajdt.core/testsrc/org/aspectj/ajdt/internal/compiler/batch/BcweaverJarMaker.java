@@ -21,7 +21,7 @@ import org.aspectj.tools.ajc.AjcTests;
 
 public class BcweaverJarMaker {
 
-  private static String cp = "../lib/test/aspectjrt.jar;../lib/test/testing-client.jar" + File.pathSeparator + System.getProperty("aspectjrt.path");
+  private static final String cp = "../lib/test/aspectjrt.jar;../lib/test/testing-client.jar" + File.pathSeparator + System.getProperty("aspectjrt.path");
 
   public BcweaverJarMaker() {
     super();
@@ -225,7 +225,7 @@ public class BcweaverJarMaker {
     CommandTestCase.runCompiler(args, CommandTestCase.NO_ERRORS);
 
 		/*
-		 * Advice
+     * Advice
 		 */
     args = new ArrayList();
     args.add("-classpath");

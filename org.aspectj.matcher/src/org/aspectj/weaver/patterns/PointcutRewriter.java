@@ -243,7 +243,7 @@ public class PointcutRewriter {
   /**
    * Passed an array of pointcuts, returns an AND tree with them in.
    */
-  public Pointcut createAndsFor(Pointcut[] ps) {
+  public static Pointcut createAndsFor(Pointcut[] ps) {
     if (ps.length == 1) {
       return ps[0]; // dumb case
     }
@@ -428,15 +428,15 @@ public class PointcutRewriter {
     }
   }
 
-  private boolean isNot(Pointcut pc) {
+  private static boolean isNot(Pointcut pc) {
     return (pc instanceof NotPointcut);
   }
 
-  private boolean isAnd(Pointcut pc) {
+  private static boolean isAnd(Pointcut pc) {
     return (pc instanceof AndPointcut);
   }
 
-  private boolean isOr(Pointcut pc) {
+  private static boolean isOr(Pointcut pc) {
     return (pc instanceof OrPointcut);
   }
 

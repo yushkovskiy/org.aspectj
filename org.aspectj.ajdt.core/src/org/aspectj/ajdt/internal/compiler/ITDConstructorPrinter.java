@@ -25,7 +25,7 @@ import java.lang.reflect.Modifier;
  */
 class ITDConstructorPrinter extends CommonPrinter {
 
-  private InterTypeConstructorDeclaration constructorDeclaration;
+  private final InterTypeConstructorDeclaration constructorDeclaration;
 
   ITDConstructorPrinter(InterTypeConstructorDeclaration constructorDeclaration, MethodScope mscope) {
     super(mscope);

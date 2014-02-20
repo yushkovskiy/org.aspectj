@@ -140,6 +140,7 @@ public final class CodeExceptionGen
    * @param old_ih old target, either start or end
    * @param new_ih new target
    */
+  @Override
   public void updateTarget(InstructionHandle old_ih, InstructionHandle new_ih) {
     boolean targeted = false;
 
@@ -166,6 +167,7 @@ public final class CodeExceptionGen
   /**
    * @return true, if ih is target of this handler
    */
+  @Override
   public boolean containsTarget(InstructionHandle ih) {
     return (start_pc == ih) || (end_pc == ih) || (handler_pc == ih);
   }
@@ -209,6 +211,7 @@ public final class CodeExceptionGen
     return "CodeExceptionGen(" + start_pc + ", " + end_pc + ", " + handler_pc + ")";
   }
 
+  @Override
   public Object clone() {
     try {
       return super.clone();

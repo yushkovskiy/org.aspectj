@@ -17,6 +17,7 @@ import org.aspectj.org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclarati
 import org.aspectj.org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
 import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.*;
 import org.aspectj.weaver.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Modifier;
 import java.util.Map;
@@ -25,7 +26,7 @@ public class EclipseTypeMunger extends ConcreteTypeMunger {
   private ResolvedType targetTypeX;
   // protected ReferenceBinding targetBinding = null;
   public AbstractMethodDeclaration sourceMethod;
-  private EclipseFactory world;
+  private final EclipseFactory world;
   private ISourceLocation sourceLocation;
 
   public EclipseTypeMunger(EclipseFactory world, ResolvedTypeMunger munger, ResolvedType aspectType,
@@ -68,7 +69,7 @@ public class EclipseTypeMunger extends ConcreteTypeMunger {
   /**
    * Modifies signatures of a TypeBinding through its ClassScope, i.e. adds Method|FieldBindings, plays with inheritance, ...
    */
-  public boolean munge(SourceTypeBinding sourceType, ResolvedType onType) {
+  public boolean munge(@NotNull SourceTypeBinding sourceType, @NotNull ResolvedType onType) {
     ResolvedType rt = onType;
     if (rt.isRawType() || rt.isParameterizedType()) {
       rt = rt.getGenericType();
@@ -113,7 +114,7 @@ public class EclipseTypeMunger extends ConcreteTypeMunger {
     return true;
   }
 
-  private boolean mungeNewMethod(SourceTypeBinding sourceType, ResolvedType onType, NewMethodTypeMunger munger,
+  private boolean mungeNewMethod(@NotNull SourceTypeBinding sourceType, @NotNull ResolvedType onType, @NotNull NewMethodTypeMunger munger,
                                  boolean isExactTargetType) {
     final InterTypeMethodBinding binding = new InterTypeMethodBinding(world, munger, aspectType, sourceMethod);
 
@@ -158,7 +159,7 @@ public class EclipseTypeMunger extends ConcreteTypeMunger {
   }
 
   // very similar to code in AspectDeclaration
-  private boolean mungeNewInnerClass(SourceTypeBinding sourceType, ResolvedType onType, NewMemberClassTypeMunger munger,
+  private boolean mungeNewInnerClass(@NotNull SourceTypeBinding sourceType, ResolvedType onType, @NotNull NewMemberClassTypeMunger munger,
                                      boolean isExactTargetType) {
 
     final SourceTypeBinding aspectTypeBinding = (SourceTypeBinding) world.makeTypeBinding(aspectType);
@@ -186,7 +187,7 @@ public class EclipseTypeMunger extends ConcreteTypeMunger {
     return true;
   }
 
-  private void mungeNewConstructor(SourceTypeBinding sourceType, NewConstructorTypeMunger munger) {
+  private void mungeNewConstructor(@NotNull SourceTypeBinding sourceType, @NotNull NewConstructorTypeMunger munger) {
     if (shouldTreatAsPublic()) {
       final MethodBinding binding = world.makeMethodBinding(munger.getSignature(), munger.getTypeVariableAliases());
       findOrCreateInterTypeMemberFinder(sourceType).addInterTypeMethod(binding);
@@ -215,7 +216,7 @@ public class EclipseTypeMunger extends ConcreteTypeMunger {
 
   }
 
-  private void mungeNewField(SourceTypeBinding sourceType, NewFieldTypeMunger munger) {
+  private void mungeNewField(@NotNull SourceTypeBinding sourceType, @NotNull NewFieldTypeMunger munger) {
     if (shouldTreatAsPublic() && !targetTypeX.isInterface()) {
       final FieldBinding binding = world.makeFieldBinding(munger);
       findOrCreateInterTypeMemberFinder(sourceType).addInterTypeField(binding);
@@ -238,7 +239,8 @@ public class EclipseTypeMunger extends ConcreteTypeMunger {
     return Modifier.isPublic(munger.getSignature().getModifiers());
   }
 
-  private static InterTypeMemberFinder findOrCreateInterTypeMemberFinder(SourceTypeBinding sourceType) {
+  @NotNull
+  private static InterTypeMemberFinder findOrCreateInterTypeMemberFinder(@NotNull SourceTypeBinding sourceType) {
     InterTypeMemberFinder finder = (InterTypeMemberFinder) sourceType.memberFinder;
     if (finder == null) {
       finder = new InterTypeMemberFinder();
@@ -248,7 +250,8 @@ public class EclipseTypeMunger extends ConcreteTypeMunger {
     return finder;
   }
 
-  private static IntertypeMemberTypeFinder findOrCreateInterTypeMemberClassFinder(SourceTypeBinding sourceType) {
+  @NotNull
+  private static IntertypeMemberTypeFinder findOrCreateInterTypeMemberClassFinder(@NotNull SourceTypeBinding sourceType) {
     IntertypeMemberTypeFinder finder = (IntertypeMemberTypeFinder) sourceType.typeFinder;
     if (finder == null) {
       finder = new IntertypeMemberTypeFinder();
@@ -276,11 +279,13 @@ public class EclipseTypeMunger extends ConcreteTypeMunger {
   }
 
   @Override
+  @NotNull
   public ConcreteTypeMunger parameterizedFor(ResolvedType target) {
     return new EclipseTypeMunger(world, munger.parameterizedFor(target), aspectType, sourceMethod);
   }
 
   @Override
+  @NotNull
   public ConcreteTypeMunger parameterizeWith(Map m, World w) {
     return new EclipseTypeMunger(world, munger.parameterizeWith(m, w), aspectType, sourceMethod);
   }

@@ -469,7 +469,7 @@ public class CrosscuttingMembers {
     return changed;
   }
 
-  private boolean equivalent(Set<ShadowMunger> theseInlinedAroundMungers, Set<ShadowMunger> otherInlinedAroundMungers) {
+  private static boolean equivalent(Set<ShadowMunger> theseInlinedAroundMungers, Set<ShadowMunger> otherInlinedAroundMungers) {
     if (theseInlinedAroundMungers.size() != otherInlinedAroundMungers.size()) {
       return false;
     }
@@ -495,7 +495,7 @@ public class CrosscuttingMembers {
     return true;
   }
 
-  private ShadowMunger rewritePointcutInMunger(ShadowMunger munger) {
+  private static ShadowMunger rewritePointcutInMunger(ShadowMunger munger) {
     final PointcutRewriter pr = new PointcutRewriter();
     final Pointcut p = munger.getPointcut();
     final Pointcut newP = pr.rewrite(p);

@@ -24,8 +24,9 @@ import org.aspectj.weaver.ResolvedMemberImpl;
 import org.aspectj.weaver.UnresolvedType;
 import org.aspectj.weaver.patterns.IfPointcut;
 import org.aspectj.weaver.patterns.PerClause;
+import org.jetbrains.annotations.NotNull;
 
-public class IfMethodDeclaration extends AjMethodDeclaration {
+public final class IfMethodDeclaration extends AjMethodDeclaration {
   IfPointcut ifPointcut;
 
   public IfMethodDeclaration(CompilationResult compilationResult, IfPointcut ifPointcut) {
@@ -36,11 +37,6 @@ public class IfMethodDeclaration extends AjMethodDeclaration {
   @Override
   public void parseStatements(Parser parser, CompilationUnitDeclaration unit) {
     // do nothing, we're already fully parsed
-  }
-
-  @Override
-  protected int generateInfoAttributes(ClassFile classFile) {
-    return classFile.generateMethodInfoAttributes(binding, AstUtil.getAjSyntheticAttribute());
   }
 
   @Override
@@ -81,5 +77,10 @@ public class IfMethodDeclaration extends AjMethodDeclaration {
         }
       }
     }
+  }
+
+  @Override
+  protected int generateInfoAttributes(@NotNull ClassFile classFile) {
+    return classFile.generateMethodInfoAttributes(binding, AstUtil.getAjSyntheticAttribute());
   }
 }

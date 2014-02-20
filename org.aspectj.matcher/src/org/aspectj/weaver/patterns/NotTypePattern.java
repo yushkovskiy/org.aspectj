@@ -14,6 +14,7 @@ package org.aspectj.weaver.patterns;
 
 import org.aspectj.util.FuzzyBoolean;
 import org.aspectj.weaver.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Map;
@@ -78,7 +79,7 @@ public class NotTypePattern extends TypePattern {
   }
 
   @Override
-  public void write(CompressingDataOutputStream s) throws IOException {
+  public void write(@NotNull CompressingDataOutputStream s) throws IOException {
     s.writeByte(TypePattern.NOT);
     negatedPattern.write(s);
     annotationPattern.write(s);

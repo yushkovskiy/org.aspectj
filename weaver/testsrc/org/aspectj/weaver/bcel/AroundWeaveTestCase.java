@@ -58,6 +58,7 @@ public class AroundWeaveTestCase extends WeaveTestCase {
         AdviceKind.stringToKind("around"),
         matchOnlyPrintln ? makePointcutPrintln() : makePointcutAll(),
         sig, 0, -1, -1, null, UnresolvedType.forName("Aspect").resolve(world)) {
+      @Override
       public void specializeOn(Shadow s) {
         super.specializeOn(s);
         ((BcelShadow) s).initializeForAroundClosure();

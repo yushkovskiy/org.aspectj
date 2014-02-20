@@ -25,6 +25,20 @@ import java.util.List;
 
 public abstract class Advice extends ShadowMunger {
 
+  // ---- fields
+
+  public static final int ExtraArgument = 0x01;
+  public static final int ThisJoinPoint = 0x02;
+  public static final int ThisJoinPointStaticPart = 0x04;
+  public static final int ThisEnclosingJoinPointStaticPart = 0x08;
+  public static final int ParameterMask = 0x0f;
+  // For an if pointcut, this indicates it is hard wired to access a constant of either true or false
+  public static final int ConstantReference = 0x10;
+  // When the above flag is set, this indicates whether it is true or false
+  public static final int ConstantValue = 0x20;
+  // public static final int CanInline = 0x40; // didnt appear to be getting used
+  public static final int ThisAspectInstance = 0x40;
+
   protected AjAttribute.AdviceAttribute attribute;
   protected transient AdviceKind kind; // alias for attribute.getKind()
   protected Member signature;
@@ -50,6 +64,8 @@ public abstract class Advice extends ShadowMunger {
   protected List<Lint.Kind> suppressedLintKinds = null;
   @Nullable
   public ISourceLocation lastReportedMonitorExitJoinpointLocation = null;
+
+  private volatile int hashCode = 0;
 
   public static Advice makeCflowEntry(World world, Pointcut entry, boolean isBelow, Member stackField, int nFreeVars,
                                       List<ShadowMunger> innerCflowEntries, ResolvedType inAspect) {
@@ -90,6 +106,17 @@ public abstract class Advice extends ShadowMunger {
                                     IHasSourceLocation loc) {
     final Advice ret = world.createAdviceMunger(AdviceKind.Softener, entry, null, 0, loc, inAspect);
     ret.exceptionType = exceptionType;
+    return ret;
+  }
+
+  public static int countOnes(int bits) {
+    int ret = 0;
+    while (bits != 0) {
+      if ((bits & 1) != 0) {
+        ret += 1;
+      }
+      bits = bits >> 1;
+    }
     return ret;
   }
 
@@ -226,30 +253,6 @@ public abstract class Advice extends ShadowMunger {
     }
   }
 
-  /**
-   * In after returning advice if we are binding the extra parameter to a parameterized type we may not be able to do a type-safe
-   * conversion.
-   *
-   * @param resolvedExtraParameterType the type in the after returning declaration
-   * @param shadowReturnType           the type at the shadow
-   * @param world
-   */
-  private void maybeIssueUncheckedMatchWarning(ResolvedType afterReturningType, ResolvedType shadowReturnType, Shadow shadow,
-                                               World world) {
-    final boolean inDoubt = !afterReturningType.isAssignableFrom(shadowReturnType);
-    if (inDoubt && world.getLint().uncheckedArgument.isEnabled()) {
-      String uncheckedMatchWith = afterReturningType.getSimpleBaseName();
-      if (shadowReturnType.isParameterizedType() && (shadowReturnType.getRawType() == afterReturningType.getRawType())) {
-        uncheckedMatchWith = shadowReturnType.getSimpleName();
-      }
-      if (!Utils.isSuppressing(getSignature().getAnnotations(), "uncheckedArgument")) {
-        world.getLint().uncheckedArgument.signal(new String[]{afterReturningType.getSimpleName(), uncheckedMatchWith,
-            afterReturningType.getSimpleBaseName(), shadow.toResolvedString(world)}, getSourceLocation(),
-            new ISourceLocation[]{shadow.getSourceLocation()});
-      }
-    }
-  }
-
   // ----
 
   public AdviceKind getKind() {
@@ -264,31 +267,12 @@ public abstract class Advice extends ShadowMunger {
     return (getExtraParameterFlags() & ExtraArgument) != 0;
   }
 
-  protected int getExtraParameterFlags() {
-    return attribute.getExtraParameterFlags();
-  }
-
-  protected int getExtraParameterCount() {
-    return countOnes(getExtraParameterFlags() & ParameterMask);
-  }
-
   public UnresolvedType[] getBindingParameterTypes() {
     return bindingParameterTypes;
   }
 
   public void setBindingParameterTypes(UnresolvedType[] types) {
     bindingParameterTypes = types;
-  }
-
-  public static int countOnes(int bits) {
-    int ret = 0;
-    while (bits != 0) {
-      if ((bits & 1) != 0) {
-        ret += 1;
-      }
-      bits = bits >> 1;
-    }
-    return ret;
   }
 
   public int getBaseParameterCount() {
@@ -325,7 +309,6 @@ public abstract class Advice extends ShadowMunger {
       final ResolvedMember method = (ResolvedMember) signature;
       final UnresolvedType[] parameterTypes = method.getGenericParameterTypes();
       if (getConcreteAspect().isAnnotationStyleAspect()) {
-
         // Examine the annotation to determine the parameter name then look it up in the parameters for the method
         final String[] pnames = method.getParameterNames();
         if (pnames != null) {
@@ -378,18 +361,6 @@ public abstract class Advice extends ShadowMunger {
 
   public UnresolvedType getDeclaringAspect() {
     return getOriginalSignature().getDeclaringType();
-  }
-
-  protected Member getOriginalSignature() {
-    return signature;
-  }
-
-  protected String extraParametersToString() {
-    if (getExtraParameterFlags() == 0) {
-      return "";
-    } else {
-      return "(extraFlags: " + getExtraParameterFlags() + ")";
-    }
   }
 
   @Override
@@ -461,8 +432,6 @@ public abstract class Advice extends ShadowMunger {
 
   }
 
-  private volatile int hashCode = 0;
-
   @Override
   public int hashCode() {
     if (hashCode == 0) {
@@ -474,20 +443,6 @@ public abstract class Advice extends ShadowMunger {
     }
     return hashCode;
   }
-
-  // ---- fields
-
-  public static final int ExtraArgument = 0x01;
-  public static final int ThisJoinPoint = 0x02;
-  public static final int ThisJoinPointStaticPart = 0x04;
-  public static final int ThisEnclosingJoinPointStaticPart = 0x08;
-  public static final int ParameterMask = 0x0f;
-  // For an if pointcut, this indicates it is hard wired to access a constant of either true or false
-  public static final int ConstantReference = 0x10;
-  // When the above flag is set, this indicates whether it is true or false
-  public static final int ConstantValue = 0x20;
-  // public static final int CanInline = 0x40; // didnt appear to be getting used
-  public static final int ThisAspectInstance = 0x40;
 
   // cant use 0x80 ! the value is written out as a byte and -1 has special meaning (-1 is 0x80...)
 
@@ -514,5 +469,49 @@ public abstract class Advice extends ShadowMunger {
   }
 
   public abstract boolean hasDynamicTests();
+
+  protected int getExtraParameterFlags() {
+    return attribute.getExtraParameterFlags();
+  }
+
+  protected int getExtraParameterCount() {
+    return countOnes(getExtraParameterFlags() & ParameterMask);
+  }
+
+  protected Member getOriginalSignature() {
+    return signature;
+  }
+
+  protected String extraParametersToString() {
+    if (getExtraParameterFlags() == 0) {
+      return "";
+    } else {
+      return "(extraFlags: " + getExtraParameterFlags() + ")";
+    }
+  }
+
+  /**
+   * In after returning advice if we are binding the extra parameter to a parameterized type we may not be able to do a type-safe
+   * conversion.
+   *
+   * @param afterReturningType the type in the after returning declaration
+   * @param shadowReturnType   the type at the shadow
+   * @param world
+   */
+  private void maybeIssueUncheckedMatchWarning(ResolvedType afterReturningType, ResolvedType shadowReturnType, Shadow shadow,
+                                               World world) {
+    final boolean inDoubt = !afterReturningType.isAssignableFrom(shadowReturnType);
+    if (inDoubt && world.getLint().uncheckedArgument.isEnabled()) {
+      String uncheckedMatchWith = afterReturningType.getSimpleBaseName();
+      if (shadowReturnType.isParameterizedType() && (shadowReturnType.getRawType() == afterReturningType.getRawType())) {
+        uncheckedMatchWith = shadowReturnType.getSimpleName();
+      }
+      if (!Utils.isSuppressing(getSignature().getAnnotations(), "uncheckedArgument")) {
+        world.getLint().uncheckedArgument.signal(new String[]{afterReturningType.getSimpleName(), uncheckedMatchWith,
+            afterReturningType.getSimpleBaseName(), shadow.toResolvedString(world)}, getSourceLocation(),
+            new ISourceLocation[]{shadow.getSourceLocation()});
+      }
+    }
+  }
 
 }

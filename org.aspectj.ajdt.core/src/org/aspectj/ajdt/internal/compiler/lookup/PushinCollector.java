@@ -21,6 +21,8 @@ import org.aspectj.weaver.ResolvedType;
 import org.aspectj.weaver.World;
 import org.aspectj.weaver.patterns.ExactTypePattern;
 import org.aspectj.weaver.patterns.TypePattern;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -41,37 +43,91 @@ import java.util.*;
  * @author Andy Clement
  * @since 1.6.9
  */
-public class PushinCollector {
-
+public final class PushinCollector {
+  @NotNull
   private final static String OPTION_SUFFIX = "suffix";
+  @NotNull
   private final static String OPTION_DIR = "dir";
+  @NotNull
   private final static String OPTION_PKGDIRS = "packageDirs";
+  @NotNull
   private final static String OPTION_DEBUG = "debug";
+  @NotNull
   private final static String OPTION_LINENUMS = "lineNums";
+  @NotNull
   private final static String OPTION_DUMPUNCHANGED = "dumpUnchanged";
 
-  private World world;
+  @NotNull
+  private final World world;
   private boolean debug = false;
   private boolean dumpUnchanged = false;
+  @Nullable
   private IOutputClassFileNameProvider outputFileNameProvider;
-  private String specifiedOutputDirectory;
-  private boolean includePackageDirs;
-  private boolean includeLineNumberComments;
-  private String suffix;
+  @Nullable
+  private final String specifiedOutputDirectory;
+  private final boolean includePackageDirs;
+  private final boolean includeLineNumberComments;
+  @NotNull
+  private final String suffix;
 
   // This first collection stores the 'text' for the declarations.
-  private Map<AbstractMethodDeclaration, RepresentationAndLocation> codeRepresentation = new HashMap<AbstractMethodDeclaration, RepresentationAndLocation>();
+  @NotNull
+  private final Map<AbstractMethodDeclaration, RepresentationAndLocation> codeRepresentation = new HashMap<AbstractMethodDeclaration, RepresentationAndLocation>();
 
   // This stores the new annotations
-  private Map<SourceTypeBinding, List<String>> additionalAnnotations = new HashMap<SourceTypeBinding, List<String>>();
+  @NotNull
+  private final Map<SourceTypeBinding, List<String>> additionalAnnotations = new HashMap<SourceTypeBinding, List<String>>();
 
   // This stores the new parents
-  private Map<SourceTypeBinding, List<ExactTypePattern>> additionalParents = new HashMap<SourceTypeBinding, List<ExactTypePattern>>();
+  @NotNull
+  private final Map<SourceTypeBinding, List<ExactTypePattern>> additionalParents = new HashMap<SourceTypeBinding, List<ExactTypePattern>>();
 
   // This indicates which types are affected by which intertype declarations
-  private Map<SourceTypeBinding, List<AbstractMethodDeclaration>> newDeclarations = new HashMap<SourceTypeBinding, List<AbstractMethodDeclaration>>();
+  @NotNull
+  private final Map<SourceTypeBinding, List<AbstractMethodDeclaration>> newDeclarations = new HashMap<SourceTypeBinding, List<AbstractMethodDeclaration>>();
 
-  private PushinCollector(World world, Properties configuration) {
+  /**
+   * Checks if the aspectj.pushin property is set - this is the main condition for triggering the creation of pushed-in source
+   * files. If not set just to 'true', the value of the property is processed as configuration. Configurable options are:
+   * <ul>
+   * <li>dir=XXXX - to set the output directory for the pushed in files
+   * <li>suffix=XXX - to set the suffix, can be blank to get just '.java'
+   * </ul>
+   */
+  @Nullable
+  public static PushinCollector createInstance(@NotNull World world) {
+    try {
+      final String property = System.getProperty("aspectj.pushin");
+      if (property == null) {
+        return null;
+      }
+      final Properties configuration = new Properties();
+      final StringTokenizer tokenizer = new StringTokenizer(property, ",");
+      while (tokenizer.hasMoreElements()) {
+        final String token = tokenizer.nextToken();
+        // Simplest thing to do is turn it on 'aspectj.pushin=true'
+        if (token.equalsIgnoreCase("true")) {
+          continue;
+        }
+        final int positionOfEquals = token.indexOf("=");
+        if (positionOfEquals != -1) {
+          // it is an option
+          final String optionName = token.substring(0, positionOfEquals);
+          final String optionValue = token.substring(positionOfEquals + 1);
+          configuration.put(optionName, optionValue);
+        } else {
+          // it is a flag
+          configuration.put(token, "true");
+        }
+      }
+      return new PushinCollector(world, configuration);
+    } catch (Exception e) {
+      // unable to read system properties...
+    }
+    return null;
+  }
+
+  private PushinCollector(@NotNull World world, @NotNull Properties configuration) {
     this.world = world;
 
     // Configure the instance based on the input properties
@@ -95,30 +151,10 @@ public class PushinCollector {
 
   }
 
-  private static String getName(CompilationUnitDeclaration cud) {
-    if (cud == null) {
-      return "UNKNOWN";
-    }
-    if (cud.scope == null) {
-      return "UNKNOWN";
-    }
-    if (cud.scope.referenceContext == null) {
-      return "UNKNOWN";
-    }
-    return new String(cud.scope.referenceContext.getFileName());
-  }
-
-  /**
-   * @return true if the type is affected by something (itd/declare anno/declare parent)
-   */
-  private boolean hasChanged(SourceTypeBinding stb) {
-    return newDeclarations.get(stb) != null || additionalParents.get(stb) != null || additionalAnnotations.get(stb) != null;
-  }
-
   /**
    * Produce the modified source that looks like the itds and declares have been applied.
    */
-  public void dump(CompilationUnitDeclaration compilationUnitDeclaration, String outputFileLocation) {
+  public void dump(@NotNull CompilationUnitDeclaration compilationUnitDeclaration, String outputFileLocation) {
     if (compilationUnitDeclaration.scope.topLevelTypes == null || compilationUnitDeclaration.scope.topLevelTypes.length == 0) {
       return;
     }
@@ -212,20 +248,6 @@ public class PushinCollector {
     }
   }
 
-  /**
-   * Encapsulates a text representation (source code) for a member and the line where it was declared.
-   */
-  private static class RepresentationAndLocation {
-
-    String textualRepresentation;
-    int linenumber;
-
-    public RepresentationAndLocation(String textualRepresentation, int linenumber) {
-      this.textualRepresentation = textualRepresentation;
-      this.linenumber = linenumber;
-    }
-  }
-
   public void recordInterTypeMethodDeclarationCode(AbstractMethodDeclaration md, String s, int line) {
     codeRepresentation.put(md, new RepresentationAndLocation(s, line));
   }
@@ -265,7 +287,7 @@ public class PushinCollector {
     annos.add(annotationString);
   }
 
-  public void dump(CompilationUnitDeclaration unit) {
+  public void dump(@NotNull CompilationUnitDeclaration unit) {
     final String outputFile = getOutputFileFor(unit);
     if (debug) {
       System.out
@@ -274,7 +296,44 @@ public class PushinCollector {
     dump(unit, outputFile);
   }
 
-  private String getOutputFileFor(CompilationUnitDeclaration unit) {
+  public void tagAsMunged(SourceTypeBinding sourceType, TypePattern typePattern) {
+    if (typePattern instanceof ExactTypePattern) {
+      List<ExactTypePattern> annos = additionalParents.get(sourceType);
+      if (annos == null) {
+        annos = new ArrayList<ExactTypePattern>();
+        additionalParents.put(sourceType, annos);
+      }
+      annos.add((ExactTypePattern) typePattern);
+    }
+  }
+
+  public void setOutputFileNameProvider(@Nullable IOutputClassFileNameProvider outputFileNameProvider) {
+    this.outputFileNameProvider = outputFileNameProvider;
+  }
+
+  @NotNull
+  private static String getName(@Nullable CompilationUnitDeclaration cud) {
+    if (cud == null) {
+      return "UNKNOWN";
+    }
+    if (cud.scope == null) {
+      return "UNKNOWN";
+    }
+    if (cud.scope.referenceContext == null) {
+      return "UNKNOWN";
+    }
+    return new String(cud.scope.referenceContext.getFileName());
+  }
+
+  /**
+   * @return true if the type is affected by something (itd/declare anno/declare parent)
+   */
+  private boolean hasChanged(SourceTypeBinding stb) {
+    return newDeclarations.get(stb) != null || additionalParents.get(stb) != null || additionalAnnotations.get(stb) != null;
+  }
+
+  @NotNull
+  private String getOutputFileFor(@NotNull CompilationUnitDeclaration unit) {
     final StringBuilder sb = new StringBuilder();
 
     // Create the directory portion of the output location
@@ -313,58 +372,17 @@ public class PushinCollector {
     return sb.toString();
   }
 
-  public void tagAsMunged(SourceTypeBinding sourceType, TypePattern typePattern) {
-    if (typePattern instanceof ExactTypePattern) {
-      List<ExactTypePattern> annos = additionalParents.get(sourceType);
-      if (annos == null) {
-        annos = new ArrayList<ExactTypePattern>();
-        additionalParents.put(sourceType, annos);
-      }
-      annos.add((ExactTypePattern) typePattern);
-    }
-  }
-
   /**
-   * Checks if the aspectj.pushin property is set - this is the main condition for triggering the creation of pushed-in source
-   * files. If not set just to 'true', the value of the property is processed as configuration. Configurable options are:
-   * <ul>
-   * <li>dir=XXXX - to set the output directory for the pushed in files
-   * <li>suffix=XXX - to set the suffix, can be blank to get just '.java'
-   * </ul>
+   * Encapsulates a text representation (source code) for a member and the line where it was declared.
    */
-  public static PushinCollector createInstance(World world) {
-    try {
-      final String property = System.getProperty("aspectj.pushin");
-      if (property == null) {
-        return null;
-      }
-      final Properties configuration = new Properties();
-      final StringTokenizer tokenizer = new StringTokenizer(property, ",");
-      while (tokenizer.hasMoreElements()) {
-        final String token = tokenizer.nextToken();
-        // Simplest thing to do is turn it on 'aspectj.pushin=true'
-        if (token.equalsIgnoreCase("true")) {
-          continue;
-        }
-        final int positionOfEquals = token.indexOf("=");
-        if (positionOfEquals != -1) {
-          // it is an option
-          final String optionName = token.substring(0, positionOfEquals);
-          final String optionValue = token.substring(positionOfEquals + 1);
-          configuration.put(optionName, optionValue);
-        } else {
-          // it is a flag
-          configuration.put(token, "true");
-        }
-      }
-      return new PushinCollector(world, configuration);
-    } catch (Exception e) {
-      // unable to read system properties...
-    }
-    return null;
-  }
+  private static class RepresentationAndLocation {
 
-  public void setOutputFileNameProvider(IOutputClassFileNameProvider outputFileNameProvider) {
-    this.outputFileNameProvider = outputFileNameProvider;
+    String textualRepresentation;
+    int linenumber;
+
+    public RepresentationAndLocation(String textualRepresentation, int linenumber) {
+      this.textualRepresentation = textualRepresentation;
+      this.linenumber = linenumber;
+    }
   }
 }

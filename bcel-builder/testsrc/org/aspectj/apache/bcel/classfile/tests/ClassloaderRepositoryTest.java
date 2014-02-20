@@ -15,6 +15,7 @@ public class ClassloaderRepositoryTest extends TestCase {
 
   private ClassLoaderRepository rep1, rep2;
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
     final ClassLoader cl = Thread.currentThread().getContextClassLoader();
@@ -69,6 +70,7 @@ public class ClassloaderRepositoryTest extends TestCase {
     }
   }
 
+  @Override
   public void tearDown() throws Exception {
     super.tearDown();
     System.err.println("Rep1: " + rep1.reportStats());
@@ -77,11 +79,11 @@ public class ClassloaderRepositoryTest extends TestCase {
     rep2.reset();
   }
 
-  private long reportLocalCacheHits(ClassLoaderRepository rep) {
+  private static long reportLocalCacheHits(ClassLoaderRepository rep) {
     return rep.reportStats()[5];
   }
 
-  private long reportSharedCacheHits(ClassLoaderRepository rep) {
+  private static long reportSharedCacheHits(ClassLoaderRepository rep) {
     return rep.reportStats()[3];
   }
 

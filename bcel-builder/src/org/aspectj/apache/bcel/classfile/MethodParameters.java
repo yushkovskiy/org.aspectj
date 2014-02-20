@@ -60,6 +60,7 @@ public class MethodParameters extends Attribute {
     }
   }
 
+  @Override
   public void dump(DataOutputStream dos) throws IOException {
     super.dump(dos);
     dos.writeByte(names.length);

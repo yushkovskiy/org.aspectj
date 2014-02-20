@@ -14,6 +14,7 @@ import org.aspectj.weaver.tools.DefaultTrace;
 
 public class DefaultTraceTest extends AbstractTraceTest {
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     trace = new DefaultTrace(getClass());

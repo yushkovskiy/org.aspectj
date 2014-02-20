@@ -17,7 +17,7 @@ import java.util.Map;
  * @author Adrian Colyer
  * @author Andy Clement
  */
-public class TypeVariableReferenceType extends ReferenceType implements TypeVariableReference {
+public final class TypeVariableReferenceType extends ReferenceType implements TypeVariableReference {
 
   private final TypeVariable typeVariable;
 

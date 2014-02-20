@@ -16,6 +16,8 @@ import org.aspectj.bridge.ISourceLocation;
 import org.aspectj.weaver.CompressingDataOutputStream;
 import org.aspectj.weaver.IHasSourceLocation;
 import org.aspectj.weaver.ISourceContext;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -23,6 +25,7 @@ import java.io.IOException;
 
 public abstract class PatternNode implements IHasSourceLocation {
   protected int start, end;
+  @Nullable
   protected ISourceContext sourceContext;
 
   public PatternNode() {
@@ -41,10 +44,12 @@ public abstract class PatternNode implements IHasSourceLocation {
   }
 
   @Override
+  @Nullable
   public ISourceContext getSourceContext() {
     return sourceContext;
   }
 
+  @NotNull
   public String getFileName() {
     return "unknown";
   }
@@ -55,7 +60,7 @@ public abstract class PatternNode implements IHasSourceLocation {
     this.end = end;
   }
 
-  public void copyLocationFrom(PatternNode other) {
+  public void copyLocationFrom(@NotNull PatternNode other) {
     this.start = other.start;
     this.end = other.end;
     this.sourceContext = other.sourceContext;
@@ -71,14 +76,14 @@ public abstract class PatternNode implements IHasSourceLocation {
     return sourceContext.makeSourceLocation(this);
   }
 
-  public abstract void write(CompressingDataOutputStream s) throws IOException;
+  public abstract void write(@NotNull CompressingDataOutputStream s) throws IOException;
 
-  public void writeLocation(DataOutputStream s) throws IOException {
+  public void writeLocation(@NotNull DataOutputStream s) throws IOException {
     s.writeInt(start);
     s.writeInt(end);
   }
 
-  public void readLocation(ISourceContext context, DataInputStream s) throws IOException {
+  public void readLocation(ISourceContext context, @NotNull DataInputStream s) throws IOException {
     start = s.readInt();
     end = s.readInt();
     this.sourceContext = context;

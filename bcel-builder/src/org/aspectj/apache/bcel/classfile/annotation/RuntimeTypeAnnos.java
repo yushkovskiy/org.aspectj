@@ -37,6 +37,7 @@ public abstract class RuntimeTypeAnnos extends Attribute {
     dis.read(annotation_data, 0, length);
   }
 
+  @Override
   public final void dump(DataOutputStream dos) throws IOException {
     super.dump(dos);
     writeTypeAnnotations(dos);
@@ -60,7 +61,7 @@ public abstract class RuntimeTypeAnnos extends Attribute {
 //		annotation_data = data;
 //	}
 
-  public Attribute copy(ConstantPool constant_pool) {
+  public static Attribute copy(ConstantPool constant_pool) {
     throw new RuntimeException("Not implemented yet!");
   }
 

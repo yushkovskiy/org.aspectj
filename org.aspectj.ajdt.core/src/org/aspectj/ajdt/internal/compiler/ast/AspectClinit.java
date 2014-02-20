@@ -25,12 +25,18 @@ import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.ClassScope;
 import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.FieldBinding;
 import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.LocalVariableBinding;
 import org.aspectj.weaver.AjcMemberMaker;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class AspectClinit extends Clinit {
-  private boolean hasPre, hasPost;
-  private FieldBinding initFailureField;
+public final class AspectClinit extends Clinit {
+  private final boolean hasPre;
+  private final boolean hasPost;
+  @Nullable
+  private final FieldBinding initFailureField;
+  @Nullable
+  private ExceptionLabel handlerLabel;
 
-  public AspectClinit(Clinit old, CompilationResult compilationResult, boolean hasPre, boolean hasPost, FieldBinding initFailureField) {
+  public AspectClinit(@NotNull Clinit old, @NotNull CompilationResult compilationResult, boolean hasPre, boolean hasPost, @Nullable FieldBinding initFailureField) {
     super(compilationResult);
     // CHECK do we need all the bits or just the needfreereturn bit?
     //	if ((old.bits & ASTNode.NeedFreeReturn)!=0) this.bits |= ASTNode.NeedFreeReturn;
@@ -45,12 +51,8 @@ public class AspectClinit extends Clinit {
     this.initFailureField = initFailureField;
   }
 
-  private ExceptionLabel handlerLabel;
-
   @Override
-  protected void generateSyntheticCode(
-      ClassScope classScope,
-      CodeStream codeStream) {
+  protected void generateSyntheticCode(@NotNull ClassScope classScope, @NotNull CodeStream codeStream) {
     if (initFailureField != null) {
       handlerLabel = new ExceptionLabel(codeStream, classScope.getJavaLangThrowable());
       handlerLabel.placeStart();
@@ -67,9 +69,7 @@ public class AspectClinit extends Clinit {
   }
 
   @Override
-  protected void generatePostSyntheticCode(
-      ClassScope classScope,
-      CodeStream codeStream) {
+  protected void generatePostSyntheticCode(@NotNull ClassScope classScope, @NotNull CodeStream codeStream) {
     super.generatePostSyntheticCode(classScope, codeStream);
     if (hasPost) {
       final EclipseFactory world = EclipseFactory.fromScopeLookupEnvironment(classScope);

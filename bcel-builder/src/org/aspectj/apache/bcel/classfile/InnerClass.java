@@ -110,6 +110,7 @@ public final class InnerClass implements Cloneable, Node {
    *
    * @param v Visitor object
    */
+  @Override
   public void accept(ClassVisitor v) {
     v.visitInnerClass(this);
   }

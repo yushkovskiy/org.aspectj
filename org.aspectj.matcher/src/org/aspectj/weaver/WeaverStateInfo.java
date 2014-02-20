@@ -482,7 +482,7 @@ public class WeaverStateInfo {
     return diff;
   }
 
-  byte[] applyDiff(byte[] wovenClassFile, byte[] diff) {
+  static byte[] applyDiff(byte[] wovenClassFile, byte[] diff) {
 
     final int lengthInCommon = readInt(diff, 2);
     final byte[] unWovenClassFile = new byte[4 + diff.length + lengthInCommon];
@@ -503,7 +503,7 @@ public class WeaverStateInfo {
     return unWovenClassFile;
   }
 
-  private byte[] serializeInt(int i) {
+  private static byte[] serializeInt(int i) {
     final ByteArrayOutputStream bos = new ByteArrayOutputStream(4);
     final DataOutputStream dos = new DataOutputStream(bos);
     try {

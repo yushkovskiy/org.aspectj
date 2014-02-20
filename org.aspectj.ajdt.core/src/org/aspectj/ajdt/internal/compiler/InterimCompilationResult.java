@@ -12,6 +12,7 @@ package org.aspectj.ajdt.internal.compiler;
 
 import org.aspectj.org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.aspectj.weaver.bcel.UnwovenClassFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -19,10 +20,10 @@ import java.util.List;
  * Holds a compilation result produced by the Java compilation phase, ready for weaving in the weave phase. NOTE: This class defines
  * equality based solely on the fileName of the compiled file (not the bytecodes produced for example)
  */
-public class InterimCompilationResult {
+public final class InterimCompilationResult {
 
-  private CompilationResult result;
-  private UnwovenClassFile[] unwovenClassFiles; // longer term would be nice not to have two copies of
+  private final CompilationResult result;
+  private final UnwovenClassFile[] unwovenClassFiles; // longer term would be nice not to have two copies of
 
   // the byte codes, one in result.classFiles and another
   // in unwovenClassFiles;
@@ -32,7 +33,7 @@ public class InterimCompilationResult {
     unwovenClassFiles = ClassFileBasedByteCodeProvider.unwovenClassFilesFor(result, np);
   }
 
-  public InterimCompilationResult(CompilationResult cr, List<UnwovenClassFile> ucfList) {
+  public InterimCompilationResult(@NotNull CompilationResult cr, @NotNull List<UnwovenClassFile> ucfList) {
     result = cr;
     unwovenClassFiles = new UnwovenClassFile[ucfList.size()];
     for (int i = 0; i < ucfList.size(); i++) {

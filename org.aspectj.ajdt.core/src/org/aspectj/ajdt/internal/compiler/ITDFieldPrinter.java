@@ -22,7 +22,7 @@ import org.aspectj.org.eclipse.jdt.internal.compiler.lookup.MethodScope;
  */
 class ITDFieldPrinter extends CommonPrinter {
 
-  private InterTypeFieldDeclaration fieldDeclaration;
+  private final InterTypeFieldDeclaration fieldDeclaration;
 
   ITDFieldPrinter(InterTypeFieldDeclaration fieldDeclaration, MethodScope methodscope) {
     super(methodscope);

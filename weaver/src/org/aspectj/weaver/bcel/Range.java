@@ -161,10 +161,12 @@ abstract class Range implements InstructionTargeter {
 
   // -----
 
+  @Override
   public boolean containsTarget(InstructionHandle ih) {
     return false;
   }
 
+  @Override
   public final void updateTarget(InstructionHandle old_ih, InstructionHandle new_ih) {
     throw new RuntimeException("Ranges must be updated with an enclosing instructionList");
   }

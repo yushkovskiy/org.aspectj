@@ -166,6 +166,7 @@ public class PointcutResidueTestCase extends WeaveTestCase {
     checkSerialize(rp);
   }
 
+  @Override
   public void weaveTest(String name, String outName, ShadowMunger planner) throws IOException {
     final List l = new ArrayList(1);
     l.add(planner);

@@ -17,7 +17,8 @@ import org.aspectj.weaver.patterns.TypePatternListTestCase;
 
 public class BcelTypePatternListTestCase extends TypePatternListTestCase {
 
-	public World getWorld() {
-		return new BcelWorld();
-	}
+  @Override
+  public World getWorld() {
+    return new BcelWorld();
+  }
 }

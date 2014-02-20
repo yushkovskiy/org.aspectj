@@ -25,6 +25,7 @@ public class GenericSignatureParserTest extends TestCase {
 
   GenericSignatureParser parser;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     parser = new GenericSignatureParser();

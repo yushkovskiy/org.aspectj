@@ -309,6 +309,7 @@ public class ReflectionBasedReferenceTypeDelegateTest extends TestCase {
 
   // todo: array of int
 
+  @Override
   protected void setUp() throws Exception {
     world = new ReflectionWorld(getClass().getClassLoader());
     objectType = world.resolve("java.lang.Object");

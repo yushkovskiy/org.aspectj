@@ -25,6 +25,7 @@ import org.aspectj.weaver.AjAttribute;
 import org.aspectj.weaver.ResolvedPointcutDefinition;
 import org.aspectj.weaver.UnresolvedType;
 import org.aspectj.weaver.patterns.Pointcut;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Modifier;
 import java.util.Iterator;
@@ -267,10 +268,10 @@ public class PointcutDeclaration extends AjMethodDeclaration {
     classFile.extraAttributes.add(new EclipseAttributeAdapter(new AjAttribute.WeaverVersionInfo()));
   }
 
-  private static char[] weaverVersionChars = "org.aspectj.weaver.WeaverVersion".toCharArray();
+  private static final char[] weaverVersionChars = "org.aspectj.weaver.WeaverVersion".toCharArray();
 
   @Override
-  protected int generateInfoAttributes(ClassFile classFile) {
+  protected int generateInfoAttributes(@NotNull ClassFile classFile) {
     return super.generateInfoAttributes(classFile, true);
   }
 

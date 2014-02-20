@@ -54,6 +54,8 @@ package org.aspectj.apache.bcel.util;
  * <http://www.apache.org/>.
  */
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 
@@ -66,9 +68,10 @@ import java.io.DataInputStream;
  * @version $Id: ByteSequence.java,v 1.3 2008/05/28 23:52:53 aclement Exp $
  */
 public final class ByteSequence extends DataInputStream {
+  @NotNull
   private final ByteArrayStream byte_stream;
 
-  public ByteSequence(byte[] bytes) {
+  public ByteSequence(@NotNull byte[] bytes) {
     super(new ByteArrayStream(bytes));
     byte_stream = (ByteArrayStream) in;
   }
@@ -82,7 +85,7 @@ public final class ByteSequence extends DataInputStream {
   }
 
   private static final class ByteArrayStream extends ByteArrayInputStream {
-    ByteArrayStream(byte[] bytes) {
+    ByteArrayStream(@NotNull byte[] bytes) {
       super(bytes);
     }
 

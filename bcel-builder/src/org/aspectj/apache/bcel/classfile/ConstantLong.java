@@ -97,6 +97,7 @@ public final class ConstantLong extends Constant implements SimpleConstant {
     return longValue;
   }
 
+  @Override
   public final String getStringValue() {
     return Long.toString(longValue);
   }

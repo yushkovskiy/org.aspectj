@@ -150,28 +150,28 @@ public class GenericSignatureParsingTest extends BcelTestCase {
   // helper methods below
 
   // These routines call BCEL to determine if it can correctly translate from one form to the other.
-  private void checkClassTypeSignature(String sig, String expected) {
+  private static void checkClassTypeSignature(String sig, String expected) {
     final StringBuffer result = new StringBuffer();
     final int p = GenericSignatureParsingTest.readClassTypeSignatureFrom(sig, 0, result, false);
     assertTrue("Only swallowed " + p + " chars of this sig " + sig + " (len=" + sig.length() + ")", p == sig.length());
     assertTrue("Expected '" + expected + "' but got '" + result.toString() + "'", result.toString().equals(expected));
   }
 
-  private void checkMethodTypeToSignature(String ret, String[] args, String expected) {
+  private static void checkMethodTypeToSignature(String ret, String[] args, String expected) {
     final String res = GenericSignatureParsingTest.methodTypeToSignature(ret, args);
     if (!res.equals(expected)) {
       fail("Should match.  Got: " + res + "  Expected:" + expected);
     }
   }
 
-  private void checkMethodSignatureReturnType(String sig, String expected) {
+  private static void checkMethodSignatureReturnType(String sig, String expected) {
     final String result = GenericSignatureParsingTest.methodSignatureReturnType(sig, false);
     if (!result.equals(expected)) {
       fail("Should match.  Got: " + result + "  Expected:" + expected);
     }
   }
 
-  private void checkMethodSignatureArgumentTypes(String in, String[] expected) {
+  private static void checkMethodSignatureArgumentTypes(String in, String[] expected) {
     final String[] result = GenericSignatureParsingTest.methodSignatureArgumentTypes(in, false);
     if (result.length != expected.length) {
       fail("Expected " + expected.length + " entries to be returned but only got " + result.length);

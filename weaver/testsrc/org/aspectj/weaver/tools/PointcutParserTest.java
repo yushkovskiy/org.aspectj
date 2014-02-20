@@ -49,6 +49,7 @@ public class PointcutParserTest extends TestCase {
     return false;
   }
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     needToSkip = needToSkipPointcutParserTests();
@@ -370,6 +371,7 @@ public class PointcutParserTest extends TestCase {
 
   private static class IgnoreWarningsMessageHandler implements IMessageHandler {
 
+    @Override
     public boolean handleMessage(@NotNull IMessage message) throws AbortException {
       if (message.getKind() != IMessage.WARNING) {
         throw new RuntimeException("unexpected message: " + message.toString());
@@ -377,6 +379,7 @@ public class PointcutParserTest extends TestCase {
       return true;
     }
 
+    @Override
     public boolean isIgnoring(Kind kind) {
       if (kind != IMessage.ERROR) {
         return true;
@@ -384,9 +387,11 @@ public class PointcutParserTest extends TestCase {
       return false;
     }
 
+    @Override
     public void dontIgnore(Kind kind) {
     }
 
+    @Override
     public void ignore(Kind kind) {
     }
 

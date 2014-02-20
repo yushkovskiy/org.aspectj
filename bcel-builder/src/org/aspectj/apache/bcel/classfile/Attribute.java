@@ -190,6 +190,7 @@ public abstract class Attribute implements Cloneable, Node, Serializable {
     return Constants.ATTRIBUTE_NAMES[tag];
   }
 
+  @Override
   public abstract void accept(ClassVisitor v);
 
 }

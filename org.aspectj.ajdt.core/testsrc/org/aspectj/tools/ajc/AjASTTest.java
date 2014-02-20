@@ -1789,7 +1789,7 @@ public class AjASTTest extends AjASTTestCase {
         "class B{}class E{}aspect C {declare parents : B && !is(EnumType) extends E;}",
         TypeCategoryTypePattern.ENUM, "is(EnumType)");
   }
-	
+
 	/*
 	 * 
 	 * 
@@ -1857,7 +1857,7 @@ class TypeCategoryTypeVisitor extends AjASTVisitor {
 }
 
 class TypePatternSourceRangeVisitor extends AjASTVisitor {
-  private List<SourceRange> sourceRanges = new ArrayList<SourceRange>();
+  private final List<SourceRange> sourceRanges = new ArrayList<SourceRange>();
 
   public List<SourceRange> getVisitedSourceRanges() {
     return sourceRanges;

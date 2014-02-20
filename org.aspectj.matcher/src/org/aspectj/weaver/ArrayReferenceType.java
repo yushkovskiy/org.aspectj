@@ -11,6 +11,8 @@
  * ******************************************************************/
 package org.aspectj.weaver;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.lang.reflect.Modifier;
 
 /**
@@ -18,11 +20,11 @@ import java.lang.reflect.Modifier;
  *
  * @author Andy Clement
  */
-public class ArrayReferenceType extends ReferenceType {
-
+public final class ArrayReferenceType extends ReferenceType {
+  @NotNull
   private final ResolvedType componentType;
 
-  public ArrayReferenceType(String sig, String erasureSig, World world, ResolvedType componentType) {
+  public ArrayReferenceType(String sig, String erasureSig, World world, @NotNull ResolvedType componentType) {
     super(sig, erasureSig, world);
     this.componentType = componentType;
   }
@@ -59,6 +61,7 @@ public class ArrayReferenceType extends ReferenceType {
     return AnnotationAJ.EMPTY_ARRAY;
   }
 
+  @NotNull
   @Override
   public ResolvedType[] getAnnotationTypes() {
     return ResolvedType.NONE;

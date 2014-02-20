@@ -88,6 +88,7 @@ public final class INVOKEINTERFACE extends InvokeInstruction {
    *
    * @param out Output stream
    */
+  @Override
   public void dump(DataOutputStream out) throws IOException {
     out.writeByte(opcode);
     out.writeShort(index);
@@ -105,10 +106,12 @@ public final class INVOKEINTERFACE extends InvokeInstruction {
   /**
    * @return mnemonic for instruction with symbolic references resolved
    */
+  @Override
   public String toString(ConstantPool cp) {
     return super.toString(cp) + " " + nargs;
   }
 
+  @Override
   public int consumeStack(ConstantPool cpg) { // nargs is given in byte-code
     return nargs; // nargs includes this reference
   }

@@ -22,6 +22,7 @@ public class PointcutDesignatorHandlerTests extends TestCase {
 
   boolean needToSkip = false;
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     needToSkip = needToSkipPointcutParserTests();
@@ -180,6 +181,7 @@ public class PointcutDesignatorHandlerTests extends TestCase {
     private String askedToParse;
     public boolean simulateDynamicTest = false;
 
+    @Override
     public String getDesignatorName() {
       return "bean";
     }
@@ -187,6 +189,7 @@ public class PointcutDesignatorHandlerTests extends TestCase {
     /* (non-Javadoc)
      * @see org.aspectj.weaver.tools.PointcutDesignatorHandler#parse(java.lang.String)
      */
+    @Override
     public ContextBasedMatcher parse(String expression) {
       this.askedToParse = expression;
       return new BeanPointcutExpression(expression, this.simulateDynamicTest);
@@ -208,6 +211,7 @@ public class PointcutDesignatorHandlerTests extends TestCase {
     }
 
 
+    @Override
     public boolean couldMatchJoinPointsInType(Class aClass) {
       return true;
     }
@@ -215,6 +219,7 @@ public class PointcutDesignatorHandlerTests extends TestCase {
     /* (non-Javadoc)
      * @see org.aspectj.weaver.tools.ContextBasedMatcher#couldMatchJoinPointsInType(java.lang.Class)
      */
+    @Override
     public boolean couldMatchJoinPointsInType(Class aClass, MatchingContext context) {
       if (this.beanNamePattern.equals(context.getBinding("beanName"))) {
         return true;
@@ -227,11 +232,13 @@ public class PointcutDesignatorHandlerTests extends TestCase {
     /* (non-Javadoc)
      * @see org.aspectj.weaver.tools.ContextBasedMatcher#mayNeedDynamicTest()
      */
+    @Override
     public boolean mayNeedDynamicTest() {
       return this.simulateDynamicTest;
     }
 
 
+    @Override
     public FuzzyBoolean matchesStatically(MatchingContext matchContext) {
       if (this.simulateDynamicTest) return FuzzyBoolean.MAYBE;
       if (this.beanNamePattern.equals(matchContext.getBinding("beanName"))) {
@@ -245,6 +252,7 @@ public class PointcutDesignatorHandlerTests extends TestCase {
     /* (non-Javadoc)
      * @see org.aspectj.weaver.tools.ContextBasedMatcher#matchesDynamically(org.aspectj.weaver.tools.MatchingContext)
      */
+    @Override
     public boolean matchesDynamically(MatchingContext matchContext) {
       return this.beanNamePattern.equals(matchContext.getBinding("beanName"));
     }

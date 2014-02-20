@@ -28,10 +28,10 @@ import java.util.*;
 
 public class StatefulNameEnvironment implements INameEnvironment {
   private Map classesFromName;
-  private Map inflatedClassFilesCache;
-  private Set packageNames;
-  private AjState state;
-  private INameEnvironment baseEnvironment;
+  private final Map inflatedClassFilesCache;
+  private final Set packageNames;
+  private final AjState state;
+  private final INameEnvironment baseEnvironment;
 
   public StatefulNameEnvironment(INameEnvironment baseEnvironment, Map classesFromName, AjState state) {
     this.classesFromName = classesFromName;

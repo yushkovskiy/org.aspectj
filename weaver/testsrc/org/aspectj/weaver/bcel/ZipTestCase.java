@@ -33,10 +33,12 @@ public class ZipTestCase extends TestCase {
     super(arg0);
   }
 
+  @Override
   public void setUp() {
     outDir = BcweaverTests.getOutdir();
   }
 
+  @Override
   public void tearDown() {
     BcweaverTests.removeOutDir();
     outDir = null;

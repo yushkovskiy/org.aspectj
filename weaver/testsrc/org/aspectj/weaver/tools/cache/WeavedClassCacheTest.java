@@ -36,6 +36,7 @@ public class WeavedClassCacheTest extends AbstractCacheBackingTestSupport {
   public class MemoryCacheBacking implements CacheBacking {
     HashMap<String, CachedClassEntry> cache = new HashMap<String, CachedClassEntry>();
 
+    @Override
     public String[] getKeys(String regex) {
       final Set<String> keys = cache.keySet();
       final List<String> matches = new LinkedList<String>();
@@ -47,18 +48,22 @@ public class WeavedClassCacheTest extends AbstractCacheBackingTestSupport {
       return matches.toArray(new String[0]);
     }
 
+    @Override
     public void remove(CachedClassReference ref) {
       cache.remove(ref.getKey());
     }
 
+    @Override
     public void clear() {
       cache.clear();
     }
 
+    @Override
     public CachedClassEntry get(CachedClassReference ref, byte[] originalBytes) {
       return cache.get(ref.getKey());
     }
 
+    @Override
     public void put(CachedClassEntry entry, byte[] originalBytes) {
       assertNotNull("put(" + entry + ") no original bytes", originalBytes);
       cache.put(entry.getKey(), entry);
@@ -68,18 +73,22 @@ public class WeavedClassCacheTest extends AbstractCacheBackingTestSupport {
   MemoryCacheBacking memoryBacking = new MemoryCacheBacking();
 
   IMessageHandler messageHandler = new IMessageHandler() {
+    @Override
     public boolean handleMessage(@NotNull IMessage message) throws AbortException {
       return true;
     }
 
+    @Override
     public boolean isIgnoring(IMessage.Kind kind) {
       return true;
     }
 
+    @Override
     public void dontIgnore(IMessage.Kind kind) {
       // do nothing
     }
 
+    @Override
     public void ignore(IMessage.Kind kind) {
       // do nothing
     }
@@ -89,6 +98,7 @@ public class WeavedClassCacheTest extends AbstractCacheBackingTestSupport {
     public int accepts = 0;
     public List<String> classesISaw = new LinkedList<String>();
 
+    @Override
     public void acceptClass(String name, byte[] originalBytes, byte[] wovenBytes) {
       accepts++;
       classesISaw.add(name);

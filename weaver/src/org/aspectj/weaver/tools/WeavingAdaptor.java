@@ -266,6 +266,7 @@ public class WeavingAdaptor implements IMessageContext {
     }
   }
 
+  @Override
   @NotNull
   public String getContextId() {
     return "WeavingAdaptor";
@@ -849,6 +850,7 @@ public class WeavingAdaptor implements IMessageContext {
       isApplyAtAspectJMungersOnly = true;
     }
 
+    @Override
     public boolean isApplyAtAspectJMungersOnly() {
       return isApplyAtAspectJMungersOnly;
     }
@@ -861,14 +863,17 @@ public class WeavingAdaptor implements IMessageContext {
       }
     }
 
+    @Override
     public Iterator<UnwovenClassFile> getClassFileIterator() {
       return unwovenClasses.iterator();
     }
 
+    @Override
     public IWeaveRequestor getRequestor() {
       return new IWeaveRequestor() {
 
-        public void acceptResult(IUnwovenClassFile result) {
+        @Override
+        public void acceptResult(@NotNull IUnwovenClassFile result) {
           if (wovenClass == null) {
             wovenClass = result;
             final String name = result.getClassName();
@@ -892,18 +897,23 @@ public class WeavingAdaptor implements IMessageContext {
           }
         }
 
+        @Override
         public void processingReweavableState() {
         }
 
+        @Override
         public void addingTypeMungers() {
         }
 
+        @Override
         public void weavingAspects() {
         }
 
+        @Override
         public void weavingClasses() {
         }
 
+        @Override
         public void weaveCompleted() {
           // ResolvedType.resetPrimitives();
           if (delegateForCurrentClass != null) {

@@ -354,6 +354,7 @@ public class AnnotationPatternTestCase extends TestCase {
       this.annotationTypes = annotationTypes;
     }
 
+    @Override
     public boolean hasAnnotation(UnresolvedType ofType) {
       for (int i = 0; i < annotationTypes.length; i++) {
         if (annotationTypes[i].equals(ofType.getName())) {
@@ -368,11 +369,13 @@ public class AnnotationPatternTestCase extends TestCase {
      *
      * @see org.aspectj.weaver.AnnotatedElement#getAnnotationTypes()
      */
+    @Override
     public ResolvedType[] getAnnotationTypes() {
       // TODO Auto-generated method stub
       return null;
     }
 
+    @Override
     public AnnotationAJ getAnnotationOfType(UnresolvedType ofType) {
       // TODO Auto-generated method stub
       return null;

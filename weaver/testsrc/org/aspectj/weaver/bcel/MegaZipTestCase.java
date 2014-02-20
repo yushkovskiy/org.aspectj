@@ -34,11 +34,13 @@ public class MegaZipTestCase extends WeaveTestCase {
     super(arg0);
   }
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
     outDir = BcweaverTests.getOutdir();
   }
 
+  @Override
   public void tearDown() throws Exception {
     super.tearDown();
     BcweaverTests.removeOutDir();
@@ -52,6 +54,7 @@ public class MegaZipTestCase extends WeaveTestCase {
 
     return new BcelAdvice(AdviceKind.stringToKind("around"), matchOnlyPrintln ? makePointcutPrintln() : makePointcutAll(), sig,
         0, -1, -1, null, null) {
+      @Override
       public void specializeOn(Shadow s) {
         super.specializeOn(s);
         ((BcelShadow) s).initializeForAroundClosure();

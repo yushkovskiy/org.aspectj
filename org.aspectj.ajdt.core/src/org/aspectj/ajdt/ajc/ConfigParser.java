@@ -87,7 +87,7 @@ public class ConfigParser {
     xmlfiles.add(xmlFile);
   }
 
-  protected void parseOption(@NotNull String arg, @NotNull LinkedList args) {
+  protected void parseOption(@NotNull String arg, @NotNull LinkedList<Arg> args) {
     showWarning("unrecognized option: " + arg);
   }
 

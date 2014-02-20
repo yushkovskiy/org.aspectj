@@ -70,6 +70,7 @@ public class NonCachingClassLoaderRepositoryTest extends TestCase {
   private final NonCachingClassLoaderRepository nonCachingClassLoaderRepository = new NonCachingClassLoaderRepository(
       NonCachingClassLoaderRepositoryTest.class.getClassLoader());
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
   }
@@ -91,10 +92,12 @@ public class NonCachingClassLoaderRepositoryTest extends TestCase {
       done = true;
     }
 
+    @Override
     public abstract void run();
   }
 
   class Loader extends DoneChecker implements Runnable {
+    @Override
     public void run() {
       try {
         final JavaClass javaClass = nonCachingClassLoaderRepository.loadClass(NonCachingClassLoaderRepositoryTest.class
@@ -109,6 +112,7 @@ public class NonCachingClassLoaderRepositoryTest extends TestCase {
   }
 
   class Clearer extends DoneChecker implements Runnable {
+    @Override
     public void run() {
       try {
         nonCachingClassLoaderRepository.clear();
@@ -142,6 +146,7 @@ public class NonCachingClassLoaderRepositoryTest extends TestCase {
 
   }
 
+  @Override
   protected void tearDown() throws Exception {
     super.tearDown();
   }

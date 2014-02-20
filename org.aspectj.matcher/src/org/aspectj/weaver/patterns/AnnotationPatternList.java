@@ -11,6 +11,7 @@ package org.aspectj.weaver.patterns;
 
 import org.aspectj.util.FuzzyBoolean;
 import org.aspectj.weaver.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.List;
@@ -190,7 +191,7 @@ public class AnnotationPatternList extends PatternNode {
   }
 
   @Override
-  public void write(CompressingDataOutputStream s) throws IOException {
+  public void write(@NotNull CompressingDataOutputStream s) throws IOException {
     s.writeShort(typePatterns.length);
     for (int i = 0; i < typePatterns.length; i++) {
       typePatterns[i].write(s);

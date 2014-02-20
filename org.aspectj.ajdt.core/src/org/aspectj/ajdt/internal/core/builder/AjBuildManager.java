@@ -29,7 +29,6 @@ import org.aspectj.bridge.context.ContextToken;
 import org.aspectj.org.eclipse.jdt.core.compiler.CharOperation;
 import org.aspectj.org.eclipse.jdt.core.compiler.IProblem;
 import org.aspectj.org.eclipse.jdt.internal.compiler.*;
-import org.aspectj.org.eclipse.jdt.internal.compiler.apt.dispatch.BatchAnnotationProcessorManager;
 import org.aspectj.org.eclipse.jdt.internal.compiler.batch.ClasspathLocation;
 import org.aspectj.org.eclipse.jdt.internal.compiler.batch.CompilationUnit;
 import org.aspectj.org.eclipse.jdt.internal.compiler.batch.FileSystem;
@@ -73,7 +72,7 @@ public final class AjBuildManager implements IOutputClassFileNameProvider, IBina
   @NotNull
   private static final FileFilter binarySourceFilter = new FileFilter() {
     @Override
-    public boolean accept(File f) {
+    public boolean accept(@NotNull File f) {
       return f.getName().endsWith(".class");
     }
   };
@@ -97,7 +96,7 @@ public final class AjBuildManager implements IOutputClassFileNameProvider, IBina
   private INameEnvironment environment;
 
   @NotNull
-  private Map /* String -> List<UCF> */binarySourcesForTheNextCompile = new HashMap();
+  private Map<String, List<UnwovenClassFile>> /* String -> List<UCF> */binarySourcesForTheNextCompile = new HashMap<>();
 
   // FIXME asc should this really be in here?
   // private AsmManager structureModel;
@@ -108,7 +107,9 @@ public final class AjBuildManager implements IOutputClassFileNameProvider, IBina
   @NotNull
   AjState state = new AjState(this);
 
+  @NotNull
   public CountingMessageHandler handler;
+  @Nullable
   private CustomMungerFactory customMungerFactory;
 
   static {
@@ -127,6 +128,7 @@ public final class AjBuildManager implements IOutputClassFileNameProvider, IBina
     DO_RUNTIME_VERSION_CHECK = null != caller;
   }
 
+  @NotNull
   public static AsmHierarchyBuilder getAsmHierarchyBuilder() {
     return asmHierarchyBuilder;
   }
@@ -134,11 +136,30 @@ public final class AjBuildManager implements IOutputClassFileNameProvider, IBina
   /**
    * Override the the default hierarchy builder.
    */
-  public static void setAsmHierarchyBuilder(AsmHierarchyBuilder newBuilder) {
+  public static void setAsmHierarchyBuilder(@NotNull AsmHierarchyBuilder newBuilder) {
     asmHierarchyBuilder = newBuilder;
   }
 
-  public AjBuildManager(IMessageHandler holder) {
+  @NotNull
+  public static IProblemFactory getProblemFactory() {
+    return new DefaultProblemFactory(Locale.getDefault());
+  }
+
+  @NotNull
+  public static String extractDestinationPathFromSourceFile(@NotNull CompilationResult result) {
+    final ICompilationUnit compilationUnit = result.compilationUnit;
+    if (compilationUnit != null) {
+      final char[] fileName = compilationUnit.getFileName();
+      final int lastIndex = CharOperation.lastIndexOf(java.io.File.separatorChar, fileName);
+      if (lastIndex == -1) {
+        return System.getProperty("user.dir"); //$NON-NLS-1$
+      }
+      return new String(CharOperation.subarray(fileName, 0, lastIndex));
+    }
+    return System.getProperty("user.dir"); //$NON-NLS-1$
+  }
+
+  public AjBuildManager(@NotNull IMessageHandler holder) {
     super();
     this.handler = CountingMessageHandler.makeCountingMessageHandler(holder);
   }
@@ -193,10 +214,11 @@ public final class AjBuildManager implements IOutputClassFileNameProvider, IBina
 
   // LTODO delegate to BcelWeaver?
   // XXX hideous, should not be Object
-  public void setCustomMungerFactory(Object o) {
+  public void setCustomMungerFactory(@Nullable CustomMungerFactory o) {
     customMungerFactory = (CustomMungerFactory) o;
   }
 
+  @Nullable
   public Object getCustomMungerFactory() {
     return customMungerFactory;
   }
@@ -227,11 +249,6 @@ public final class AjBuildManager implements IOutputClassFileNameProvider, IBina
     return new FileSystem(classpaths, filenames, defaultEncoding, ClasspathLocation.BINARY);
   }
 
-  @NotNull
-  public static IProblemFactory getProblemFactory() {
-    return new DefaultProblemFactory(Locale.getDefault());
-  }
-
   /*
    * Build the set of compilation source units
    */
@@ -250,20 +267,6 @@ public final class AjBuildManager implements IOutputClassFileNameProvider, IBina
       units[i] = new CompilationUnit(null, filenames[i], defaultEncoding);
     }
     return units;
-  }
-
-  @NotNull
-  public static String extractDestinationPathFromSourceFile(@NotNull CompilationResult result) {
-    final ICompilationUnit compilationUnit = result.compilationUnit;
-    if (compilationUnit != null) {
-      final char[] fileName = compilationUnit.getFileName();
-      final int lastIndex = CharOperation.lastIndexOf(java.io.File.separatorChar, fileName);
-      if (lastIndex == -1) {
-        return System.getProperty("user.dir"); //$NON-NLS-1$
-      }
-      return new String(CharOperation.subarray(fileName, 0, lastIndex));
-    }
-    return System.getProperty("user.dir"); //$NON-NLS-1$
   }
 
   public void performCompilation(@NotNull Collection<File> files) {
@@ -306,20 +309,13 @@ public final class AjBuildManager implements IOutputClassFileNameProvider, IBina
 
     org.aspectj.ajdt.internal.compiler.CompilerAdapter.setCompilerAdapterFactory(this);
     final Map<?, ?> settings = buildConfig.getOptions().getMap();
-//    org.aspectj.org.eclipse.jdt.internal.compiler.batch.Main bMain = new org.aspectj.org.eclipse.jdt.internal.compiler.batch.Main(
-//        new PrintWriter(System.out),
-//        new PrintWriter(System.err),
-//        false,
-//        settings,
-//        null
-//    );
-
     final BuildArgParser bMain = buildConfig.getBuildArgParser();
-
     final org.aspectj.org.eclipse.jdt.internal.compiler.Compiler compiler = new org.aspectj.org.eclipse.jdt.internal.compiler.Compiler(
         environment, DefaultErrorHandlingPolicies.proceedWithAllProblems(), settings,
         getBatchRequestor(), getProblemFactory());
+    bMain.compilerOptions = compiler.options;
     bMain.batchCompiler = compiler;
+    bMain.initializeAnnotationProcessorManager();
     compiler.options.produceReferenceInfo = true; // TODO turn off when not needed
 
     final StringBuilder builder = new StringBuilder();
@@ -330,27 +326,12 @@ public final class AjBuildManager implements IOutputClassFileNameProvider, IBina
     Main.info("compiling: " + Arrays.toString(filenames));
 
     try {
-      initializeAnnotationProcessorManager(bMain, buildConfig);
-      Main.info("annotationProcessorManager: " + compiler.annotationProcessorManager);
-    } catch (Throwable e) {
-      Main.info("initializeAnnotationProcessorManager", e);
-    }
-    try (
-        final PrintWriter out = new PrintWriter(new File("F:\\apt.out.txt"));
-        final PrintWriter err = new PrintWriter(new File("F:\\apt.err.txt"))
-    ) {
-      out.write("starting...\n");
-
-      compiler.annotationProcessorManager.setOut(out);
-      compiler.annotationProcessorManager.setErr(err);
-
-      try {
-        compiler.compile(getCompilationUnits(filenames));
-      } catch (OperationCanceledException oce) {
-        handler.handleMessage(new Message("build cancelled:" + oce.getMessage(), IMessage.WARNING, null, null));
-      }
+      compiler.compile(getCompilationUnits(filenames));
+    } catch (OperationCanceledException oce) {
+      handler.handleMessage(new Message("build cancelled:" + oce.getMessage(), IMessage.WARNING, null, null));
     } catch (Throwable e) {
       Main.info("compilation", e);
+      throw e;
     }
 
     // cleanup
@@ -447,8 +428,7 @@ public final class AjBuildManager implements IOutputClassFileNameProvider, IBina
       }
 
       @NotNull
-      private String writeDirectoryEntry(CompilationResult unitResult, ClassFile classFile, String filename)
-          throws IOException {
+      private String writeDirectoryEntry(@NotNull CompilationResult unitResult, @NotNull ClassFile classFile, @NotNull String filename) throws IOException {
         File destinationPath = buildConfig.getOutputDir();
         if (buildConfig.getCompilationResultDestinationManager() != null) {
           destinationPath = buildConfig.getCompilationResultDestinationManager().getOutputLocationForClass(
@@ -607,7 +587,8 @@ public final class AjBuildManager implements IOutputClassFileNameProvider, IBina
    * @see org.aspectj.ajdt.internal.compiler.IBinarySourceProvider#getBinarySourcesForThisWeave()
    */
   @Override
-  public Map getBinarySourcesForThisWeave() {
+  @NotNull
+  public Map<String, List<UnwovenClassFile>> getBinarySourcesForThisWeave() {
     return binarySourcesForTheNextCompile;
   }
 
@@ -622,25 +603,6 @@ public final class AjBuildManager implements IOutputClassFileNameProvider, IBina
 
   public boolean wasFullBuild() {
     return wasFullBuild;
-  }
-
-  @Deprecated
-  protected static void initializeAnnotationProcessorManager(@NotNull org.aspectj.org.eclipse.jdt.internal.compiler.batch.Main compilerHolder,
-                                                             @NotNull AjBuildConfig buildConfig) {
-    final AbstractAnnotationProcessorManager annotationManager = new BatchAnnotationProcessorManager();
-    final StringBuilder builder = new StringBuilder();
-    for (final Iterator<String> i = buildConfig.getClasspath().iterator(); i.hasNext(); ) {
-      builder.append(i.next());
-      if (i.hasNext())
-        builder.append(File.pathSeparatorChar);
-    }
-    annotationManager.configure(compilerHolder, new String[]{
-        "-XprintProcessorInfo",
-        "-XprintRounds",
-        "-cp",
-        builder.toString()
-    });
-    compilerHolder.batchCompiler.annotationProcessorManager = annotationManager;
   }
 
   protected boolean proceedOnError() {

@@ -53,6 +53,7 @@ import org.aspectj.apache.bcel.util.SyntheticRepository;
  */
 public class ParameterAnnotationsTest extends BcelTestCase {
 
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
   }
@@ -266,7 +267,7 @@ public class ParameterAnnotationsTest extends BcelTestCase {
   }
 
 
-  private Method findMethod(ClassGen c, String mname) {
+  private static Method findMethod(ClassGen c, String mname) {
     final Method[] ms = c.getMethods();
     for (int i = 0; i < ms.length; i++) {
       if (ms[i].getName().equals(mname)) return ms[i];
@@ -522,12 +523,12 @@ public class ParameterAnnotationsTest extends BcelTestCase {
   // helper methods
 
 
-  private ClassGen createClassGen(String classname) {
+  private static ClassGen createClassGen(String classname) {
     return new ClassGen(classname, "java.lang.Object",
         "<generated>", Constants.ACC_PUBLIC | Constants.ACC_SUPER, null);
   }
 
-  private MethodGen createMethodGen(String methodname, InstructionList il, ConstantPool cp) {
+  private static MethodGen createMethodGen(String methodname, InstructionList il, ConstantPool cp) {
     return new MethodGen(
         Constants.ACC_STATIC | Constants.ACC_PUBLIC,  // access flags
         Type.VOID,                                    // return type
@@ -538,7 +539,7 @@ public class ParameterAnnotationsTest extends BcelTestCase {
   }
 
 
-  public AnnotationGen createSimpleVisibleAnnotation(ConstantPool cp) {
+  public static AnnotationGen createSimpleVisibleAnnotation(ConstantPool cp) {
     final SimpleElementValue evg = new SimpleElementValue(
         ElementValue.PRIMITIVE_INT, cp, 4);
 
@@ -564,7 +565,7 @@ public class ParameterAnnotationsTest extends BcelTestCase {
     return new AnnotationGen(new ObjectType("CombinedAnnotation"), elements, true, cp);
   }
 
-  public AnnotationGen createSimpleInvisibleAnnotation(ConstantPool cp) {
+  public static AnnotationGen createSimpleInvisibleAnnotation(ConstantPool cp) {
     final SimpleElementValue evg = new SimpleElementValue(
         ElementValue.PRIMITIVE_INT, cp, 4);
 
@@ -579,6 +580,7 @@ public class ParameterAnnotationsTest extends BcelTestCase {
     return a;
   }
 
+  @Override
   protected void tearDown() throws Exception {
     super.tearDown();
   }

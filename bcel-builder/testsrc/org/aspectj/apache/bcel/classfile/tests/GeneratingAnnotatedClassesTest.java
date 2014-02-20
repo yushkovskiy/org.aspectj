@@ -503,11 +503,11 @@ public class GeneratingAnnotatedClassesTest extends BcelTestCase {
 
   // helper methods
 
-  private ClassGen createClassGen(String classname) {
+  private static ClassGen createClassGen(String classname) {
     return new ClassGen(classname, "java.lang.Object", "<generated>", Constants.ACC_PUBLIC | Constants.ACC_SUPER, null);
   }
 
-  private MethodGen createMethodGen(String methodname, InstructionList il, ConstantPool cp) {
+  private static MethodGen createMethodGen(String methodname, InstructionList il, ConstantPool cp) {
     return new MethodGen(Constants.ACC_STATIC | Constants.ACC_PUBLIC, // access flags
         Type.VOID, // return type
         new Type[]{new ArrayType(Type.STRING, 1)}, // argument types
@@ -516,7 +516,7 @@ public class GeneratingAnnotatedClassesTest extends BcelTestCase {
         il, cp);
   }
 
-  public AnnotationGen createSimpleVisibleAnnotation(ConstantPool cp) {
+  public static AnnotationGen createSimpleVisibleAnnotation(ConstantPool cp) {
     final SimpleElementValue evg = new SimpleElementValue(ElementValue.PRIMITIVE_INT, cp, 4);
 
     final NameValuePair nvGen = new NameValuePair("id", evg, cp);
@@ -530,7 +530,7 @@ public class GeneratingAnnotatedClassesTest extends BcelTestCase {
     return a;
   }
 
-  public AnnotationGen createFruitAnnotation(ConstantPool cp, String aFruit) {
+  public static AnnotationGen createFruitAnnotation(ConstantPool cp, String aFruit) {
     final SimpleElementValue evg = new SimpleElementValue(ElementValue.STRING, cp, aFruit);
     final NameValuePair nvGen = new NameValuePair("fruit", evg, cp);
     final ObjectType t = new ObjectType("SimpleStringAnnotation");
@@ -550,7 +550,7 @@ public class GeneratingAnnotatedClassesTest extends BcelTestCase {
     return new AnnotationGen(new ObjectType("CombinedAnnotation"), elements, true, cp);
   }
 
-  public AnnotationGen createSimpleInvisibleAnnotation(ConstantPool cp) {
+  public static AnnotationGen createSimpleInvisibleAnnotation(ConstantPool cp) {
     final SimpleElementValue evg = new SimpleElementValue(ElementValue.PRIMITIVE_INT, cp, 4);
 
     final NameValuePair nvGen = new NameValuePair("id", evg, cp);
@@ -564,6 +564,7 @@ public class GeneratingAnnotatedClassesTest extends BcelTestCase {
     return a;
   }
 
+  @Override
   protected void tearDown() throws Exception {
     super.tearDown();
   }

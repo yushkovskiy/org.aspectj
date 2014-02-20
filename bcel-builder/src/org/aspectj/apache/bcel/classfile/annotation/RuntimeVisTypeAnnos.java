@@ -33,6 +33,7 @@ public class RuntimeVisTypeAnnos extends RuntimeTypeAnnos {
 //		super(Constants.ATTR_RUNTIME_VISIBLE_TYPE_ANNOTATIONS,true,nameIndex,len,rvaData,cpool);
 //	  }
 
+  @Override
   public void accept(ClassVisitor v) {
     v.visitRuntimeVisibleTypeAnnotations(this);
   }

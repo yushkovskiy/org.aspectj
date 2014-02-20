@@ -56,6 +56,7 @@ package org.aspectj.apache.bcel.util;
 
 import org.aspectj.apache.bcel.classfile.ClassParser;
 import org.aspectj.apache.bcel.classfile.JavaClass;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -185,7 +186,8 @@ public class NonCachingClassLoaderRepository implements Repository {
   /**
    * Store a new JavaClass into this Repository.
    */
-  public void storeClass(JavaClass clazz) {
+  @Override
+  public void storeClass(@NotNull JavaClass clazz) {
     synchronized (loadedClasses) {
       loadedClasses.put(clazz.getClassName(), clazz);
     }
@@ -195,7 +197,8 @@ public class NonCachingClassLoaderRepository implements Repository {
   /**
    * Remove class from repository
    */
-  public void removeClass(JavaClass clazz) {
+  @Override
+  public void removeClass(@NotNull JavaClass clazz) {
     synchronized (loadedClasses) {
       loadedClasses.remove(clazz.getClassName());
     }
@@ -204,6 +207,7 @@ public class NonCachingClassLoaderRepository implements Repository {
   /**
    * Find an already defined JavaClass.
    */
+  @Override
   public JavaClass findClass(String className) {
     synchronized (loadedClasses) {
       if (loadedClasses.containsKey(className)) {
@@ -217,6 +221,7 @@ public class NonCachingClassLoaderRepository implements Repository {
   /**
    * Clear all entries from cache.
    */
+  @Override
   public void clear() {
     synchronized (loadedClasses) {
       loadedClasses.clear();
@@ -226,6 +231,7 @@ public class NonCachingClassLoaderRepository implements Repository {
   /**
    * Lookup a JavaClass object from the Class Name provided.
    */
+  @Override
   public JavaClass loadClass(String className) throws ClassNotFoundException {
 
     JavaClass javaClass = findClass(className);
@@ -239,6 +245,7 @@ public class NonCachingClassLoaderRepository implements Repository {
     return javaClass;
   }
 
+  @Override
   public JavaClass loadClass(Class clazz) throws ClassNotFoundException {
     return loadClass(clazz.getName());
   }

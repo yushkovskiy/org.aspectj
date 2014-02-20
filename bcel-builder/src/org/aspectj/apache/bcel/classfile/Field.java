@@ -87,6 +87,7 @@ public final class Field extends FieldOrMethod {
     super(modifiers, nameIndex, signatureIndex, attributes, cpool);
   }
 
+  @Override
   public void accept(ClassVisitor v) {
     v.visitField(this);
   }

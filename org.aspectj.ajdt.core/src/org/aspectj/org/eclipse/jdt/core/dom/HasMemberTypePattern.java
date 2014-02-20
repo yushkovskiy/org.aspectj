@@ -16,7 +16,7 @@ import java.util.List;
  */
 public class HasMemberTypePattern extends TypePattern {
 
-  private SignaturePattern signaturePattern;
+  private final SignaturePattern signaturePattern;
 
   public HasMemberTypePattern(AST ast, SignaturePattern signaturePattern) {
     super(ast, signaturePattern.getDetail());

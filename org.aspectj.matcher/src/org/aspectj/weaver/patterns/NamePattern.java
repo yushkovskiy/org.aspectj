@@ -14,6 +14,7 @@ package org.aspectj.weaver.patterns;
 
 import org.aspectj.weaver.CompressingDataOutputStream;
 import org.aspectj.weaver.VersionedDataInputStream;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -168,7 +169,7 @@ public class NamePattern extends PatternNode {
   }
 
   @Override
-  public void write(CompressingDataOutputStream out) throws IOException {
+  public void write(@NotNull CompressingDataOutputStream out) throws IOException {
     out.writeUTF(new String(pattern));
   }
 
