@@ -322,16 +322,11 @@ public final class AjBuildManager implements IOutputClassFileNameProvider, IBina
     for (Map.Entry<?, ?> entry : settings.entrySet()) {
       builder.append('\t').append(entry.getKey().toString()).append(": ").append(entry.getValue().toString()).append("\n");
     }
-    Main.info("settings: \n" + builder.toString());
-    Main.info("compiling: " + Arrays.toString(filenames));
 
     try {
       compiler.compile(getCompilationUnits(filenames));
     } catch (OperationCanceledException oce) {
       handler.handleMessage(new Message("build cancelled:" + oce.getMessage(), IMessage.WARNING, null, null));
-    } catch (Throwable e) {
-      Main.info("compilation", e);
-      throw e;
     }
 
     // cleanup

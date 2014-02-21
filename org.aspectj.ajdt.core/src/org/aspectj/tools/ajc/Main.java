@@ -22,8 +22,10 @@ import org.aspectj.weaver.Dump;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
-import java.util.ArrayList;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -108,29 +110,6 @@ public final class Main {
    */
   @Nullable
   private Runnable completionRunner;
-
-  @Deprecated
-  public static void info(Object value) {
-    info(value, null);
-  }
-
-  @Deprecated
-  public static void info(Object value, Throwable t) {
-    try (FileWriter writer = new FileWriter("F:\\out.txt", true)) {
-      writer.write("[" + System.currentTimeMillis() + "]: ");
-      writer.write(value.toString());
-      writer.write("\n");
-      if (t == null)
-        return;
-      writer.write(t.getMessage() + '\n');
-      for (StackTraceElement stackTraceElement : t.getStackTrace()) {
-        writer.write("\t" + stackTraceElement.toString() + "\n");
-      }
-      writer.write("\n");
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-  }
 
   /**
    * Convenience method to run ajc and collect String lists of messages. This can be reflectively invoked with the List collecting
